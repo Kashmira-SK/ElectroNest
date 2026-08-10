@@ -2,7 +2,7 @@
 
 Multi-vendor online electronics store — SE2030 Group Project (2026-Y2-S1-KU-25)
 
-# Stack
+## Stack
 Java 21 · Spring Boot 4.1.0 · Spring Data JPA · PostgreSQL · Thymeleaf · Bootstrap 5
 
 ## Getting Started
