@@ -2,8 +2,8 @@ package lk.sliit.electronest.admin.controller;
 
 import lk.sliit.electronest.admin.dto.UpdateRoleForm;
 import lk.sliit.electronest.admin.dto.UpdateStatusForm;
-import lk.sliit.electronest.admin.entity.User;
-import lk.sliit.electronest.admin.security.CustomUserDetails;
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.admin.service.ReportService;
 import lk.sliit.electronest.admin.service.UserService;
 import jakarta.validation.Valid;

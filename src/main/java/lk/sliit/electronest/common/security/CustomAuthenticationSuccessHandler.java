@@ -1,4 +1,4 @@
-package lk.sliit.electronest.admin.security;
+package lk.sliit.electronest.common.security;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

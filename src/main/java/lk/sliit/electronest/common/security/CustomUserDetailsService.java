@@ -1,7 +1,7 @@
-package lk.sliit.electronest.admin.security;
+package lk.sliit.electronest.common.security;
 
-import lk.sliit.electronest.admin.entity.User;
-import lk.sliit.electronest.admin.repository.UserRepository;
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -2,12 +2,12 @@ package lk.sliit.electronest.admin.service;
 
 import lk.sliit.electronest.admin.dto.UpdateRoleForm;
 import lk.sliit.electronest.admin.dto.UpdateStatusForm;
-import lk.sliit.electronest.admin.entity.AccountStatus;
+import lk.sliit.electronest.common.model.AccountStatus;
 import lk.sliit.electronest.admin.entity.RoleChangeLog;
-import lk.sliit.electronest.admin.entity.User;
+import lk.sliit.electronest.common.model.User;
 import lk.sliit.electronest.admin.exception.ResourceNotFoundException;
 import lk.sliit.electronest.admin.repository.RoleChangeLogRepository;
-import lk.sliit.electronest.admin.repository.UserRepository;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,4 +1,4 @@
-package lk.sliit.electronest.admin.entity;
+package lk.sliit.electronest.common.model;
 
 /**
  * Tracks the lifecycle state of a user account.

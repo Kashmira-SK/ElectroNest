@@ -1,9 +1,9 @@
 package lk.sliit.electronest.admin.service;
 
 import lk.sliit.electronest.admin.dto.DashboardSummary;
-import lk.sliit.electronest.admin.entity.AccountStatus;
-import lk.sliit.electronest.admin.entity.Role;
-import lk.sliit.electronest.admin.repository.UserRepository;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

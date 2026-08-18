@@ -1,8 +1,8 @@
-package lk.sliit.electronest.admin.repository;
+package lk.sliit.electronest.common.repository;
 
-import lk.sliit.electronest.admin.entity.AccountStatus;
-import lk.sliit.electronest.admin.entity.Role;
-import lk.sliit.electronest.admin.entity.User;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.common.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

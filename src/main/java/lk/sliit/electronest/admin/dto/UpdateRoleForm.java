@@ -1,6 +1,6 @@
 package lk.sliit.electronest.admin.dto;
 
-import lk.sliit.electronest.admin.entity.Role;
+import lk.sliit.electronest.common.model.Role;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

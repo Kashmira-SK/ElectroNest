@@ -1,7 +1,7 @@
-package lk.sliit.electronest.admin.security;
+package lk.sliit.electronest.common.security;
 
-import lk.sliit.electronest.admin.entity.AccountStatus;
-import lk.sliit.electronest.admin.entity.User;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.common.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

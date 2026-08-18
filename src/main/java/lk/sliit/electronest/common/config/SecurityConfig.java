@@ -1,6 +1,6 @@
-package lk.sliit.electronest.admin.config;
+package lk.sliit.electronest.common.config;
 
-import lk.sliit.electronest.admin.security.CustomAuthenticationSuccessHandler;
+import lk.sliit.electronest.common.security.CustomAuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +31,9 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
                 // Everything under /admin/** requires the ADMIN role
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                // TEMP: other modules' REST APIs are open while each module builds its own
+                // auth/role checks. Tighten this per-endpoint as modules mature (pre-demo).
+                .requestMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

@@ -1,4 +1,4 @@
-package lk.sliit.electronest.admin.entity;
+package lk.sliit.electronest.common.model;
 
 /**
  * The three roles defined in the ElectroNest platform (from the proposal report):

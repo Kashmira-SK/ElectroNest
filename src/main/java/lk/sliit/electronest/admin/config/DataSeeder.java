@@ -1,9 +1,9 @@
 package lk.sliit.electronest.admin.config;
 
-import lk.sliit.electronest.admin.entity.AccountStatus;
-import lk.sliit.electronest.admin.entity.Role;
-import lk.sliit.electronest.admin.entity.User;
-import lk.sliit.electronest.admin.repository.UserRepository;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
