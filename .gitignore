@@ -43,3 +43,4 @@ Thumbs.db
 application-local.properties
 application-local.yml
 *.log
+application.properties
