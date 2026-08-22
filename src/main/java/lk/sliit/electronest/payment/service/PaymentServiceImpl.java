@@ -1,6 +1,7 @@
 package lk.sliit.electronest.payment.service;
 
 import lk.sliit.electronest.payment.model.Payment;
+import lk.sliit.electronest.payment.model.PaymentRequest;
 import lk.sliit.electronest.payment.model.PaymentStatus;
 import lk.sliit.electronest.payment.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
@@ -19,33 +20,41 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Payment processPayment(Payment payment) {
+    public Payment processPayment(PaymentRequest request) {
 
-        // Generate transaction ID
+        // Build a brand-new entity here so no client-supplied id can ever
+        // reach the repository and accidentally overwrite an existing payment.
+        Payment payment = new Payment();
+        payment.setOrderId(request.getOrderId());
+        payment.setOrderNumber(request.getOrderNumber());
+        payment.setCustomerId(request.getCustomerId());
+        payment.setCustomerEmail(request.getCustomerEmail());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setCardHolderName(request.getCardHolderName());
+
         payment.setTransactionId(
                 "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()
         );
 
-        // Set default values
-        if (payment.getCurrency() == null || payment.getCurrency().isBlank()) {
-            payment.setCurrency("LKR");
-        }
+        payment.setCurrency(
+                (request.getCurrency() == null || request.getCurrency().isBlank())
+                        ? "LKR"
+                        : request.getCurrency()
+        );
 
         payment.setPaymentStatus(PaymentStatus.SUCCESSFUL);
         payment.setCreatedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
 
-        // Mask card number before saving
-        if (payment.getMaskedCardNumber() != null
-                && !payment.getMaskedCardNumber().isBlank()) {
-
-            String cardNumber = payment.getMaskedCardNumber()
-                    .replaceAll("\\s+", "");
-
-            if (cardNumber.length() >= 4) {
+        // Mask the raw card number from the request before it ever gets saved
+        String rawCardNumber = request.getCardNumber();
+        if (rawCardNumber != null && !rawCardNumber.isBlank()) {
+            String digitsOnly = rawCardNumber.replaceAll("\\s+", "");
+            if (digitsOnly.length() >= 4) {
                 payment.setMaskedCardNumber(
                         "**** **** **** " +
-                                cardNumber.substring(cardNumber.length() - 4)
+                                digitsOnly.substring(digitsOnly.length() - 4)
                 );
             }
         }

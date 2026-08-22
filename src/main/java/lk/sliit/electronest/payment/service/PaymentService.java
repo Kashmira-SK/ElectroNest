@@ -1,13 +1,14 @@
 package lk.sliit.electronest.payment.service;
 
 import lk.sliit.electronest.payment.model.Payment;
+import lk.sliit.electronest.payment.model.PaymentRequest;
 import lk.sliit.electronest.payment.model.PaymentStatus;
 
 import java.util.List;
 
 public interface PaymentService {
 
-    Payment processPayment(Payment payment);
+    Payment processPayment(PaymentRequest request);
 
     Payment getPaymentById(Long id);
 

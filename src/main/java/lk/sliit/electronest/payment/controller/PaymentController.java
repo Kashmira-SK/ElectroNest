@@ -1,6 +1,7 @@
 package lk.sliit.electronest.payment.controller;
 
 import lk.sliit.electronest.payment.model.Payment;
+import lk.sliit.electronest.payment.model.PaymentRequest;
 import lk.sliit.electronest.payment.model.PaymentStatus;
 import lk.sliit.electronest.payment.service.PaymentService;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ public class PaymentController {
     // Create / process a payment
     @PostMapping
     public ResponseEntity<Payment> processPayment(
-            @RequestBody Payment payment) {
+            @RequestBody PaymentRequest request) {
 
-        Payment savedPayment = paymentService.processPayment(payment);
+        Payment savedPayment = paymentService.processPayment(request);
 
         return ResponseEntity.ok(savedPayment);
     }
