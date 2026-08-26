@@ -1,32 +1,25 @@
 package lk.sliit.electronest.order.controller;
 
 import lk.sliit.electronest.common.model.User;
-import lk.sliit.electronest.common.repository.UserRepository;
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.order.controller.dto.OrderResponse;
 import lk.sliit.electronest.order.controller.dto.UpdateOrderStatusRequest;
 import lk.sliit.electronest.order.model.Order;
 import lk.sliit.electronest.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
-/**
- * NOTE: assumes a UserRepository already exists in
- * common.repository (Navodya's Admin/User module) with a standard
- * findById(Long). Adjust the import/package if hers differs.
- */
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderService orderService;
-    private final UserRepository userRepository;
 
-    public OrderController(OrderService orderService, UserRepository userRepository) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
-        this.userRepository = userRepository;
     }
 
     /** PB-20: order history for a customer. */
@@ -53,9 +46,9 @@ public class OrderController {
     /** UC-03 main flow: update fulfilment status. */
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long orderId,
-                                                        @RequestBody UpdateOrderStatusRequest request) {
-        User actor = userRepository.findById(request.actorId())
-                .orElseThrow(() -> new NoSuchElementException("User not found: " + request.actorId()));
+                                                        @RequestBody UpdateOrderStatusRequest request,
+                                                        @AuthenticationPrincipal CustomUserDetails currentUser) {
+        User actor = currentUser.getUser();
 
         Order updated = orderService.updateFulfilmentStatus(
                 orderId, actor, request.targetStatus(), request.adminOverride());
