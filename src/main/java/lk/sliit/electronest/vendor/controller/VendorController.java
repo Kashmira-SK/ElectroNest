@@ -72,14 +72,18 @@ public class VendorController {
     // Admin: reject a vendor, with reason
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/reject")
-    public ResponseEntity<VendorResponse> reject(@PathVariable Long id, @RequestBody ReasonRequest body) {
+    public ResponseEntity<VendorResponse> reject(
+            @PathVariable Long id,
+            @Valid @RequestBody ReasonRequest body) {
         return ResponseEntity.ok(VendorResponse.from(vendorService.rejectVendor(id, body.getReason())));
     }
 
     // Admin: request more info from vendor
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/request-info")
-    public ResponseEntity<VendorResponse> requestInfo(@PathVariable Long id, @RequestBody ReasonRequest body) {
+    public ResponseEntity<VendorResponse> requestInfo(
+            @PathVariable Long id,
+            @Valid @RequestBody ReasonRequest body) {
         return ResponseEntity.ok(VendorResponse.from(vendorService.requestMoreInfo(id, body.getReason())));
     }
 

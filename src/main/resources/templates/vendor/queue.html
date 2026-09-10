@@ -26,7 +26,7 @@
             </form>
 
             <form th:action="@{/vendor/queue/{id}/reject(id=${v.id})}" method="post" class="en-actions" style="margin-top: 0;">
-                <input type="text" name="reason" placeholder="Rejection reason" required>
+                <input type="text" name="reason" placeholder="Rejection reason" maxlength="500" required>
                 <button type="submit" class="en-btn en-btn-reject en-btn-sm">Reject</button>
             </form>
         </div>
