@@ -12,7 +12,7 @@ public class Vendor {
     private Long id;
 
     // References common.User once it exists — plain ID for now, no hard dependency
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Long userId;
 
     @Column(nullable = false)

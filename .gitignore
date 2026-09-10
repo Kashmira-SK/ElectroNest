@@ -43,3 +43,6 @@ Thumbs.db
 application-local.properties
 application-local.yml
 *.log
+
+### Local agent planning ###
+AGENTS.md

@@ -11,31 +11,32 @@
     <h1>Register your business</h1>
 
     <div class="en-card">
-        <form th:action="@{/vendor/register}" th:object="${vendor}" method="post">
+        <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-            <div class="en-field">
-                <label>Your User ID</label>
-                <input type="number" th:field="*{userId}" required>
-            </div>
+        <form th:action="@{/vendor/register}" th:object="${registrationRequest}" method="post">
 
             <div class="en-field">
                 <label>Business Name</label>
                 <input type="text" th:field="*{businessName}" required>
+                <p class="en-field-error" th:if="${#fields.hasErrors('businessName')}" th:errors="*{businessName}"></p>
             </div>
 
             <div class="en-field">
                 <label>Business Registration Number</label>
                 <input type="text" th:field="*{registrationNumber}" required>
+                <p class="en-field-error" th:if="${#fields.hasErrors('registrationNumber')}" th:errors="*{registrationNumber}"></p>
             </div>
 
             <div class="en-field">
                 <label>Business Address</label>
-                <input type="text" th:field="*{businessAddress}">
+                <input type="text" th:field="*{businessAddress}" required>
+                <p class="en-field-error" th:if="${#fields.hasErrors('businessAddress')}" th:errors="*{businessAddress}"></p>
             </div>
 
             <div class="en-field">
                 <label>Contact Phone</label>
-                <input type="text" th:field="*{contactPhone}">
+                <input type="tel" th:field="*{contactPhone}" required>
+                <p class="en-field-error" th:if="${#fields.hasErrors('contactPhone')}" th:errors="*{contactPhone}"></p>
             </div>
 
             <button type="submit" class="en-btn en-btn-primary">Submit application</button>
