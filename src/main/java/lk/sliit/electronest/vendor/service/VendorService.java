@@ -3,6 +3,7 @@ package lk.sliit.electronest.vendor.service;
 import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorReviewReasonException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorStatusTransitionException;
+import lk.sliit.electronest.vendor.exception.VendorNotFoundException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
@@ -92,17 +93,17 @@ public class VendorService {
     }
 
     public void revokeVendor(Long id) {
-        vendorRepository.deleteById(id);
+        vendorRepository.delete(getVendorOrThrow(id));
     }
 
     public Vendor getVendorOrThrow(Long id) {
         return vendorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Vendor not found: " + id));
+                .orElseThrow(() -> new VendorNotFoundException("Vendor not found: " + id));
     }
 
     public Vendor getVendorForUser(Long userId) {
         return vendorRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new VendorNotFoundException(
                         "Vendor application not found for the current user"
                 ));
     }

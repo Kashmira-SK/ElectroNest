@@ -10,6 +10,9 @@
     <p class="en-eyebrow">ElectroNest / Admin</p>
     <h1>Vendor verification queue</h1>
 
+    <div class="en-alert en-alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
     <div class="en-card en-empty" th:if="${#lists.isEmpty(vendors)}">
         No pending applications right now.
     </div>
