@@ -92,4 +92,11 @@ public class VendorService {
         return vendorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Vendor not found: " + id));
     }
+
+    public Vendor getVendorForUser(Long userId) {
+        return vendorRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Vendor application not found for the current user"
+                ));
+    }
 }
