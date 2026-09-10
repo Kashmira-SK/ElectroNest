@@ -31,6 +31,7 @@ public class Vendor {
     @Column(nullable = false)
     private VendorStatus status = VendorStatus.PENDING;
 
+    @Column(length = 500)
     private String rejectionReason;
 
     @Column(nullable = false, updatable = false)
