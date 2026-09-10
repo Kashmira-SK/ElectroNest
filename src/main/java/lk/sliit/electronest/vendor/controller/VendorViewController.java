@@ -1,10 +1,15 @@
 package lk.sliit.electronest.vendor.controller;
 
+import jakarta.validation.Valid;
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.vendor.model.Vendor;
+import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.service.VendorService;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
@@ -17,15 +22,27 @@ public class VendorViewController {
         this.vendorService = vendorService;
     }
 
+    @PreAuthorize("hasRole('VENDOR')")
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
-        model.addAttribute("vendor", new Vendor());
+        if (!model.containsAttribute("registrationRequest")) {
+            model.addAttribute("registrationRequest", new VendorRegistrationRequest());
+        }
         return "vendor/register";
     }
 
+    @PreAuthorize("hasRole('VENDOR')")
     @PostMapping("/register")
-    public String submitRegistration(@ModelAttribute Vendor vendor, Model model) {
-        Vendor saved = vendorService.registerVendor(vendor);
+    public String submitRegistration(
+            @Valid @ModelAttribute("registrationRequest") VendorRegistrationRequest request,
+            BindingResult bindingResult,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            Model model) {
+        if (bindingResult.hasErrors()) {
+            return "vendor/register";
+        }
+
+        Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
         model.addAttribute("vendor", saved);
         return "vendor/register-success";
     }

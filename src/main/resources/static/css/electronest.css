@@ -88,6 +88,12 @@ h3 { font-size: 22px; margin-bottom: 20px; }
   background: var(--card);
 }
 
+.en-field-error {
+  color: var(--red);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
 .en-btn {
   display: inline-flex;
   align-items: center;

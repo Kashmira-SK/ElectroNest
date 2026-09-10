@@ -2,6 +2,7 @@ package lk.sliit.electronest.vendor.service;
 
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
+import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,13 @@ public class VendorService {
         this.vendorRepository = vendorRepository;
     }
 
-    public Vendor registerVendor(Vendor vendor) {
+    public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
+        Vendor vendor = new Vendor();
+        vendor.setUserId(userId);
+        vendor.setBusinessName(request.getBusinessName());
+        vendor.setRegistrationNumber(request.getRegistrationNumber());
+        vendor.setBusinessAddress(request.getBusinessAddress());
+        vendor.setContactPhone(request.getContactPhone());
         vendor.setStatus(VendorStatus.PENDING);
         return vendorRepository.save(vendor);
     }

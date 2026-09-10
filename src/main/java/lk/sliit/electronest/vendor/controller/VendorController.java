@@ -1,10 +1,14 @@
 package lk.sliit.electronest.vendor.controller;
 
+import jakarta.validation.Valid;
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.dto.ReasonRequest;
+import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.service.VendorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +24,12 @@ public class VendorController {
     }
 
     // Vendor self-registration
+    @PreAuthorize("hasRole('VENDOR')")
     @PostMapping("/register")
-    public ResponseEntity<Vendor> register(@RequestBody Vendor vendor) {
-        Vendor saved = vendorService.registerVendor(vendor);
+    public ResponseEntity<Vendor> register(
+            @Valid @RequestBody VendorRegistrationRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
         return ResponseEntity.ok(saved);
     }
 
