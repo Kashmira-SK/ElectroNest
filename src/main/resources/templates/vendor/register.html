@@ -11,6 +11,8 @@
     <h1>Register your business</h1>
 
     <div class="en-card">
+        <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
         <form th:action="@{/vendor/register}" th:object="${registrationRequest}" method="post">
 
             <div class="en-field">

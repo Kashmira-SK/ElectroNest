@@ -1,12 +1,15 @@
 package lk.sliit.electronest.vendor.service;
 
+import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class VendorService {
@@ -17,13 +20,29 @@ public class VendorService {
         this.vendorRepository = vendorRepository;
     }
 
+    @Transactional
     public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
+        if (vendorRepository.existsByUserId(userId)) {
+            throw new DuplicateVendorApplicationException(
+                    "You already have a vendor application"
+            );
+        }
+
+        String registrationNumber = request.getRegistrationNumber()
+                .trim()
+                .toUpperCase(Locale.ROOT);
+        if (vendorRepository.existsByRegistrationNumberIgnoreCase(registrationNumber)) {
+            throw new DuplicateVendorApplicationException(
+                    "This business registration number is already in use"
+            );
+        }
+
         Vendor vendor = new Vendor();
         vendor.setUserId(userId);
-        vendor.setBusinessName(request.getBusinessName());
-        vendor.setRegistrationNumber(request.getRegistrationNumber());
-        vendor.setBusinessAddress(request.getBusinessAddress());
-        vendor.setContactPhone(request.getContactPhone());
+        vendor.setBusinessName(request.getBusinessName().trim());
+        vendor.setRegistrationNumber(registrationNumber);
+        vendor.setBusinessAddress(request.getBusinessAddress().trim());
+        vendor.setContactPhone(request.getContactPhone().trim());
         vendor.setStatus(VendorStatus.PENDING);
         return vendorRepository.save(vendor);
     }

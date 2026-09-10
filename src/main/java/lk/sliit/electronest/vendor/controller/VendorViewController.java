@@ -2,6 +2,7 @@ package lk.sliit.electronest.vendor.controller;
 
 import jakarta.validation.Valid;
 import lk.sliit.electronest.common.security.CustomUserDetails;
+import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.service.VendorService;
@@ -42,9 +43,14 @@ public class VendorViewController {
             return "vendor/register";
         }
 
-        Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
-        model.addAttribute("vendor", saved);
-        return "vendor/register-success";
+        try {
+            Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
+            model.addAttribute("vendor", saved);
+            return "vendor/register-success";
+        } catch (DuplicateVendorApplicationException ex) {
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "vendor/register";
+        }
     }
 
     @PreAuthorize("hasRole('ADMIN')")
