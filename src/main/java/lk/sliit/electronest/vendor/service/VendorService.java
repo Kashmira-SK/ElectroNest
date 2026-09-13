@@ -1,5 +1,7 @@
 package lk.sliit.electronest.vendor.service;
 
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorReviewReasonException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorStatusTransitionException;
@@ -18,14 +20,18 @@ import java.util.Locale;
 public class VendorService {
 
     private final VendorRepository vendorRepository;
+    private final UserRepository userRepository;
 
-    public VendorService(VendorRepository vendorRepository) {
+    public VendorService(
+            VendorRepository vendorRepository,
+            UserRepository userRepository) {
         this.vendorRepository = vendorRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
-        if (vendorRepository.existsByUserId(userId)) {
+        if (vendorRepository.existsByUser_Id(userId)) {
             throw new DuplicateVendorApplicationException(
                     "You already have a vendor application"
             );
@@ -40,8 +46,11 @@ public class VendorService {
             );
         }
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
         Vendor vendor = new Vendor();
-        vendor.setUserId(userId);
+        vendor.setUser(user);
         vendor.setBusinessName(request.getBusinessName().trim());
         vendor.setRegistrationNumber(registrationNumber);
         vendor.setBusinessAddress(request.getBusinessAddress().trim());
@@ -102,7 +111,7 @@ public class VendorService {
     }
 
     public Vendor getVendorForUser(Long userId) {
-        return vendorRepository.findByUserId(userId)
+        return vendorRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new VendorNotFoundException(
                         "Vendor application not found for the current user"
                 ));
