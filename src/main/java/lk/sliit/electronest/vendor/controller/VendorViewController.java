@@ -9,13 +9,19 @@ import lk.sliit.electronest.vendor.exception.VendorNotFoundException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.dto.VendorProfileUpdateRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
+import lk.sliit.electronest.vendor.service.VendorDocumentStorageService;
 import lk.sliit.electronest.vendor.service.VendorService;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -24,9 +30,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class VendorViewController {
 
     private final VendorService vendorService;
+    private final VendorDocumentStorageService documentStorageService;
 
-    public VendorViewController(VendorService vendorService) {
+    public VendorViewController(
+            VendorService vendorService,
+            VendorDocumentStorageService documentStorageService) {
         this.vendorService = vendorService;
+        this.documentStorageService = documentStorageService;
     }
 
     @PreAuthorize("hasRole('VENDOR')")
@@ -44,23 +54,42 @@ public class VendorViewController {
             @Valid @ModelAttribute("registrationRequest") VendorRegistrationRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam("document") MultipartFile document,
             Model model) {
         if (bindingResult.hasErrors()) {
             return "vendor/register";
         }
 
+        String storedDocument = null;
+
         try {
-            Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
+            storedDocument = documentStorageService.store(document);
+
+            Vendor saved = vendorService.registerVendor(
+                    currentUser.getUser().getId(),
+                    request,
+                    storedDocument
+            );
+
             model.addAttribute("vendor", saved);
             return "vendor/register-success";
+
         } catch (DuplicateVendorApplicationException ex) {
+            documentStorageService.deleteQuietly(storedDocument);
             model.addAttribute("errorMessage", ex.getMessage());
             return "vendor/register";
+
         } catch (DataIntegrityViolationException ex) {
+            documentStorageService.deleteQuietly(storedDocument);
             model.addAttribute(
                     "errorMessage",
                     "This vendor application conflicts with an existing record"
             );
+            return "vendor/register";
+
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            documentStorageService.deleteQuietly(storedDocument);
+            model.addAttribute("errorMessage", ex.getMessage());
             return "vendor/register";
         }
     }
@@ -150,6 +179,39 @@ public class VendorViewController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/vendor/status";
         }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/queue/{id}/document")
+    public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
+        Vendor vendor = vendorService.getVendorOrThrow(id);
+
+        if (vendor.getIdDocumentPath() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String storedName = vendor.getIdDocumentPath();
+        Resource resource = documentStorageService.load(storedName);
+
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        String lowerName = storedName.toLowerCase();
+
+        if (lowerName.endsWith(".pdf")) {
+            mediaType = MediaType.APPLICATION_PDF;
+        } else if (lowerName.endsWith(".png")) {
+            mediaType = MediaType.IMAGE_PNG;
+        } else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
+            mediaType = MediaType.IMAGE_JPEG;
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=vendor-document" +
+                                storedName.substring(storedName.lastIndexOf('.'))
+                )
+                .body(resource);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -32,6 +32,14 @@ public class VendorService {
 
     @Transactional
     public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
+        return registerVendor(userId, request, null);
+    }
+
+    @Transactional
+    public Vendor registerVendor(
+            Long userId,
+            VendorRegistrationRequest request,
+            String documentPath) {
         if (vendorRepository.existsByUser_Id(userId)) {
             throw new DuplicateVendorApplicationException(
                     "You already have a vendor application"
@@ -56,6 +64,7 @@ public class VendorService {
         vendor.setRegistrationNumber(registrationNumber);
         vendor.setBusinessAddress(request.getBusinessAddress().trim());
         vendor.setContactPhone(request.getContactPhone().trim());
+        vendor.setIdDocumentPath(documentPath);
         vendor.setStatus(VendorStatus.PENDING);
         return vendorRepository.save(vendor);
     }
