@@ -1,7 +1,7 @@
 # Copy this file to application-local.properties (gitignored) and adjust if needed.
 # Default values match docker-compose.yml — no changes needed if using Docker.
 
-spring.datasource.url=jdbc:postgresql://localhost:5432/electronest
+spring.datasource.url=jdbc:postgresql://localhost:5433/electronest
 spring.datasource.username=electronest
 spring.datasource.password=electronest_dev
 
