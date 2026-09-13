@@ -215,6 +215,13 @@ public class VendorViewController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/manage")
+    public String showVendorManagement(Model model) {
+        model.addAttribute("vendors", vendorService.getAllVendors());
+        return "vendor/manage";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/queue")
     public String showQueue(Model model) {
         model.addAttribute("vendors", vendorService.getVerificationQueue());
@@ -255,6 +262,77 @@ public class VendorViewController {
                 "Vendor application rejected.",
                 redirectAttributes
         );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/manage/{id}/suspend")
+    public String suspend(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        return executeManagementAction(
+                () -> vendorService.suspendVendor(id),
+                "Vendor suspended successfully.",
+                redirectAttributes
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/manage/{id}/reactivate")
+    public String reactivate(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        return executeManagementAction(
+                () -> vendorService.reactivateVendor(id),
+                "Vendor reactivated successfully.",
+                redirectAttributes
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/manage/{id}/remove")
+    public String remove(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Vendor vendor = vendorService.getVendorOrThrow(id);
+            String documentPath = vendor.getIdDocumentPath();
+
+            vendorService.revokeVendor(id);
+            documentStorageService.deleteQuietly(documentPath);
+
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Vendor removed successfully."
+            );
+        } catch (VendorNotFoundException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    ex.getMessage()
+            );
+        }
+
+        return "redirect:/vendor/manage";
+    }
+
+    private String executeManagementAction(
+            Runnable action,
+            String successMessage,
+            RedirectAttributes redirectAttributes) {
+        try {
+            action.run();
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    successMessage
+            );
+        } catch (VendorNotFoundException
+                 | InvalidVendorStatusTransitionException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    ex.getMessage()
+            );
+        }
+
+        return "redirect:/vendor/manage";
     }
 
     private String executeQueueAction(

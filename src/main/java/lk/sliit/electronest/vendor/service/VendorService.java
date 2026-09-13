@@ -73,6 +73,10 @@ public class VendorService {
         return vendorRepository.findByStatus(VendorStatus.PENDING);
     }
 
+    public List<Vendor> getAllVendors() {
+        return vendorRepository.findAll();
+    }
+
     public Vendor approveVendor(Long id) {
         Vendor vendor = getVendorOrThrow(id);
         requireStatus(vendor, VendorStatus.PENDING, "approve");
