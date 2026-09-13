@@ -8,6 +8,7 @@ import lk.sliit.electronest.vendor.exception.InvalidVendorStatusTransitionExcept
 import lk.sliit.electronest.vendor.exception.VendorNotFoundException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
+import lk.sliit.electronest.vendor.model.dto.VendorProfileUpdateRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
@@ -115,6 +116,29 @@ public class VendorService {
                 .orElseThrow(() -> new VendorNotFoundException(
                         "Vendor application not found for the current user"
                 ));
+    }
+
+    @Transactional
+    public Vendor updateVendorDetails(Long userId, VendorProfileUpdateRequest request) {
+        Vendor vendor = getVendorForUser(userId);
+
+        if (vendor.getStatus() != VendorStatus.APPROVED
+                && vendor.getStatus() != VendorStatus.INFO_REQUESTED) {
+            throw new InvalidVendorStatusTransitionException(
+                    "Vendor details can only be edited after approval or when more information is requested"
+            );
+        }
+
+        vendor.setBusinessName(request.getBusinessName().trim());
+        vendor.setBusinessAddress(request.getBusinessAddress().trim());
+        vendor.setContactPhone(request.getContactPhone().trim());
+
+        if (vendor.getStatus() == VendorStatus.INFO_REQUESTED) {
+            vendor.setStatus(VendorStatus.PENDING);
+            vendor.setRejectionReason(null);
+        }
+
+        return vendorRepository.save(vendor);
     }
 
     private void requireStatus(Vendor vendor, VendorStatus requiredStatus, String action) {
