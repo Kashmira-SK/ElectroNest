@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: electronest-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: electronest
+      POSTGRES_USER: electronest
+      POSTGRES_PASSWORD: electronest_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - electronest_pgdata:/var/lib/postgresql/data
+
+volumes:
+  electronest_pgdata:
