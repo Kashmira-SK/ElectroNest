@@ -15,5 +15,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByVendorId(Long vendorId);
 
+    List<Product> findByVendorIdAndStockQuantityLessThan(Long vendorId, int threshold);
+
     List<Product> findByBrandContainingIgnoreCase(String brand);
 }

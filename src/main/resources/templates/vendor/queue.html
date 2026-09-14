@@ -23,9 +23,24 @@
         <p class="en-meta"><strong>Address</strong> <span th:text="${v.businessAddress}"></span></p>
         <p class="en-meta"><strong>Phone</strong> <span th:text="${v.contactPhone}"></span></p>
 
+        <p class="en-meta" th:if="${v.idDocumentPath != null}">
+            <strong>Verification document:</strong>
+            <a th:href="@{/vendor/queue/{id}/document(id=${v.id})}"
+               target="_blank">View document</a>
+        </p>
+
+        <p class="en-meta" th:if="${v.idDocumentPath == null}">
+            <strong>Verification document:</strong> Not uploaded
+        </p>
+
         <div class="en-actions">
             <form th:action="@{/vendor/queue/{id}/approve(id=${v.id})}" method="post">
                 <button type="submit" class="en-btn en-btn-approve en-btn-sm">Approve</button>
+            </form>
+
+            <form th:action="@{/vendor/queue/{id}/request-info(id=${v.id})}" method="post" class="en-actions" style="margin-top: 0;">
+                <input type="text" name="message" placeholder="Information required" maxlength="500" required>
+                <button type="submit" class="en-btn en-btn-primary en-btn-sm">Request info</button>
             </form>
 
             <form th:action="@{/vendor/queue/{id}/reject(id=${v.id})}" method="post" class="en-actions" style="margin-top: 0;">

@@ -11,11 +11,11 @@ public interface VendorRepository extends JpaRepository<Vendor, Long> {
 
     List<Vendor> findByStatus(VendorStatus status);
 
-    Optional<Vendor> findByUserId(Long userId);
+    Optional<Vendor> findByUser_Id(Long userId);
 
     Optional<Vendor> findByRegistrationNumber(String registrationNumber);
 
-    boolean existsByUserId(Long userId);
+    boolean existsByUser_Id(Long userId);
 
     boolean existsByRegistrationNumberIgnoreCase(String registrationNumber);
 }
