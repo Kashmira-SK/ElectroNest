@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Orders - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-customer-page">
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Customer</p>
+            <h1>My orders</h1>
+            <p class="en-muted">
+                View your order history, payment status and fulfilment progress.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(orders)}">
+        You haven't placed any orders yet.
+    </div>
+
+    <div class="en-order-list"
+         th:unless="${#lists.isEmpty(orders)}">
+
+        <article class="en-card en-order-card"
+                 th:each="order : ${orders}">
+
+            <div class="en-order-heading">
+                <div>
+                    <p class="en-eyebrow">
+                        Order
+                        <span th:text="'#' + ${order.id}">#1</span>
+                    </p>
+
+                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(order.totalAmount(), 1, 2)}">
+                        Rs. 0.00
+                    </h3>
+                </div>
+
+                <span class="en-status"
+                      th:text="${order.status}">
+                    PENDING
+                </span>
+            </div>
+
+            <div class="en-order-meta">
+                <div>
+                    <strong>Payment</strong>
+                    <span th:text="${order.paymentStatus}">
+                        PENDING_PAYMENT
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Placed</strong>
+                    <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, HH:mm')}">
+                        Date
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Cancellation</strong>
+                    <span th:text="${order.cancellationRequested ? 'Requested' : 'No request'}">
+                        No request
+                    </span>
+                </div>
+            </div>
+
+            <div class="en-order-progress">
+                <span th:classappend="${order.status.name() == 'PENDING'
+                                      or order.status.name() == 'PROCESSING'
+                                      or order.status.name() == 'DELIVERED'}
+                                      ? ' active' : ''">
+                    Pending
+                </span>
+
+                <span th:classappend="${order.status.name() == 'PROCESSING'
+                                      or order.status.name() == 'DELIVERED'}
+                                      ? ' active' : ''">
+                    Processing
+                </span>
+
+                <span th:classappend="${order.status.name() == 'DELIVERED'}
+                                      ? ' active' : ''">
+                    Delivered
+                </span>
+            </div>
+
+            <div class="en-alert en-alert-error"
+                 th:if="${order.status.name() == 'CANCELLED'}"
+                 style="margin-top: 18px;">
+                This order was cancelled.
+            </div>
+
+        </article>
+
+    </div>
+
+</main>
+</body>
+</html>

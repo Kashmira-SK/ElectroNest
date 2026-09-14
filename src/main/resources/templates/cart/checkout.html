@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-customer-page">
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+    <nav class="en-nav-links">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Checkout</p>
+            <h1>Review your order</h1>
+            <p class="en-muted">
+                Confirm delivery and order details before payment.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-checkout-layout">
+
+        <section>
+            <div class="en-card">
+                <p class="en-eyebrow">Delivery</p>
+                <h2>Delivery details</h2>
+
+                <div th:if="${hasSavedDelivery}" id="savedDelivery">
+                    <div class="en-saved-address">
+                        <strong th:text="${customer.deliveryName}">Customer</strong>
+                        <p th:text="${customer.deliveryPhone}">Phone</p>
+
+                        <p>
+                            <span th:text="${customer.deliveryAddressLine1}"></span>
+
+                            <span th:if="${customer.deliveryAddressLine2 != null}">
+                                <br>
+                                <span th:text="${customer.deliveryAddressLine2}"></span>
+                            </span>
+
+                            <br>
+                            <span th:text="${customer.deliveryCity}"></span>
+
+                            <span th:if="${customer.deliveryPostalCode != null}"
+                                  th:text="' ' + ${customer.deliveryPostalCode}">
+                            </span>
+
+                            <br>
+                            <span th:text="${customer.deliveryCountry}"></span>
+                        </p>
+                    </div>
+
+                    <div class="en-delivery-actions">
+                        <button type="button"
+                                class="en-btn en-btn-secondary"
+                                onclick="showSavedAddressForm()">
+                            Edit
+                        </button>
+
+                        <button type="button"
+                                class="en-btn en-btn-secondary"
+                                onclick="showAlternateAddressForm()">
+                            Use another address
+                        </button>
+                    </div>
+                </div>
+
+                <form th:action="@{/checkout/delivery/save}"
+                      method="post"
+                      id="savedAddressForm"
+                      th:style="${hasSavedDelivery} ? 'display:none' : 'display:block'">
+
+                    <div class="en-field">
+                        <label>Full name</label>
+                        <input type="text"
+                               name="deliveryName"
+                               required
+                               th:value="${customer.deliveryName != null ? customer.deliveryName : customer.fullName}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Contact number</label>
+                        <input type="tel"
+                               name="deliveryPhone"
+                               required
+                               th:value="${customer.deliveryPhone != null ? customer.deliveryPhone : customer.contactNumber}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Address line 1</label>
+                        <input type="text"
+                               name="deliveryAddressLine1"
+                               required
+                               th:value="${customer.deliveryAddressLine1}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Address line 2</label>
+                        <input type="text"
+                               name="deliveryAddressLine2"
+                               th:value="${customer.deliveryAddressLine2}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>City</label>
+                        <input type="text"
+                               name="deliveryCity"
+                               required
+                               th:value="${customer.deliveryCity}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Postal code</label>
+                        <input type="text"
+                               name="deliveryPostalCode"
+                               th:value="${customer.deliveryPostalCode}">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Country</label>
+                        <input type="text"
+                               name="deliveryCountry"
+                               required
+                               th:value="${customer.deliveryCountry}">
+                    </div>
+
+                    <button class="en-btn en-btn-primary" type="submit">
+                        Save & use
+                    </button>
+                </form>
+
+                <div id="alternateAddressForm" style="display:none">
+                    <p class="en-muted">
+                        This address will only be used for this order.
+                    </p>
+
+                    <div class="en-field">
+                        <label>Full name</label>
+                        <input type="text" id="alternateName">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Contact number</label>
+                        <input type="tel" id="alternatePhone">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Address line 1</label>
+                        <input type="text" id="alternateAddressLine1">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Address line 2</label>
+                        <input type="text" id="alternateAddressLine2">
+                    </div>
+
+                    <div class="en-field">
+                        <label>City</label>
+                        <input type="text" id="alternateCity">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Postal code</label>
+                        <input type="text" id="alternatePostalCode">
+                    </div>
+
+                    <div class="en-field">
+                        <label>Country</label>
+                        <input type="text" id="alternateCountry">
+                    </div>
+
+                    <button type="button"
+                            class="en-btn en-btn-secondary"
+                            onclick="cancelAlternateAddress()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <div class="en-card" style="margin-top: 18px;">
+                <p class="en-eyebrow">Items</p>
+                <h2>Checkout summary</h2>
+
+                <div class="en-checkout-items">
+                    <div class="en-checkout-item"
+                         th:each="item : ${cartItems}">
+                        <div>
+                            <strong th:text="${item.name()}">Product</strong>
+                            <p class="en-muted"
+                               th:text="${item.quantity()} + ' × Rs. ' + ${#numbers.formatDecimal(item.unitPrice(), 1, 2)}">
+                                Quantity
+                            </p>
+                        </div>
+
+                        <strong th:text="'Rs. ' + ${#numbers.formatDecimal(item.lineTotal(), 1, 2)}">
+                            Rs. 0.00
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="en-card en-cart-summary">
+            <p class="en-eyebrow">Total</p>
+            <h2>Order summary</h2>
+
+            <div class="en-summary-row">
+                <span>Subtotal</span>
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(subtotal, 1, 2)}">Rs. 0.00</strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Delivery</span>
+                <strong id="checkoutDelivery">Rs. 0.00</strong>
+            </div>
+
+            <div class="en-summary-row en-summary-total">
+                <span>Total</span>
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(subtotal, 1, 2)}">Rs. 0.00</strong>
+            </div>
+
+            <button class="en-btn en-btn-primary"
+                    type="button"
+                    disabled
+                    title="Checkout backend integration pending">
+                Continue to payment
+            </button>
+
+            <p class="en-muted" style="margin-top: 12px;">
+                Payment will be enabled once order creation and checkout validation are connected.
+            </p>
+        </aside>
+
+    </div>
+
+</main>
+<script>
+function showSavedAddressForm() {
+    document.getElementById('savedDelivery').style.display = 'none';
+    document.getElementById('alternateAddressForm').style.display = 'none';
+    document.getElementById('savedAddressForm').style.display = 'block';
+}
+
+function showAlternateAddressForm() {
+    document.getElementById('savedDelivery').style.display = 'none';
+    document.getElementById('savedAddressForm').style.display = 'none';
+    document.getElementById('alternateAddressForm').style.display = 'block';
+}
+
+function cancelAlternateAddress() {
+    document.getElementById('alternateAddressForm').style.display = 'none';
+
+    const saved = document.getElementById('savedDelivery');
+    if (saved) {
+        saved.style.display = 'block';
+    } else {
+        document.getElementById('savedAddressForm').style.display = 'block';
+    }
+}
+</script>
+<script>
+function showSavedAddressForm() {
+    const saved = document.getElementById('savedDelivery');
+    const alternate = document.getElementById('alternateAddressForm');
+    const form = document.getElementById('savedAddressForm');
+
+    if (saved) saved.style.display = 'none';
+    alternate.style.display = 'none';
+    form.style.display = 'block';
+}
+
+function showAlternateAddressForm() {
+    const saved = document.getElementById('savedDelivery');
+
+    if (saved) saved.style.display = 'none';
+
+    document.getElementById('savedAddressForm').style.display = 'none';
+    document.getElementById('alternateAddressForm').style.display = 'block';
+}
+
+function cancelAlternateAddress() {
+    document.getElementById('alternateAddressForm').style.display = 'none';
+
+    const saved = document.getElementById('savedDelivery');
+
+    if (saved) {
+        saved.style.display = 'block';
+    } else {
+        document.getElementById('savedAddressForm').style.display = 'block';
+    }
+}
+</script>
+</body>
+</html>

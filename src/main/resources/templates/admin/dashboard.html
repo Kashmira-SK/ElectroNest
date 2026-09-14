@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-admin-nav">
+        <a th:href="@{/admin/dashboard}">Dashboard</a>
+        <a th:href="@{/admin/users}">Users</a>
+        <a th:href="@{/vendor/queue}">Vendor Queue</a>
+        <a th:href="@{/vendor/manage}">Vendors</a>
+        <a th:href="@{/admin/audit-logs}">Audit Log</a>
+    </nav>
+</header>
+
+<main class="en-admin-shell">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Administration</p>
+            <h1>Dashboard</h1>
+            <p class="en-muted">Platform activity and account overview.</p>
+        </div>
+    </div>
+
+    <section class="en-stat-grid">
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Users</p>
+            <p class="en-stat-value" th:text="${summary.totalUsers}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Customers</p>
+            <p class="en-stat-value" th:text="${summary.totalCustomers}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Vendors</p>
+            <p class="en-stat-value" th:text="${summary.totalVendors}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Admins</p>
+            <p class="en-stat-value" th:text="${summary.totalAdmins}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Active accounts</p>
+            <p class="en-stat-value" th:text="${summary.activeAccounts}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Suspended</p>
+            <p class="en-stat-value" th:text="${summary.suspendedAccounts}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Orders</p>
+            <p class="en-stat-value" th:text="${summary.totalOrders}">0</p>
+        </div>
+
+        <div class="en-stat">
+            <p class="en-eyebrow">Revenue</p>
+            <p class="en-stat-value">
+                Rs.
+                <span th:text="${#numbers.formatDecimal(summary.totalRevenue, 1, 2)}">
+                    0.00
+                </span>
+            </p>
+        </div>
+
+    </section>
+
+    <div class="en-card">
+        <h2>Account governance</h2>
+
+        <p class="en-muted">
+            Manage user roles, account status and administrative audit history.
+        </p>
+
+        <div class="en-actions">
+            <a th:href="@{/admin/users}" class="en-btn en-btn-primary en-btn-auto">
+                Manage users
+            </a>
+
+            <a th:href="@{/admin/audit-logs}" class="en-btn en-btn-secondary">
+                View audit log
+            </a>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Details - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header class="en-navbar">
+    <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
+
+    <nav class="en-admin-nav">
+        <a th:href="@{/admin/dashboard}">Dashboard</a>
+        <a th:href="@{/admin/users}">Users</a>
+        <a th:href="@{/vendor/queue}">Vendor Queue</a>
+        <a th:href="@{/vendor/manage}">Vendors</a>
+        <a th:href="@{/admin/audit-logs}">Audit Log</a>
+    </nav>
+</header>
+
+<main class="en-admin-shell">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">User Management</p>
+            <h1 th:text="${targetUser.fullName}">User Name</h1>
+            <p class="en-muted" th:text="${targetUser.email}">
+                user@example.com
+            </p>
+        </div>
+
+        <a th:href="@{/admin/users}" class="en-btn en-btn-secondary">
+            Back to users
+        </a>
+    </div>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <section class="en-grid-3">
+
+        <div class="en-card">
+            <p class="en-eyebrow">Account</p>
+            <h3>Profile</h3>
+
+            <p class="en-meta">
+                <strong>ID:</strong>
+                <span th:text="${targetUser.id}"></span>
+            </p>
+
+            <p class="en-meta">
+                <strong>Email:</strong>
+                <span th:text="${targetUser.email}"></span>
+            </p>
+
+            <p class="en-meta">
+                <strong>Contact:</strong>
+                <span th:text="${targetUser.contactNumber != null ? targetUser.contactNumber : '—'}"></span>
+            </p>
+
+            <p class="en-meta">
+                <strong>Role:</strong>
+                <span th:text="${targetUser.role}"></span>
+            </p>
+
+            <p class="en-meta">
+                <strong>Status:</strong>
+                <span class="en-status"
+                      th:classappend="' en-status-' + ${#strings.toLowerCase(targetUser.status.name())}"
+                      th:text="${targetUser.status}">
+                    ACTIVE
+                </span>
+            </p>
+        </div>
+
+        <div class="en-card">
+            <p class="en-eyebrow">RBAC</p>
+            <h3>Change role</h3>
+
+            <form th:action="@{/admin/users/{id}/role(id=${targetUser.id})}"
+                  th:object="${updateRoleForm}"
+                  method="post">
+
+                <div class="en-field">
+                    <label>Role</label>
+
+                    <select th:field="*{newRole}">
+                        <option th:each="role : ${T(lk.sliit.electronest.common.model.Role).values()}"
+                                th:value="${role}"
+                                th:text="${role}">
+                        </option>
+                    </select>
+
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('newRole')}"
+                       th:errors="*{newRole}"></p>
+                </div>
+
+                <div class="en-field">
+                    <label>Reason</label>
+                    <input type="text"
+                           th:field="*{reason}"
+                           placeholder="Optional reason for role change">
+                </div>
+
+                <button type="submit" class="en-btn en-btn-primary">
+                    Update role
+                </button>
+            </form>
+        </div>
+
+        <div class="en-card">
+            <p class="en-eyebrow">Governance</p>
+            <h3>Account status</h3>
+
+            <form th:action="@{/admin/users/{id}/status(id=${targetUser.id})}"
+                  th:object="${updateStatusForm}"
+                  method="post">
+
+                <div class="en-field">
+                    <label>Status</label>
+
+                    <select th:field="*{newStatus}">
+                        <option th:each="status : ${T(lk.sliit.electronest.common.model.AccountStatus).values()}"
+                                th:value="${status}"
+                                th:text="${status}">
+                        </option>
+                    </select>
+
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('newStatus')}"
+                       th:errors="*{newStatus}"></p>
+                </div>
+
+                <div class="en-field">
+                    <label>Reason</label>
+                    <input type="text"
+                           th:field="*{reason}"
+                           placeholder="Optional reason for status change">
+                </div>
+
+                <button type="submit" class="en-btn en-btn-primary">
+                    Update status
+                </button>
+            </form>
+
+            <form th:action="@{/admin/users/{id}/delete(id=${targetUser.id})}"
+                  method="post"
+                  style="margin-top: 12px;">
+
+                <button type="submit"
+                        class="en-btn en-btn-reject"
+                        onclick="return confirm('Deactivate this user account?')">
+                    Deactivate account
+                </button>
+            </form>
+        </div>
+
+    </section>
+
+    <div class="en-page-header" style="margin-top: 36px;">
+        <div>
+            <p class="en-eyebrow">Audit History</p>
+            <h2>Changes to this user</h2>
+        </div>
+    </div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(auditLogs)}">
+        No role or account-status changes have been recorded.
+    </div>
+
+    <div class="en-table-wrap"
+         th:unless="${#lists.isEmpty(auditLogs)}">
+
+        <table class="en-table">
+            <thead>
+            <tr>
+                <th>Changed</th>
+                <th>Change</th>
+                <th>Performed by</th>
+                <th>Reason</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="log : ${auditLogs}">
+                <td th:text="${log.changedAt}">Date</td>
+
+                <td>
+                    <span th:if="${log.newRole != null}">
+                        Role:
+                        <strong th:text="${log.previousRole}"></strong>
+                        →
+                        <strong th:text="${log.newRole}"></strong>
+                    </span>
+
+                    <span th:if="${log.newStatus != null}">
+                        Status:
+                        <strong th:text="${log.previousStatus}"></strong>
+                        →
+                        <strong th:text="${log.newStatus}"></strong>
+                    </span>
+                </td>
+
+                <td th:text="${log.performedByEmail}">admin@example.com</td>
+
+                <td th:text="${log.reason != null && !log.reason.isBlank() ? log.reason : '—'}">
+                    —
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</main>
+</body>
+</html>

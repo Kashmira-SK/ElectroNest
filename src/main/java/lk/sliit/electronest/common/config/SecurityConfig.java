@@ -28,7 +28,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // Public pages - anyone can view/register/login
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/webjars/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/products", "/products/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 // Everything under /admin/** requires the ADMIN role
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // TEMP: other modules' REST APIs are open while each module builds its own

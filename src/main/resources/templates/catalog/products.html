@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shop — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+    <script th:src="@{/js/catalog.js}" defer></script>
+</head>
+<body>
+
+<header class="en-site-header">
+    <div class="en-navbar">
+        <a th:href="@{/}" class="en-brand en-brand-light">
+            <span class="en-brand-mark"></span>
+            ElectroNest
+        </a>
+
+        <nav class="en-nav-center">
+            <a th:href="@{/products}">Shop</a>
+            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}" th:href="@{/cart}">Cart</a>
+            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}" th:href="@{/orders}">Orders</a>
+            <a th:if="${loggedIn and currentUser.role.name() == 'VENDOR'}" th:href="@{/vendor/products}">Seller Hub</a>
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN'}" th:href="@{/admin}">Admin</a>
+        </nav>
+
+        <div class="en-nav-account">
+            <th:block th:unless="${loggedIn}">
+                <a th:href="@{/login}" class="en-nav-login">Log in</a>
+                <a th:href="@{/register}" class="en-btn en-btn-electric en-btn-auto">Join ElectroNest</a>
+            </th:block>
+
+            <th:block th:if="${loggedIn}">
+                <div class="en-user-chip">
+                    <span class="en-user-dot"></span>
+                    <div>
+                        <strong th:text="${currentUser.fullName}">Account</strong>
+                        <small th:text="${currentUser.role}">CUSTOMER</small>
+                    </div>
+                </div>
+
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="en-nav-logout">Log out</button>
+                </form>
+            </th:block>
+        </div>
+    </div>
+</header>
+
+<main class="en-shop">
+
+    <section class="en-shop-intro">
+        <p class="en-kicker en-kicker-dark">
+            <span class="en-kicker-light"></span>
+            ELECTRONEST / SHOP
+        </p>
+
+        <h1>Find the tech you're after.</h1>
+        <p>Search products from verified electronics sellers.</p>
+    </section>
+
+    <section class="en-search-area">
+
+        <div class="en-main-search">
+            <span class="en-search-icon"></span>
+
+            <input id="keyword"
+                   type="search"
+                   autocomplete="off"
+                   autofocus
+                   placeholder="Search products...">
+
+            <button id="searchButton" type="button">Search</button>
+        </div>
+
+        <div class="en-search-toolbar">
+            <span>Browse all products or narrow your search.</span>
+
+            <button id="filterToggle"
+                    class="en-filter-toggle en-filter-button"
+                    type="button"
+                    aria-expanded="false">
+                Filters
+                <span id="filterCount" hidden>0</span>
+            </button>
+        </div>
+
+        <div id="advancedFilters" class="en-advanced-filters" hidden>
+
+            <div>
+                <label for="category">Category</label>
+                <select id="category">
+                    <option value="">All categories</option>
+                    <option th:each="category : ${categories}"
+                            th:value="${category}"
+                            th:text="${category}">
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label for="brand">Brand</label>
+                <select id="brand">
+                    <option value="">All brands</option>
+                    <option th:each="brand : ${brands}"
+                            th:value="${brand}"
+                            th:text="${brand}">
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label for="minPrice">Min price</label>
+                <input id="minPrice" type="number" min="0" placeholder="Any">
+            </div>
+
+            <div>
+                <label for="maxPrice">Max price</label>
+                <input id="maxPrice" type="number" min="0" placeholder="Any">
+            </div>
+
+            <label class="en-simple-check">
+                <input id="inStockOnly" type="checkbox">
+                <span>In stock only</span>
+            </label>
+
+            <div class="en-filter-actions">
+                <button id="applyFilters" type="button" class="en-btn en-btn-electric">Apply</button>
+                <button id="resetFilters" type="button" class="en-filter-reset">Reset</button>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="en-product-results">
+
+        <div class="en-product-results-head">
+            <div>
+                <strong id="resultCount">—</strong>
+                <span id="resultLabel">products</span>
+            </div>
+
+            <button id="clearAll" type="button" hidden>Clear search</button>
+        </div>
+
+        <div id="loadingState" class="en-shop-loading" hidden>Loading products…</div>
+
+        <div id="emptyState" class="en-shop-empty" hidden>
+            <span>NO RESULTS</span>
+            <h2>Nothing here yet.</h2>
+            <p>Try another search or remove a filter.</p>
+        </div>
+
+        <div id="productGrid" class="en-market-grid"></div>
+
+        <div class="en-shop-pagination">
+            <button id="previousPage" type="button">← Previous</button>
+            <span id="pageIndicator">Page 1</span>
+            <button id="nextPage" type="button">Next →</button>
+        </div>
+
+    </section>
+
+</main>
+</body>
+</html>

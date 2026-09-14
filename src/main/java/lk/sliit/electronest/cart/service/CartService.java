@@ -1,6 +1,7 @@
 package lk.sliit.electronest.cart.service;
 
 import lk.sliit.electronest.cart.dto.CartItemResponse;
+import lk.sliit.electronest.cart.dto.CartItemView;
 import lk.sliit.electronest.cart.dto.CartSummaryResponse;
 import lk.sliit.electronest.cart.model.CartItem;
 import lk.sliit.electronest.cart.repository.CartItemRepository;
@@ -76,6 +77,30 @@ public class CartService {
 
     public List<CartItem> getCartItems(Long userId) {
         return cartItemRepository.findByUserId(userId);
+    }
+
+
+    public List<CartItemView> getCartItemViews(Long userId) {
+        return getCartItems(userId).stream()
+                .map(item -> {
+                    Product product = productService.getProductById(item.getProductId());
+
+                    BigDecimal lineTotal = product.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+
+                    return new CartItemView(
+                            item.getId(),
+                            product.getId(),
+                            product.getName(),
+                            product.getBrand(),
+                            product.getImageUrl(),
+                            item.getQuantity(),
+                            product.getPrice(),
+                            lineTotal,
+                            product.getStockQuantity()
+                    );
+                })
+                .toList();
     }
 
     public CartSummaryResponse getCartSummary(Long userId) {

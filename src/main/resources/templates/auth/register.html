@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Account - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell" style="max-width: 520px;">
+    <p class="en-eyebrow">ElectroNest</p>
+    <h1>Create your account</h1>
+    <p class="en-muted">Shop electronics or register as a seller.</p>
+
+    <div class="en-card">
+        <div class="en-alert en-alert-error"
+             th:if="${errorMessage}"
+             th:text="${errorMessage}"></div>
+
+        <form th:action="@{/register}" th:object="${registerForm}" method="post">
+
+            <div class="en-field">
+                <label>Full name</label>
+                <input type="text" th:field="*{fullName}" required>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('fullName')}"
+                   th:errors="*{fullName}"></p>
+            </div>
+
+            <div class="en-field">
+                <label>Email</label>
+                <input type="email" th:field="*{email}" required>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('email')}"
+                   th:errors="*{email}"></p>
+            </div>
+
+            <div class="en-field">
+                <label>Contact number</label>
+                <input type="tel" th:field="*{contactNumber}">
+            </div>
+
+            <div class="en-field">
+                <label>Account type</label>
+                <select th:field="*{role}" required>
+                    <option value="">Choose an account type</option>
+                    <option value="CUSTOMER">Customer</option>
+                    <option value="VENDOR">Seller / Vendor</option>
+                </select>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('role')}"
+                   th:errors="*{role}"></p>
+            </div>
+
+            <div class="en-field">
+                <label>Password</label>
+                <input type="password" th:field="*{password}" required>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('password')}"
+                   th:errors="*{password}"></p>
+            </div>
+
+            <div class="en-field">
+                <label>Confirm password</label>
+                <input type="password" th:field="*{confirmPassword}" required>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('confirmPassword')}"
+                   th:errors="*{confirmPassword}"></p>
+            </div>
+
+            <button type="submit" class="en-btn en-btn-primary">
+                Create account
+            </button>
+        </form>
+
+        <p class="en-muted en-center" style="margin-top: 18px;">
+            Already have an account?
+            <a th:href="@{/login}">Log in</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

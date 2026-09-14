@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audit Log - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header class="en-navbar">
+    <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
+
+    <nav class="en-admin-nav">
+        <a th:href="@{/admin/dashboard}">Dashboard</a>
+        <a th:href="@{/admin/users}">Users</a>
+        <a th:href="@{/vendor/queue}">Vendor Queue</a>
+        <a th:href="@{/vendor/manage}">Vendors</a>
+        <a th:href="@{/admin/audit-logs}">Audit Log</a>
+    </nav>
+</header>
+
+<main class="en-admin-shell">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Security / Governance</p>
+            <h1>Audit log</h1>
+
+            <p class="en-muted">
+                Role and account-status changes performed by administrators.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(auditLogs)}">
+        No administrative changes have been recorded yet.
+    </div>
+
+    <div class="en-table-wrap"
+         th:unless="${#lists.isEmpty(auditLogs)}">
+
+        <table class="en-table">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Change</th>
+                <th>Administrator</th>
+                <th>Reason</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="log : ${auditLogs}">
+
+                <td th:text="${log.changedAt}">
+                    Date
+                </td>
+
+                <td>
+                    <strong th:text="${log.targetUserEmail}">
+                        user@example.com
+                    </strong>
+
+                    <div class="en-muted">
+                        ID
+                        <span th:text="${log.targetUserId}"></span>
+                    </div>
+                </td>
+
+                <td>
+                    <span th:if="${log.newRole != null}">
+                        Role:
+                        <strong th:text="${log.previousRole}"></strong>
+                        →
+                        <strong th:text="${log.newRole}"></strong>
+                    </span>
+
+                    <span th:if="${log.newStatus != null}">
+                        Status:
+                        <strong th:text="${log.previousStatus}"></strong>
+                        →
+                        <strong th:text="${log.newStatus}"></strong>
+                    </span>
+                </td>
+
+                <td th:text="${log.performedByEmail}">
+                    admin@example.com
+                </td>
+
+                <td th:text="${log.reason != null && !log.reason.isBlank() ? log.reason : '—'}">
+                    —
+                </td>
+
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</main>
+</body>
+</html>

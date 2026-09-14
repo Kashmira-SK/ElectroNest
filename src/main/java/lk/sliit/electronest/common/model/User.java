@@ -43,6 +43,27 @@ public class User {
     @Column(length = 20)
     private String contactNumber;
 
+    @Column(length = 100)
+    private String deliveryName;
+
+    @Column(length = 20)
+    private String deliveryPhone;
+
+    @Column(length = 200)
+    private String deliveryAddressLine1;
+
+    @Column(length = 200)
+    private String deliveryAddressLine2;
+
+    @Column(length = 100)
+    private String deliveryCity;
+
+    @Column(length = 20)
+    private String deliveryPostalCode;
+
+    @Column(length = 100)
+    private String deliveryCountry;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;

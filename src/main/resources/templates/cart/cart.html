@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Cart - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-customer-page">
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+    <nav class="en-nav-links">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Customer</p>
+            <h1>Your cart</h1>
+            <p class="en-muted">Review your items before checkout.</p>
+        </div>
+    </div>
+
+    <div class="en-card en-empty" th:if="${#lists.isEmpty(cartItems)}">
+        <p>Your cart is currently empty.</p>
+        <div style="margin-top:18px">
+            <a th:href="@{/products}" class="en-btn en-btn-primary en-btn-auto">
+                Browse products
+            </a>
+        </div>
+    </div>
+
+    <div class="en-cart-layout" th:unless="${#lists.isEmpty(cartItems)}">
+
+        <section class="en-cart-items">
+
+            <article class="en-cart-item" th:each="item : ${cartItems}">
+
+                <div class="en-cart-item-image">
+                    <img th:if="${item.imageUrl() != null and !item.imageUrl().isBlank()}"
+                         th:src="${item.imageUrl()}"
+                         th:alt="${item.name()}">
+
+                    <span th:unless="${item.imageUrl() != null and !item.imageUrl().isBlank()}"
+                          th:text="${#strings.substring(item.name(), 0, 1)}">
+                        E
+                    </span>
+                </div>
+
+                <div>
+                    <p class="en-eyebrow"
+                       th:text="${item.brand() != null ? item.brand() : 'ElectroNest'}">
+                        Brand
+                    </p>
+
+                    <h2 th:text="${item.name()}">Product</h2>
+
+                    <p class="en-muted">
+                        <span th:text="'Rs. ' + ${#numbers.formatDecimal(item.unitPrice(), 1, 2)}">
+                            Rs. 0.00
+                        </span>
+                        each
+                    </p>
+
+                    <p class="en-muted"
+                       th:text="${item.stockQuantity()} + ' available'">
+                        Stock
+                    </p>
+
+                    <div class="en-cart-actions">
+
+                        <form th:action="@{/cart/update}" method="post">
+                            <input type="hidden"
+                                   name="itemId"
+                                   th:value="${item.itemId()}">
+
+                            <input type="number"
+                                   name="quantity"
+                                   min="1"
+                                   th:max="${item.stockQuantity()}"
+                                   th:value="${item.quantity()}">
+
+                            <button class="en-btn en-btn-secondary"
+                                    type="submit">
+                                Update
+                            </button>
+                        </form>
+
+                        <form th:action="@{/cart/remove}" method="post">
+                            <input type="hidden"
+                                   name="itemId"
+                                   th:value="${item.itemId()}">
+
+                            <button class="en-btn en-btn-danger"
+                                    type="submit">
+                                Remove
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+
+                <strong class="en-cart-line-total"
+                        th:text="'Rs. ' + ${#numbers.formatDecimal(item.lineTotal(), 1, 2)}">
+                    Rs. 0.00
+                </strong>
+
+            </article>
+
+        </section>
+
+        <aside class="en-card en-cart-summary">
+            <p class="en-eyebrow">Summary</p>
+            <h2>Order total</h2>
+
+            <div class="en-summary-row">
+                <span>Items</span>
+                <strong th:text="${#lists.size(cartItems)}">0</strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Subtotal</span>
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(subtotal, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Delivery</span>
+                <span>Calculated at checkout</span>
+            </div>
+
+            <hr>
+
+            <a th:href="@{/checkout}"
+               class="en-btn en-btn-primary">
+                Continue to checkout
+            </a>
+        </aside>
+
+    </div>
+
+</main>
+</body>
+</html>

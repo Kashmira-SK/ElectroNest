@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${product.id == null ? 'Add Product - ElectroNest' : 'Edit Product - ElectroNest'}">
+        Product - ElectroNest
+    </title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/vendor/products}">My Products</a>
+        <a th:href="@{/vendor/orders}">Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-form-shell">
+        <p class="en-eyebrow">ElectroNest / Seller</p>
+
+        <h1 th:text="${product.id == null ? 'Add a product' : 'Edit product'}">
+            Add a product
+        </h1>
+
+        <p class="en-muted">
+            Enter the listing and inventory details below.
+        </p>
+
+        <form th:object="${product}"
+              th:action="${product.id == null}
+                ? @{/vendor/products}
+                : @{/vendor/products/{id}(id=${product.id})}"
+              method="post">
+
+            <div class="en-field">
+                <label>Product name</label>
+                <input th:field="*{name}" required maxlength="150">
+            </div>
+
+            <div class="en-form-grid">
+                <div class="en-field">
+                    <label>Brand</label>
+                    <input th:field="*{brand}" required>
+                </div>
+
+                <div class="en-field">
+                    <label>Category</label>
+                    <input th:field="*{category}" required>
+                </div>
+            </div>
+
+            <div class="en-field">
+                <label>Description</label>
+                <textarea th:field="*{description}"
+                          rows="5"
+                          maxlength="1000"></textarea>
+            </div>
+
+            <div class="en-form-grid">
+                <div class="en-field">
+                    <label>Price (Rs.)</label>
+                    <input th:field="*{price}"
+                           type="number"
+                           min="0.01"
+                           step="0.01"
+                           required>
+                </div>
+
+                <div class="en-field">
+                    <label>Stock quantity</label>
+                    <input th:field="*{stockQuantity}"
+                           type="number"
+                           min="0"
+                           required>
+                </div>
+            </div>
+
+            <div class="en-field">
+                <label>Image URL</label>
+                <input th:field="*{imageUrl}"
+                       type="url"
+                       placeholder="https://...">
+            </div>
+
+            <div class="en-actions">
+                <button type="submit"
+                        class="en-btn en-btn-primary">
+                    Save product
+                </button>
+
+                <a th:href="@{/vendor/products}"
+                   class="en-btn en-btn-secondary">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+</body>
+</html>
