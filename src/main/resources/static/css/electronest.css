@@ -734,3 +734,29 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.en-form-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 30px;
+}
+
+.en-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.en-stock-line {
+  margin: 14px 0;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 620px) {
+  .en-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

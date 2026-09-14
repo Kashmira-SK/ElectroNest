@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Products - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/vendor/status}">Vendor Profile</a>
+        <a th:href="@{/vendor/products}">Products</a>
+        <a th:href="@{/vendor/orders}">Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Seller</p>
+            <h1>My products</h1>
+            <p class="en-muted">
+                Manage listings, pricing and inventory.
+            </p>
+        </div>
+
+        <a th:href="@{/vendor/products/new}"
+           class="en-btn en-btn-primary en-btn-auto">
+            Add product
+        </a>
+    </div>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(products)}">
+        You haven't listed any products yet.
+    </div>
+
+    <div class="en-product-grid"
+         th:unless="${#lists.isEmpty(products)}">
+
+        <article class="en-product-card"
+                 th:each="product : ${products}">
+
+            <div class="en-product-image">
+                <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                     th:src="${product.imageUrl}"
+                     th:alt="${product.name}">
+
+                <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
+                    No image
+                </span>
+            </div>
+
+            <div class="en-product-body">
+                <p class="en-eyebrow"
+                   th:text="${product.category}">
+                    Category
+                </p>
+
+                <h3 th:text="${product.name}">Product</h3>
+
+                <p class="en-muted"
+                   th:text="${product.brand}">
+                    Brand
+                </p>
+
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(product.price, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+
+                <p class="en-stock-line">
+                    Stock:
+                    <strong th:text="${product.stockQuantity}">0</strong>
+                </p>
+
+                <div class="en-actions">
+                    <a th:href="@{/vendor/products/{id}/edit(id=${product.id})}"
+                       class="en-btn en-btn-secondary">
+                        Edit
+                    </a>
+
+                    <form th:action="@{/vendor/products/{id}/delete(id=${product.id})}"
+                          method="post"
+                          onsubmit="return confirm('Remove this product?')">
+                        <button type="submit"
+                                class="en-btn en-btn-reject">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </article>
+
+    </div>
+
+</main>
+</body>
+</html>
