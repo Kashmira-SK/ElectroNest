@@ -34,8 +34,17 @@ public class Order {
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING_PAYMENT;
 
+    @Column(name = "delivery_name", nullable = false)
+    private String deliveryName;
+
+    @Column(name = "delivery_phone", nullable = false)
+    private String deliveryPhone;
+
     @Column(name = "address_line1", nullable = false)
     private String addressLine1;
+
+    @Column(name = "address_line2")
+    private String addressLine2;
 
     private String city;
 

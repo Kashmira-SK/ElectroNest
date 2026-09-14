@@ -6,6 +6,7 @@ import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -153,6 +154,36 @@ public class ProductService {
         }
 
         return productRepository.saveAll(products);
+    }
+
+    @Transactional
+    public Product decreaseStockForOrder(Long productId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
+        Product product = getProductById(productId);
+
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if (Boolean.TRUE.equals(product.getOutOfStock()) || stock <= 0) {
+            throw new IllegalStateException(product.getName() + " is out of stock");
+        }
+
+        if (quantity > stock) {
+            throw new IllegalStateException(
+                    "Only " + stock + " units of " + product.getName() + " are available"
+            );
+        }
+
+        int remaining = stock - quantity;
+
+        product.setStockQuantity(remaining);
+        product.setOutOfStock(remaining == 0);
+
+        return productRepository.save(product);
     }
 
     private void validateProduct(Product product) {

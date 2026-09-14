@@ -1,8 +1,9 @@
 package lk.sliit.electronest.order.service;
 
+import lk.sliit.electronest.catalog.model.Product;
+import lk.sliit.electronest.catalog.service.ProductService;
 import lk.sliit.electronest.common.model.Role;
 import lk.sliit.electronest.common.model.User;
-import lk.sliit.electronest.common.repository.UserRepository;
 import lk.sliit.electronest.order.controller.dto.CreateOrderRequest;
 import lk.sliit.electronest.order.controller.dto.OrderLineItemRequest;
 import lk.sliit.electronest.order.model.Order;
@@ -10,6 +11,8 @@ import lk.sliit.electronest.order.model.OrderLineItem;
 import lk.sliit.electronest.order.model.OrderStatus;
 import lk.sliit.electronest.order.model.PaymentStatus;
 import lk.sliit.electronest.order.repository.OrderRepository;
+import lk.sliit.electronest.vendor.model.Vendor;
+import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,38 +20,42 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
+    private final ProductService productService;
+    private final VendorRepository vendorRepository;
 
-    public OrderService(OrderRepository orderRepository, UserRepository userRepository) {
+    public OrderService(OrderRepository orderRepository,
+                        ProductService productService,
+                        VendorRepository vendorRepository) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
+        this.productService = productService;
+        this.vendorRepository = vendorRepository;
     }
-
 
     public List<Order> getOrderHistoryForCustomer(User customer) {
         return orderRepository.findByCustomer_Id(customer.getId());
     }
 
-
     public List<Order> getOrderHistoryForCustomerId(Long customerId) {
         return orderRepository.findByCustomer_Id(customerId);
     }
-
 
     public List<Order> getOrderQueueForVendor(User vendor) {
         return orderRepository.findByVendorId(vendor.getId());
     }
 
-    /** Admin-only escape hatch, same reasoning as getOrderHistoryForCustomerId. */
     public List<Order> getOrderQueueForVendorId(Long vendorId) {
         return orderRepository.findByVendorId(vendorId);
     }
 
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new NoSuchElementException("Order not found: " + orderId));
+    }
 
     public Order getOrderByIdForViewer(Long orderId, User viewer) {
         Order order = getOrderById(orderId);
@@ -56,143 +63,188 @@ public class OrderService {
         return order;
     }
 
-
-    public Order getOrderById(Long orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
-    }
-
-
     @Transactional
-    public Order updateFulfilmentStatus(Long orderId, User actor, OrderStatus targetStatus,
-                                         boolean adminOverride) {
+    public Order updateFulfilmentStatus(Long orderId,
+                                        User actor,
+                                        OrderStatus targetStatus,
+                                        boolean adminOverride) {
         Order order = getOrderById(orderId);
 
         assertActorMayModifyStatus(order, actor);
 
         OrderStatus currentStatus = order.getStatus();
 
-        boolean isOrdinaryLegalMove = currentStatus.canTransitionTo(targetStatus);
-        boolean isAdminOverridingDelivered = currentStatus == OrderStatus.DELIVERED
-                && actor.getRole() == Role.ADMIN
-                && adminOverride;
-
-        if (!isOrdinaryLegalMove && !isAdminOverridingDelivered) {
+        if (currentStatus == OrderStatus.DELIVERED &&
+                actor.getRole() == Role.ADMIN &&
+                adminOverride) {
+            order.setStatus(targetStatus);
+        } else if (!currentStatus.canTransitionTo(targetStatus)) {
             throw new IllegalStateException(
-                    "Cannot move order " + orderId + " from " + currentStatus + " to " + targetStatus);
+                    "Cannot move order from " + currentStatus + " to " + targetStatus
+            );
+        } else {
+            order.setStatus(targetStatus);
         }
 
-        order.setStatus(targetStatus);
         order.setCancellationRequested(false);
         order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
-        // TODO: once the notification module exists, publish an event
-        // here so the customer gets notified (UC-03 step 7).
     }
-
 
     @Transactional
     public Order requestCancellation(Long orderId, User customer) {
         Order order = getOrderById(orderId);
 
         if (!order.getCustomer().getId().equals(customer.getId())) {
-            throw new SecurityException(
-                    "Customer " + customer.getId() + " does not own order " + orderId);
+            throw new SecurityException("You do not own this order");
         }
 
         if (order.getStatus().isTerminal()) {
-            throw new IllegalStateException("Order " + orderId + " is already " + order.getStatus());
+            throw new IllegalStateException(
+                    "Order is already " + order.getStatus()
+            );
         }
 
         if (order.getStatus() == OrderStatus.PENDING) {
             order.setStatus(OrderStatus.CANCELLED);
+            order.setCancellationRequested(false);
         } else {
             order.setCancellationRequested(true);
         }
+
         order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
     }
 
-    /**
-     * Creates an order from checkout. The customer is the authenticated
-     * caller - never a value passed in the request. Vendors on each
-     * line item are looked up by id to make sure they actually exist
-     * and really do have the VENDOR role, so a bad/forged vendorId
-     * fails loudly here instead of silently corrupting the order.
-     *
-     * TODO: unitPrice is currently trusted from the client (see
-     * OrderLineItemRequest) until the Catalog module exposes a price
-     * lookup this service can call.
-     */
     @Transactional
     public Order createOrder(CreateOrderRequest request, User customer) {
+        if (customer.getRole() != Role.CUSTOMER) {
+            throw new SecurityException("Only customers can create orders");
+        }
+
+        validateDelivery(request);
+
         if (request.items() == null || request.items().isEmpty()) {
-            throw new IllegalArgumentException("An order must have at least one item");
+            throw new IllegalArgumentException(
+                    "An order must have at least one item"
+            );
         }
 
         Order order = new Order();
+
         order.setCustomer(customer);
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentStatus(PaymentStatus.PENDING_PAYMENT);
-        order.setAddressLine1(request.addressLine1());
-        order.setCity(request.city());
-        order.setPostalCode(request.postalCode());
-        order.setCountry(request.country());
+
+        order.setDeliveryName(request.deliveryName().trim());
+        order.setDeliveryPhone(request.deliveryPhone().trim());
+        order.setAddressLine1(request.addressLine1().trim());
+        order.setAddressLine2(clean(request.addressLine2()));
+        order.setCity(request.city().trim());
+        order.setPostalCode(clean(request.postalCode()));
+        order.setCountry(request.country().trim());
+
         order.setCancellationRequested(false);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
         for (OrderLineItemRequest itemRequest : request.items()) {
-            User vendor = userRepository.findById(itemRequest.vendorId())
-                    .orElseThrow(() -> new NoSuchElementException("Vendor not found: " + itemRequest.vendorId()));
+            Product product = productService.decreaseStockForOrder(
+                    itemRequest.productId(),
+                    itemRequest.quantity()
+            );
 
-            if (vendor.getRole() != Role.VENDOR) {
-                throw new IllegalArgumentException("User " + vendor.getId() + " is not a vendor");
-            }
+            Vendor vendor = vendorRepository.findById(product.getVendorId())
+                    .orElseThrow(() ->
+                            new NoSuchElementException(
+                                    "Vendor not found for product " + product.getId()
+                            ));
 
             OrderLineItem lineItem = new OrderLineItem();
-            lineItem.setProductId(itemRequest.productId());
-            lineItem.setVendor(vendor);
+
+            lineItem.setProductId(product.getId());
+            lineItem.setVendor(vendor.getUser());
             lineItem.setQuantity(itemRequest.quantity());
-            lineItem.setUnitPrice(itemRequest.unitPrice());
+            lineItem.setUnitPrice(product.getPrice());
+
             order.addLineItem(lineItem);
         }
 
         return orderRepository.save(order);
     }
 
+    private void validateDelivery(CreateOrderRequest request) {
+        if (blank(request.deliveryName())) {
+            throw new IllegalArgumentException("Delivery name is required");
+        }
+
+        if (blank(request.deliveryPhone())) {
+            throw new IllegalArgumentException("Delivery phone is required");
+        }
+
+        if (blank(request.addressLine1())) {
+            throw new IllegalArgumentException("Delivery address is required");
+        }
+
+        if (blank(request.city())) {
+            throw new IllegalArgumentException("City is required");
+        }
+
+        if (blank(request.country())) {
+            throw new IllegalArgumentException("Country is required");
+        }
+    }
+
     private void assertActorMayModifyStatus(Order order, User actor) {
         if (actor.getRole() == Role.ADMIN) {
             return;
         }
+
         if (actor.getRole() == Role.VENDOR) {
-            boolean ownsAtLeastOneItem = order.getLineItems().stream()
+            boolean ownsItem = order.getLineItems().stream()
                     .anyMatch(item -> item.belongsToVendor(actor.getId()));
-            if (ownsAtLeastOneItem) {
+
+            if (ownsItem) {
                 return;
             }
         }
+
         throw new SecurityException(
-                "User " + actor.getId() + " is not permitted to modify order " + order.getId());
+                "User is not permitted to modify this order"
+        );
     }
 
     private void assertActorMayView(Order order, User viewer) {
         if (viewer.getRole() == Role.ADMIN) {
             return;
         }
-        if (viewer.getRole() == Role.CUSTOMER && order.getCustomer().getId().equals(viewer.getId())) {
+
+        if (viewer.getRole() == Role.CUSTOMER &&
+                order.getCustomer().getId().equals(viewer.getId())) {
             return;
         }
+
         if (viewer.getRole() == Role.VENDOR) {
-            boolean ownsAtLeastOneItem = order.getLineItems().stream()
+            boolean ownsItem = order.getLineItems().stream()
                     .anyMatch(item -> item.belongsToVendor(viewer.getId()));
-            if (ownsAtLeastOneItem) {
+
+            if (ownsItem) {
                 return;
             }
         }
+
         throw new SecurityException(
-                "User " + viewer.getId() + " is not permitted to view order " + order.getId());
+                "User is not permitted to view this order"
+        );
+    }
+
+    private boolean blank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private String clean(String value) {
+        return blank(value) ? null : value.trim();
     }
 }
