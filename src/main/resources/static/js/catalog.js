@@ -186,11 +186,38 @@ function card(product) {
     const price = document.createElement('strong');
     price.textContent = money(product.price);
 
+    const cartForm = document.createElement('form');
+    cartForm.method = 'post';
+    cartForm.action = '/cart/add';
+    cartForm.className = 'en-add-cart-form';
+
+    const productInput = document.createElement('input');
+    productInput.type = 'hidden';
+    productInput.name = 'productId';
+    productInput.value = product.id;
+
+    const quantityInput = document.createElement('input');
+    quantityInput.type = 'hidden';
+    quantityInput.name = 'quantity';
+    quantityInput.value = '1';
+
+    const addButton = document.createElement('button');
+    addButton.type = 'submit';
+    addButton.className = 'en-add-cart-btn';
+
+    const availableStock = Number(product.stockQuantity ?? 0);
+    const canAdd = availableStock > 0 && product.outOfStock !== true;
+
+    addButton.textContent = canAdd ? 'Add to cart' : 'Out of stock';
+    addButton.disabled = !canAdd;
+
+    cartForm.append(productInput, quantityInput, addButton);
+
     const arrow = document.createElement('span');
     arrow.className = 'en-card-arrow';
     arrow.textContent = '↗';
 
-    footer.append(price, arrow);
+    footer.append(price, cartForm, arrow);
     body.append(meta, title, description, footer);
     article.append(media, body);
 

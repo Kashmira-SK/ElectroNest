@@ -3536,3 +3536,144 @@ body > .en-navbar .en-admin-nav a:hover::after {
     grid-row: 2;
   }
 }
+
+.en-cart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.en-cart-actions form {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.en-cart-actions input[type="number"] {
+  width: 68px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #d3d7dd;
+  border-radius: 2px;
+}
+
+.en-cart-line-total {
+  align-self: start;
+  white-space: nowrap;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+}
+
+.en-checkout-items {
+  margin-top: 18px;
+  border-top: 1px solid #e2e4e8;
+}
+
+.en-checkout-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 17px 0;
+  border-bottom: 1px solid #e2e4e8;
+}
+
+.en-checkout-item p {
+  margin: 5px 0 0;
+}
+
+@media (max-width: 650px) {
+  .en-cart-item {
+    grid-template-columns: 80px 1fr;
+  }
+
+  .en-cart-line-total {
+    grid-column: 2;
+  }
+}
+
+.en-saved-address {
+  margin-top: 18px;
+  padding: 18px;
+  background: #f7f8fa;
+  border: 1px solid #dde1e6;
+  border-left: 3px solid var(--en-blue);
+}
+
+.en-saved-address strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 18px;
+}
+
+.en-saved-address p {
+  margin: 5px 0;
+  color: #626975;
+  line-height: 1.6;
+}
+
+.en-delivery-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.en-saved-address {
+  margin-top: 18px;
+  padding: 18px;
+  background: #f7f8fa;
+  border: 1px solid #dde1e6;
+  border-left: 3px solid var(--en-blue);
+}
+
+.en-saved-address strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 18px;
+}
+
+.en-saved-address p {
+  margin: 5px 0;
+  color: #626975;
+  line-height: 1.6;
+}
+
+.en-delivery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#savedAddressForm,
+#alternateAddressForm {
+  margin-top: 18px;
+}
+
+.en-add-cart-form {
+  margin-left: auto;
+}
+
+.en-add-cart-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--en-blue);
+  border-radius: 2px;
+  background: var(--en-blue);
+  color: #fff;
+  font: 600 11px 'Inter', sans-serif;
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.en-add-cart-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--en-blue-bright);
+}
+
+.en-add-cart-btn:disabled {
+  border-color: #c9cdd3;
+  background: #e3e5e8;
+  color: #898f98;
+  cursor: not-allowed;
+}
