@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.dto.ReasonRequest;
+import lk.sliit.electronest.vendor.model.dto.VendorGuidanceResponse;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorResponse;
 import lk.sliit.electronest.vendor.service.VendorService;
@@ -53,6 +54,16 @@ public class VendorController {
             @AuthenticationPrincipal CustomUserDetails currentUser) {
         Vendor vendor = vendorService.getVendorForUser(currentUser.getUser().getId());
         return ResponseEntity.ok(VendorResponse.from(vendor));
+    }
+
+
+    @PreAuthorize("hasRole('VENDOR')")
+    @GetMapping("/me/guidance")
+    public ResponseEntity<VendorGuidanceResponse> getCurrentVendorGuidance(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(
+                vendorService.getGuidanceForUser(currentUser.getUser().getId())
+        );
     }
 
     // Admin: get a single vendor by vendor-record id
