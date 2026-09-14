@@ -13,7 +13,7 @@
     <div class="en-card">
         <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
-        <form th:action="@{/vendor/register}" th:object="${registrationRequest}" method="post">
+        <form th:action="@{/vendor/register}" th:object="${registrationRequest}" method="post" enctype="multipart/form-data">
 
             <div class="en-field">
                 <label>Business Name</label>
@@ -37,6 +37,15 @@
                 <label>Contact Phone</label>
                 <input type="tel" th:field="*{contactPhone}" required>
                 <p class="en-field-error" th:if="${#fields.hasErrors('contactPhone')}" th:errors="*{contactPhone}"></p>
+            </div>
+
+            <div class="en-field">
+                <label>Verification Document</label>
+                <input type="file"
+                       name="document"
+                       accept=".pdf,.jpg,.jpeg,.png"
+                       required>
+                <p class="en-muted">PDF, JPG or PNG. Maximum 5 MB.</p>
             </div>
 
             <button type="submit" class="en-btn en-btn-primary">Submit application</button>
