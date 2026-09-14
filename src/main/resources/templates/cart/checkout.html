@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+    <nav class="en-nav-links">
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Checkout</p>
+            <h1>Review your order</h1>
+            <p class="en-muted">
+                Confirm delivery and order details before payment.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-checkout-layout">
+
+        <section>
+            <div class="en-card">
+                <p class="en-eyebrow">Delivery</p>
+                <h2>Delivery details</h2>
+
+                <div class="en-field">
+                    <label>Full name</label>
+                    <input type="text" id="deliveryName">
+                </div>
+
+                <div class="en-field">
+                    <label>Contact number</label>
+                    <input type="tel" id="deliveryPhone">
+                </div>
+
+                <div class="en-field">
+                    <label>Delivery address</label>
+                    <textarea id="deliveryAddress" rows="4"></textarea>
+                </div>
+            </div>
+
+            <div class="en-card" style="margin-top: 18px;">
+                <p class="en-eyebrow">Items</p>
+                <h2>Checkout summary</h2>
+
+                <div id="checkoutItems" class="en-empty">
+                    Cart items will appear here once the checkout backend is connected.
+                </div>
+            </div>
+        </section>
+
+        <aside class="en-card en-cart-summary">
+            <p class="en-eyebrow">Total</p>
+            <h2>Order summary</h2>
+
+            <div class="en-summary-row">
+                <span>Subtotal</span>
+                <strong id="checkoutSubtotal">Rs. 0.00</strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Delivery</span>
+                <strong id="checkoutDelivery">Rs. 0.00</strong>
+            </div>
+
+            <div class="en-summary-row en-summary-total">
+                <span>Total</span>
+                <strong id="checkoutTotal">Rs. 0.00</strong>
+            </div>
+
+            <button class="en-btn en-btn-primary"
+                    type="button"
+                    disabled
+                    title="Checkout backend integration pending">
+                Continue to payment
+            </button>
+
+            <p class="en-muted" style="margin-top: 12px;">
+                Payment will be enabled once order creation and checkout validation are connected.
+            </p>
+        </aside>
+
+    </div>
+
+</main>
+</body>
+</html>

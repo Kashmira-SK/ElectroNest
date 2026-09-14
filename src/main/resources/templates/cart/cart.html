@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Cart - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+    <nav class="en-nav-links">
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Customer</p>
+            <h1>Your cart</h1>
+            <p class="en-muted">Review your items before checkout.</p>
+        </div>
+    </div>
+
+    <div id="cartEmpty" class="en-card en-empty">
+        Your cart is currently empty.
+        <div style="margin-top: 18px;">
+            <a th:href="@{/products}" class="en-btn en-btn-primary en-btn-auto">
+                Browse products
+            </a>
+        </div>
+    </div>
+
+    <div id="cartContent" class="en-cart-layout" hidden>
+
+        <section id="cartItems" class="en-cart-items">
+        </section>
+
+        <aside class="en-card en-cart-summary">
+            <p class="en-eyebrow">Summary</p>
+            <h2>Order total</h2>
+
+            <div class="en-summary-row">
+                <span>Subtotal</span>
+                <strong id="cartSubtotal">Rs. 0.00</strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Delivery</span>
+                <span>Calculated at checkout</span>
+            </div>
+
+            <hr>
+
+            <a th:href="@{/checkout}" class="en-btn en-btn-primary">
+                Continue to checkout
+            </a>
+        </aside>
+
+    </div>
+
+</main>
+</body>
+</html>
