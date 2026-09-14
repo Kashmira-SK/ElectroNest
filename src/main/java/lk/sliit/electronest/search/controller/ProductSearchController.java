@@ -2,7 +2,6 @@ package lk.sliit.electronest.search.controller;
 
 import lk.sliit.electronest.catalog.model.Product;
 import lk.sliit.electronest.search.service.ProductSearchService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,8 +13,11 @@ import java.math.BigDecimal;
 @RequestMapping("/api/search")
 public class ProductSearchController {
 
-    @Autowired
-    private ProductSearchService productSearchService;
+    private final ProductSearchService productSearchService;
+
+    public ProductSearchController(ProductSearchService productSearchService) {
+        this.productSearchService = productSearchService;
+    }
 
     @GetMapping("/products")
     public Page<Product> searchProducts(
@@ -26,9 +28,52 @@ public class ProductSearchController {
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Boolean inStockOnly,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size
-    ) {
+            @RequestParam(defaultValue = "12") int size) {
+
+        if (page < 0) {
+            throw new IllegalArgumentException(
+                    "Page cannot be negative"
+            );
+        }
+
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException(
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        if (minPrice != null &&
+                minPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "Minimum price cannot be negative"
+            );
+        }
+
+        if (maxPrice != null &&
+                maxPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "Maximum price cannot be negative"
+            );
+        }
+
+        if (minPrice != null &&
+                maxPrice != null &&
+                minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException(
+                    "Minimum price cannot exceed maximum price"
+            );
+        }
+
         Pageable pageable = PageRequest.of(page, size);
-        return productSearchService.search(keyword, category, brand, minPrice, maxPrice, inStockOnly, pageable);
+
+        return productSearchService.search(
+                keyword,
+                category,
+                brand,
+                minPrice,
+                maxPrice,
+                inStockOnly,
+                pageable
+        );
     }
 }
