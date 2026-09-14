@@ -1,78 +1,82 @@
 package lk.sliit.electronest.cart.controller;
 
-import lk.sliit.electronest.cart.model.CartItem;
+import lk.sliit.electronest.cart.dto.CartSummaryResponse;
 import lk.sliit.electronest.cart.service.CartService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import lk.sliit.electronest.common.security.CustomUserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.List;
-
-@Controller
-@RequestMapping("/cart")
+@RestController
+@RequestMapping("/api/cart")
+@PreAuthorize("hasRole('CUSTOMER')")
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
 
-    // Helper method to extract the logged-in user's ID securely
-    private Long getAuthenticatedUserId(Principal principal) {
-        if (principal == null) {
-            throw new RuntimeException("User not authenticated");
-        }
-        return Long.parseLong(principal.getName());
+    public CartController(CartService cartService) {
+        this.cartService = cartService;
     }
 
-    // READ: Displays the cart page
     @GetMapping
-    public String viewCart(Model model, Principal principal) {
-        Long userId = getAuthenticatedUserId(principal);
-        model.addAttribute("cartItems", cartService.getCartItems(userId));
-        model.addAttribute("subtotal", cartService.calculateSubtotal(userId));
-        return "cart";
+    public CartSummaryResponse getCart(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return cartService.getCartSummary(
+                currentUser.getUser().getId()
+        );
     }
 
-    // CREATE: Adds an item from the catalog (Price is handled in the backend now!)
-    @PostMapping("/add")
-    public String addToCart(Principal principal, @RequestParam Long productId, @RequestParam Integer quantity) {
-        Long userId = getAuthenticatedUserId(principal);
+    @PostMapping("/items")
+    public CartSummaryResponse addItem(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam Long productId,
+            @RequestParam(defaultValue = "1") Integer quantity) {
+
+        Long userId = currentUser.getUser().getId();
+
         cartService.addItemToCart(userId, productId, quantity);
-        return "redirect:/cart";
+
+        return cartService.getCartSummary(userId);
     }
 
-    // UPDATE: Changes the quantity of an item
-    @PostMapping("/update")
-    public String updateQuantity(Principal principal, @RequestParam Long itemId, @RequestParam Integer quantity) {
-        Long userId = getAuthenticatedUserId(principal);
+    @PatchMapping("/items/{itemId}")
+    public CartSummaryResponse updateItem(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @PathVariable Long itemId,
+            @RequestParam Integer quantity) {
+
+        Long userId = currentUser.getUser().getId();
+
         cartService.updateItemQuantity(userId, itemId, quantity);
-        return "redirect:/cart";
+
+        return cartService.getCartSummary(userId);
     }
 
-    // DELETE: Removes an item
-    @PostMapping("/remove")
-    public String removeItem(Principal principal, @RequestParam Long itemId) {
-        Long userId = getAuthenticatedUserId(principal);
+    @DeleteMapping("/items/{itemId}")
+    public CartSummaryResponse removeItem(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @PathVariable Long itemId) {
+
+        Long userId = currentUser.getUser().getId();
+
         cartService.removeItemFromCart(userId, itemId);
-        return "redirect:/cart";
+
+        return cartService.getCartSummary(userId);
     }
 
-    // CHECKOUT: Validates the cart and prepares the final summary for the order module
-    @GetMapping("/checkout/summary")
-    public String getCheckoutSummary(Principal principal, Model model) {
-        Long userId = getAuthenticatedUserId(principal);
-        List<CartItem> items = cartService.getCartItems(userId);
+    @GetMapping("/checkout-summary")
+    public CartSummaryResponse checkoutSummary(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
-        // Validation: Prevent checkout if cart is empty
-        if (items.isEmpty()) {
-            return "redirect:/cart?error=empty";
+        CartSummaryResponse summary = cartService.getCartSummary(
+                currentUser.getUser().getId()
+        );
+
+        if (summary.items().isEmpty()) {
+            throw new IllegalStateException("Cart is empty");
         }
 
-        // Pass data to the final checkout webpage
-        model.addAttribute("cartItems", items);
-        model.addAttribute("finalTotal", cartService.calculateSubtotal(userId));
-
-        return "checkout-summary";
+        return summary;
     }
 }

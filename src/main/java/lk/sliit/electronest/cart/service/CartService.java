@@ -1,12 +1,13 @@
 package lk.sliit.electronest.cart.service;
 
+import lk.sliit.electronest.cart.dto.CartItemResponse;
+import lk.sliit.electronest.cart.dto.CartSummaryResponse;
 import lk.sliit.electronest.cart.model.CartItem;
 import lk.sliit.electronest.cart.repository.CartItemRepository;
-// NOTE: Import your team's Product and ProductRepository here!
-// import lk.sliit.electronest.product.model.Product;
-// import lk.sliit.electronest.product.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lk.sliit.electronest.catalog.model.Product;
+import lk.sliit.electronest.catalog.service.ProductService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,74 +16,159 @@ import java.util.Optional;
 @Service
 public class CartService {
 
-    @Autowired
-    private CartItemRepository cartItemRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductService productService;
 
-    // @Autowired
-    // private ProductRepository productRepository; // You will need to uncomment this when you have the Product class!
+    public CartService(CartItemRepository cartItemRepository,
+                       ProductService productService) {
+        this.cartItemRepository = cartItemRepository;
+        this.productService = productService;
+    }
 
-    // CREATE: Validates stock and grabs the official price
     public CartItem addItemToCart(Long userId, Long productId, Integer quantity) {
-        // 1. Fetch the official product from the database
-        // Product product = productRepository.findById(productId)
-        //        .orElseThrow(() -> new RuntimeException("Product not found"));
+        validateQuantity(quantity);
 
-        // 2. Stock Validation (Assuming the method is called getStockQuantity)
-        // if (product.getStockQuantity() < quantity) {
-        //     throw new RuntimeException("Insufficient stock available");
-        // }
+        Product product = productService.getProductById(productId);
+        validateAvailable(product);
 
-        // 3. Get the official price (Assuming the method is called getPrice)
-        // BigDecimal officialPrice = product.getPrice();
-        BigDecimal officialPrice = new BigDecimal("99.99"); // TEMPORARY PLACEHOLDER until you link the Product
+        Optional<CartItem> existing =
+                cartItemRepository.findByUserIdAndProductId(userId, productId);
 
-        Optional<CartItem> existingItem = cartItemRepository.findByUserIdAndProductId(userId, productId);
+        int requestedQuantity = quantity;
 
-        if (existingItem.isPresent()) {
-            CartItem item = existingItem.get();
-            // Also validate that existing quantity + new quantity doesn't exceed stock!
-            item.setQuantity(item.getQuantity() + quantity);
-            return cartItemRepository.save(item);
-        } else {
-            CartItem newItem = new CartItem(userId, productId, quantity, officialPrice);
-            return cartItemRepository.save(newItem);
+        if (existing.isPresent()) {
+            requestedQuantity += existing.get().getQuantity();
         }
+
+        validateStock(product, requestedQuantity);
+
+        CartItem item = existing.orElseGet(
+                () -> new CartItem(userId, productId, 0, product.getPrice())
+        );
+
+        item.setQuantity(requestedQuantity);
+        item.setUnitPrice(product.getPrice());
+
+        return cartItemRepository.save(item);
+    }
+
+    public CartItem updateItemQuantity(Long userId,
+                                       Long itemId,
+                                       Integer quantity) {
+        validateQuantity(quantity);
+
+        CartItem item = getOwnedItem(userId, itemId);
+        Product product = productService.getProductById(item.getProductId());
+
+        validateAvailable(product);
+        validateStock(product, quantity);
+
+        item.setQuantity(quantity);
+        item.setUnitPrice(product.getPrice());
+
+        return cartItemRepository.save(item);
+    }
+
+    public void removeItemFromCart(Long userId, Long itemId) {
+        CartItem item = getOwnedItem(userId, itemId);
+        cartItemRepository.delete(item);
     }
 
     public List<CartItem> getCartItems(Long userId) {
         return cartItemRepository.findByUserId(userId);
     }
 
-    // UPDATE: Ownership check and stock validation
-    public CartItem updateItemQuantity(Long userId, Long itemId, Integer newQuantity) {
-        CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+    public CartSummaryResponse getCartSummary(Long userId) {
+        List<CartItemResponse> items = getCartItems(userId).stream()
+                .map(this::toResponse)
+                .toList();
 
-        // Ownership Validation: Stop users from editing other people's carts
-        if (!item.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized action");
-        }
+        int totalItems = items.stream()
+                .mapToInt(CartItemResponse::quantity)
+                .sum();
 
-        item.setQuantity(newQuantity);
-        return cartItemRepository.save(item);
-    }
+        BigDecimal subtotal = items.stream()
+                .map(CartItemResponse::lineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    // DELETE: Ownership check
-    public void removeItemFromCart(Long userId, Long itemId) {
-        CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
-
-        if (!item.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized action");
-        }
-
-        cartItemRepository.delete(item);
+        return new CartSummaryResponse(items, totalItems, subtotal);
     }
 
     public BigDecimal calculateSubtotal(Long userId) {
-        List<CartItem> items = getCartItems(userId);
-        return items.stream()
-                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return getCartSummary(userId).subtotal();
+    }
+
+    @Transactional
+    public void clearCart(Long userId) {
+        List<CartItem> items = cartItemRepository.findByUserId(userId);
+        cartItemRepository.deleteAll(items);
+    }
+
+    private CartItemResponse toResponse(CartItem item) {
+        Product product = productService.getProductById(item.getProductId());
+
+        BigDecimal currentPrice = product.getPrice();
+        BigDecimal lineTotal = currentPrice.multiply(
+                BigDecimal.valueOf(item.getQuantity())
+        );
+
+        return new CartItemResponse(
+                item.getId(),
+                product.getId(),
+                product.getName(),
+                product.getBrand(),
+                product.getImageUrl(),
+                item.getQuantity(),
+                currentPrice,
+                lineTotal,
+                product.getStockQuantity()
+        );
+    }
+
+    private CartItem getOwnedItem(Long userId, Long itemId) {
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Cart item not found"));
+
+        if (!item.getUserId().equals(userId)) {
+            throw new SecurityException(
+                    "You cannot modify another customer's cart"
+            );
+        }
+
+        return item;
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
+        }
+    }
+
+    private void validateAvailable(Product product) {
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if (Boolean.TRUE.equals(product.getOutOfStock()) || stock <= 0) {
+            throw new IllegalStateException(
+                    product.getName() + " is out of stock"
+            );
+        }
+    }
+
+    private void validateStock(Product product, int quantity) {
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if (quantity > stock) {
+            throw new IllegalStateException(
+                    "Only " + stock + " units of "
+                            + product.getName() + " are available"
+            );
+        }
     }
 }
