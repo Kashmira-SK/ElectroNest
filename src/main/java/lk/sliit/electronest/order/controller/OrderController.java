@@ -1,12 +1,13 @@
 package lk.sliit.electronest.order.controller;
 
-import lk.sliit.electronest.common.model.User;
 import lk.sliit.electronest.common.security.CustomUserDetails;
+import lk.sliit.electronest.order.controller.dto.CreateOrderRequest;
 import lk.sliit.electronest.order.controller.dto.OrderResponse;
 import lk.sliit.electronest.order.controller.dto.UpdateOrderStatusRequest;
 import lk.sliit.electronest.order.model.Order;
 import lk.sliit.electronest.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,44 +23,119 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    /** PB-20: order history for a customer. */
-    @GetMapping("/customers/{customerId}")
-    public ResponseEntity<List<OrderResponse>> historyForCustomer(@PathVariable Long customerId) {
-        List<OrderResponse> orders = orderService.getOrderHistoryForCustomer(customerId)
-                .stream().map(OrderResponse::from).toList();
-        return ResponseEntity.ok(orders);
+    @GetMapping("/my-orders")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<OrderResponse>> myOrders(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderHistoryForCustomer(currentUser.getUser())
+                        .stream()
+                        .map(OrderResponse::from)
+                        .toList()
+        );
     }
 
-    /** UC-03 step 1: vendor's order queue. */
+    @GetMapping("/vendor/my-queue")
+    @PreAuthorize("hasRole('VENDOR')")
+    public ResponseEntity<List<OrderResponse>> myVendorQueue(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderQueueForVendor(currentUser.getUser())
+                        .stream()
+                        .map(OrderResponse::from)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/customers/{customerId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> customerOrders(
+            @PathVariable Long customerId) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderHistoryForCustomerId(customerId)
+                        .stream()
+                        .map(OrderResponse::from)
+                        .toList()
+        );
+    }
+
     @GetMapping("/vendors/{vendorId}")
-    public ResponseEntity<List<OrderResponse>> queueForVendor(@PathVariable Long vendorId) {
-        List<OrderResponse> orders = orderService.getOrderQueueForVendor(vendorId)
-                .stream().map(OrderResponse::from).toList();
-        return ResponseEntity.ok(orders);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> vendorOrders(
+            @PathVariable Long vendorId) {
+
+        return ResponseEntity.ok(
+                orderService.getOrderQueueForVendorId(vendorId)
+                        .stream()
+                        .map(OrderResponse::from)
+                        .toList()
+        );
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long orderId) {
-        return ResponseEntity.ok(OrderResponse.from(orderService.getOrderById(orderId)));
+    public ResponseEntity<OrderResponse> getOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                OrderResponse.from(
+                        orderService.getOrderByIdForViewer(
+                                orderId,
+                                currentUser.getUser()
+                        )
+                )
+        );
     }
 
-    /** UC-03 main flow: update fulfilment status. */
     @PatchMapping("/{orderId}/status")
-    public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long orderId,
-                                                        @RequestBody UpdateOrderStatusRequest request,
-                                                        @AuthenticationPrincipal CustomUserDetails currentUser) {
-        User actor = currentUser.getUser();
+    @PreAuthorize("hasAnyRole('VENDOR','ADMIN')")
+    public ResponseEntity<OrderResponse> updateStatus(
+            @PathVariable Long orderId,
+            @RequestBody UpdateOrderStatusRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         Order updated = orderService.updateFulfilmentStatus(
-                orderId, actor, request.targetStatus(), request.adminOverride());
+                orderId,
+                currentUser.getUser(),
+                request.targetStatus(),
+                request.adminOverride()
+        );
 
         return ResponseEntity.ok(OrderResponse.from(updated));
     }
 
-    /** Customer requests cancellation. */
     @PostMapping("/{orderId}/cancellation-request")
-    public ResponseEntity<OrderResponse> requestCancellation(@PathVariable Long orderId) {
-        Order updated = orderService.requestCancellation(orderId);
-        return ResponseEntity.ok(OrderResponse.from(updated));
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<OrderResponse> requestCancellation(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                OrderResponse.from(
+                        orderService.requestCancellation(
+                                orderId,
+                                currentUser.getUser()
+                        )
+                )
+        );
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<OrderResponse> createOrder(
+            @RequestBody CreateOrderRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                OrderResponse.from(
+                        orderService.createOrder(
+                                request,
+                                currentUser.getUser()
+                        )
+                )
+        );
     }
 }
