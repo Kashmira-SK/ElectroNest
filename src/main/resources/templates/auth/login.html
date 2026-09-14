@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell" style="max-width: 420px;">
+    <p class="en-eyebrow">ElectroNest</p>
+    <h1>Log in</h1>
+
+    <div class="en-card">
+        <div class="en-alert en-alert-error" th:if="${param.error}">Invalid email or password.</div>
+        <div class="en-alert en-alert-success" th:if="${param.logout}">You've been logged out.</div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="en-field">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="en-field">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="en-btn en-btn-primary">Log in</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
