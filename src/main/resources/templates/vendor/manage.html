@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Vendors - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell" style="max-width: 900px;">
+    <p class="en-eyebrow">ElectroNest / Admin</p>
+    <h1>Vendor management</h1>
+
+    <p>
+        <a th:href="@{/vendor/queue}" class="en-btn">
+            Verification queue
+        </a>
+    </p>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(vendors)}">
+        No vendors found.
+    </div>
+
+    <div class="en-card en-vendor-row"
+         th:each="v : ${vendors}">
+
+        <h3 th:text="${v.businessName}">Business Name</h3>
+
+        <p class="en-meta">
+            <strong>Registration:</strong>
+            <span th:text="${v.registrationNumber}"></span>
+        </p>
+
+        <p class="en-meta">
+            <strong>Phone:</strong>
+            <span th:text="${v.contactPhone}"></span>
+        </p>
+
+        <p class="en-meta">
+            <strong>Status:</strong>
+            <span class="en-status"
+                  th:text="${v.status}"></span>
+        </p>
+
+        <p class="en-meta"
+           th:if="${v.idDocumentPath != null}">
+            <a th:href="@{/vendor/queue/{id}/document(id=${v.id})}"
+               target="_blank">
+                View verification document
+            </a>
+        </p>
+
+        <div class="en-actions">
+
+            <form th:if="${v.status.name() == 'APPROVED'}"
+                  th:action="@{/vendor/manage/{id}/suspend(id=${v.id})}"
+                  method="post">
+                <button class="en-btn en-btn-reject en-btn-sm"
+                        type="submit">
+                    Suspend
+                </button>
+            </form>
+
+            <form th:if="${v.status.name() == 'SUSPENDED'}"
+                  th:action="@{/vendor/manage/{id}/reactivate(id=${v.id})}"
+                  method="post">
+                <button class="en-btn en-btn-approve en-btn-sm"
+                        type="submit">
+                    Reactivate
+                </button>
+            </form>
+
+            <form th:action="@{/vendor/manage/{id}/remove(id=${v.id})}"
+                  method="post">
+                <button class="en-btn en-btn-reject en-btn-sm"
+                        type="submit"
+                        onclick="return confirm('Remove this vendor permanently?')">
+                    Remove
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

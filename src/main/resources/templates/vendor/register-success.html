@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Submitted - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell">
+    <div class="en-card en-center">
+        <p class="en-eyebrow">Application received</p>
+        <h1 th:text="${vendor.businessName}">Business Name</h1>
+        <p class="en-muted" style="margin-bottom: 20px;">
+            Reg. no. <span th:text="${vendor.registrationNumber}"></span>
+        </p>
+        <span class="en-status en-status-pending" th:text="${vendor.status}">PENDING</span>
+        <p class="en-muted" style="margin-top: 20px;">An admin will review your details shortly.</p>
+        <a th:href="@{/vendor/status}" class="en-btn en-btn-primary">View application status</a>
+    </div>
+</div>
+</body>
+</html>
