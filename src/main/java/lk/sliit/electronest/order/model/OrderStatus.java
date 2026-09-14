@@ -3,12 +3,7 @@ package lk.sliit.electronest.order.model;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * Order fulfilment lifecycle (UC-03).
- * Valid transitions: PENDING -> PROCESSING -> DELIVERED
- *                     PENDING | PROCESSING -> CANCELLED
- * DELIVERED cannot be reverted without an administrator override.
- */
+
 public enum OrderStatus {
 
     PENDING {

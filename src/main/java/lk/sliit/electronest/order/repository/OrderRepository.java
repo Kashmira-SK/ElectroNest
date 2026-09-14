@@ -1,6 +1,6 @@
 package lk.sliit.electronest.order.repository;
 
-import lk.sliit.electronest.order.model.Order;
+import lk.sliit.electronest.order.model.Order; // 1. Me import eka add karanna
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,12 +9,10 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByCustomerId(Long customerId);
 
-    /**
-     * Vendor's order queue (UC-03 step 1) — every order containing at
-     * least one line item belonging to this vendor.
-     */
+    List<Order> findByCustomer_Id(Long customerId);
+
+
     @Query("""
             SELECT DISTINCT o FROM Order o
             JOIN o.lineItems li

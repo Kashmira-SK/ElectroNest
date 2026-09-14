@@ -2,67 +2,73 @@ package lk.sliit.electronest.order.service;
 
 import lk.sliit.electronest.common.model.Role;
 import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.repository.UserRepository;
+import lk.sliit.electronest.order.controller.dto.CreateOrderRequest;
+import lk.sliit.electronest.order.controller.dto.OrderLineItemRequest;
 import lk.sliit.electronest.order.model.Order;
+import lk.sliit.electronest.order.model.OrderLineItem;
 import lk.sliit.electronest.order.model.OrderStatus;
+import lk.sliit.electronest.order.model.PaymentStatus;
 import lk.sliit.electronest.order.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/**
- * All the business rules for UC-03 (Update Order Fulfilment Status)
- * live here — this is the class to know inside-out for the viva.
- *
- * Rules implemented:
- *  1. Only the vendor who owns at least one line item, or an admin,
- *     may change an order's status.
- *  2. Status can only move along the legal path defined in
- *     OrderStatus (see canTransitionTo) — e.g. can't jump straight
- *     from PENDING to DELIVERED.
- *  3. A DELIVERED order can't be reverted unless an admin explicitly
- *     overrides it.
- *  4. Every change updates the "updatedAt" timestamp so there's an
- *     audit trail of when the order last moved.
- */
+
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, UserRepository userRepository) {
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
     }
 
-    public List<Order> getOrderHistoryForCustomer(Long customerId) {
-        return orderRepository.findByCustomerId(customerId);
+
+    public List<Order> getOrderHistoryForCustomer(User customer) {
+        return orderRepository.findByCustomer_Id(customer.getId());
     }
 
-    public List<Order> getOrderQueueForVendor(Long vendorId) {
+
+    public List<Order> getOrderHistoryForCustomerId(Long customerId) {
+        return orderRepository.findByCustomer_Id(customerId);
+    }
+
+
+    public List<Order> getOrderQueueForVendor(User vendor) {
+        return orderRepository.findByVendorId(vendor.getId());
+    }
+
+    /** Admin-only escape hatch, same reasoning as getOrderHistoryForCustomerId. */
+    public List<Order> getOrderQueueForVendorId(Long vendorId) {
         return orderRepository.findByVendorId(vendorId);
     }
+
+
+    public Order getOrderByIdForViewer(Long orderId, User viewer) {
+        Order order = getOrderById(orderId);
+        assertActorMayView(order, viewer);
+        return order;
+    }
+
 
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
     }
 
-    /**
-     * Core UC-03 operation: main flow steps 3-7.
-     *
-     * @param orderId      the order being updated
-     * @param actor        who is making the change (vendor or admin)
-     * @param targetStatus the requested next status
-     * @param adminOverride true only when an admin is explicitly
-     *                       reverting a DELIVERED order
-     */
+
     @Transactional
     public Order updateFulfilmentStatus(Long orderId, User actor, OrderStatus targetStatus,
                                          boolean adminOverride) {
         Order order = getOrderById(orderId);
 
-        assertActorMayModify(order, actor);
+        assertActorMayModifyStatus(order, actor);
 
         OrderStatus currentStatus = order.getStatus();
 
@@ -78,21 +84,22 @@ public class OrderService {
 
         order.setStatus(targetStatus);
         order.setCancellationRequested(false);
-        order.touch();
+        order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
         // TODO: once the notification module exists, publish an event
         // here so the customer gets notified (UC-03 step 7).
     }
 
-    /**
-     * Customer-initiated cancellation. If the order hasn't started
-     * processing yet, cancel immediately; otherwise just flag it for
-     * vendor/admin review (UC-03 alt-flow 7a).
-     */
+
     @Transactional
-    public Order requestCancellation(Long orderId) {
+    public Order requestCancellation(Long orderId, User customer) {
         Order order = getOrderById(orderId);
+
+        if (!order.getCustomer().getId().equals(customer.getId())) {
+            throw new SecurityException(
+                    "Customer " + customer.getId() + " does not own order " + orderId);
+        }
 
         if (order.getStatus().isTerminal()) {
             throw new IllegalStateException("Order " + orderId + " is already " + order.getStatus());
@@ -103,12 +110,60 @@ public class OrderService {
         } else {
             order.setCancellationRequested(true);
         }
-        order.touch();
+        order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
     }
 
-    private void assertActorMayModify(Order order, User actor) {
+    /**
+     * Creates an order from checkout. The customer is the authenticated
+     * caller - never a value passed in the request. Vendors on each
+     * line item are looked up by id to make sure they actually exist
+     * and really do have the VENDOR role, so a bad/forged vendorId
+     * fails loudly here instead of silently corrupting the order.
+     *
+     * TODO: unitPrice is currently trusted from the client (see
+     * OrderLineItemRequest) until the Catalog module exposes a price
+     * lookup this service can call.
+     */
+    @Transactional
+    public Order createOrder(CreateOrderRequest request, User customer) {
+        if (request.items() == null || request.items().isEmpty()) {
+            throw new IllegalArgumentException("An order must have at least one item");
+        }
+
+        Order order = new Order();
+        order.setCustomer(customer);
+        order.setStatus(OrderStatus.PENDING);
+        order.setPaymentStatus(PaymentStatus.PENDING_PAYMENT);
+        order.setAddressLine1(request.addressLine1());
+        order.setCity(request.city());
+        order.setPostalCode(request.postalCode());
+        order.setCountry(request.country());
+        order.setCancellationRequested(false);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+
+        for (OrderLineItemRequest itemRequest : request.items()) {
+            User vendor = userRepository.findById(itemRequest.vendorId())
+                    .orElseThrow(() -> new NoSuchElementException("Vendor not found: " + itemRequest.vendorId()));
+
+            if (vendor.getRole() != Role.VENDOR) {
+                throw new IllegalArgumentException("User " + vendor.getId() + " is not a vendor");
+            }
+
+            OrderLineItem lineItem = new OrderLineItem();
+            lineItem.setProductId(itemRequest.productId());
+            lineItem.setVendor(vendor);
+            lineItem.setQuantity(itemRequest.quantity());
+            lineItem.setUnitPrice(itemRequest.unitPrice());
+            order.addLineItem(lineItem);
+        }
+
+        return orderRepository.save(order);
+    }
+
+    private void assertActorMayModifyStatus(Order order, User actor) {
         if (actor.getRole() == Role.ADMIN) {
             return;
         }
@@ -121,5 +176,23 @@ public class OrderService {
         }
         throw new SecurityException(
                 "User " + actor.getId() + " is not permitted to modify order " + order.getId());
+    }
+
+    private void assertActorMayView(Order order, User viewer) {
+        if (viewer.getRole() == Role.ADMIN) {
+            return;
+        }
+        if (viewer.getRole() == Role.CUSTOMER && order.getCustomer().getId().equals(viewer.getId())) {
+            return;
+        }
+        if (viewer.getRole() == Role.VENDOR) {
+            boolean ownsAtLeastOneItem = order.getLineItems().stream()
+                    .anyMatch(item -> item.belongsToVendor(viewer.getId()));
+            if (ownsAtLeastOneItem) {
+                return;
+            }
+        }
+        throw new SecurityException(
+                "User " + viewer.getId() + " is not permitted to view order " + order.getId());
     }
 }

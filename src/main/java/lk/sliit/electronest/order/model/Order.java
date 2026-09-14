@@ -11,15 +11,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Order aggregate — the customer's order, its line items, and its
- * fulfilment lifecycle.
- *
- * NOTE: adjust the `customer` field's type/mapping if common.User's
- * primary key isn't a Long, or if the Role enum's values differ from
- * CUSTOMER/VENDOR/ADMIN — everything else in this module only depends
- * on this one class lining up correctly.
- */
 @Entity
 @Table(name = "orders")
 @Getter
@@ -65,18 +56,15 @@ public class Order {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    public BigDecimal totalAmount() {
-        return lineItems.stream()
-                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 
     public void addLineItem(OrderLineItem item) {
         item.setOrder(this);
         this.lineItems.add(item);
     }
 
-    public void touch() {
-        this.updatedAt = LocalDateTime.now();
+    public BigDecimal totalAmount() {
+        return lineItems.stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

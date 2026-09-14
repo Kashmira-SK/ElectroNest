@@ -1,8 +1,8 @@
 package lk.sliit.electronest.order.controller.dto;
 
-import lk.sliit.electronest.order.model.Order;
 import lk.sliit.electronest.order.model.OrderStatus;
 import lk.sliit.electronest.order.model.PaymentStatus;
+import lk.sliit.electronest.order.model.Order;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
