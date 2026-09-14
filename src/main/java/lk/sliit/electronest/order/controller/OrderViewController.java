@@ -35,7 +35,7 @@ public class OrderViewController {
         model.addAttribute(
                 "orders",
                 orderService.getOrderHistoryForCustomer(
-                        currentUser.getUser().getId()
+                        currentUser.getUser()
                 )
         );
 
@@ -54,7 +54,7 @@ public class OrderViewController {
 
         model.addAttribute(
                 "orders",
-                orderService.getOrderQueueForVendor(vendor.getId())
+                orderService.getOrderQueueForVendor(currentUser.getUser())
         );
 
         return "order/vendor-orders";

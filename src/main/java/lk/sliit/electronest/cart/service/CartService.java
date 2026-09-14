@@ -1,11 +1,14 @@
 package lk.sliit.electronest.cart.service;
 
+import lk.sliit.electronest.cart.dto.CartItemResponse;
 import lk.sliit.electronest.cart.dto.CartItemView;
+import lk.sliit.electronest.cart.dto.CartSummaryResponse;
 import lk.sliit.electronest.cart.model.CartItem;
 import lk.sliit.electronest.cart.repository.CartItemRepository;
 import lk.sliit.electronest.catalog.model.Product;
 import lk.sliit.electronest.catalog.service.ProductService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,33 +30,55 @@ public class CartService {
         validateQuantity(quantity);
 
         Product product = productService.getProductById(productId);
-        int stock = availableStock(product);
+        validateAvailable(product);
 
         Optional<CartItem> existing =
                 cartItemRepository.findByUserIdAndProductId(userId, productId);
 
+        int requestedQuantity = quantity;
+
         if (existing.isPresent()) {
-            CartItem item = existing.get();
-            int requestedQuantity = item.getQuantity() + quantity;
-
-            validateStock(product, requestedQuantity, stock);
-
-            item.setQuantity(requestedQuantity);
-            item.setUnitPrice(product.getPrice());
-
-            return cartItemRepository.save(item);
+            requestedQuantity += existing.get().getQuantity();
         }
 
-        validateStock(product, quantity, stock);
+        validateStock(product, requestedQuantity);
 
-        return cartItemRepository.save(
-                new CartItem(userId, productId, quantity, product.getPrice())
+        CartItem item = existing.orElseGet(
+                () -> new CartItem(userId, productId, 0, product.getPrice())
         );
+
+        item.setQuantity(requestedQuantity);
+        item.setUnitPrice(product.getPrice());
+
+        return cartItemRepository.save(item);
+    }
+
+    public CartItem updateItemQuantity(Long userId,
+                                       Long itemId,
+                                       Integer quantity) {
+        validateQuantity(quantity);
+
+        CartItem item = getOwnedItem(userId, itemId);
+        Product product = productService.getProductById(item.getProductId());
+
+        validateAvailable(product);
+        validateStock(product, quantity);
+
+        item.setQuantity(quantity);
+        item.setUnitPrice(product.getPrice());
+
+        return cartItemRepository.save(item);
+    }
+
+    public void removeItemFromCart(Long userId, Long itemId) {
+        CartItem item = getOwnedItem(userId, itemId);
+        cartItemRepository.delete(item);
     }
 
     public List<CartItem> getCartItems(Long userId) {
         return cartItemRepository.findByUserId(userId);
     }
+
 
     public List<CartItemView> getCartItemViews(Long userId) {
         return getCartItems(userId).stream()
@@ -78,42 +103,62 @@ public class CartService {
                 .toList();
     }
 
-    public CartItem updateItemQuantity(Long userId,
-                                       Long itemId,
-                                       Integer quantity) {
-        validateQuantity(quantity);
+    public CartSummaryResponse getCartSummary(Long userId) {
+        List<CartItemResponse> items = getCartItems(userId).stream()
+                .map(this::toResponse)
+                .toList();
 
-        CartItem item = ownedItem(userId, itemId);
-        Product product = productService.getProductById(item.getProductId());
+        int totalItems = items.stream()
+                .mapToInt(CartItemResponse::quantity)
+                .sum();
 
-        validateStock(product, quantity, availableStock(product));
+        BigDecimal subtotal = items.stream()
+                .map(CartItemResponse::lineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        item.setQuantity(quantity);
-        item.setUnitPrice(product.getPrice());
-
-        return cartItemRepository.save(item);
-    }
-
-    public void removeItemFromCart(Long userId, Long itemId) {
-        cartItemRepository.delete(ownedItem(userId, itemId));
+        return new CartSummaryResponse(items, totalItems, subtotal);
     }
 
     public BigDecimal calculateSubtotal(Long userId) {
-        return getCartItems(userId).stream()
-                .map(item -> {
-                    Product product = productService.getProductById(item.getProductId());
-                    return product.getPrice()
-                            .multiply(BigDecimal.valueOf(item.getQuantity()));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return getCartSummary(userId).subtotal();
     }
 
-    private CartItem ownedItem(Long userId, Long itemId) {
+    @Transactional
+    public void clearCart(Long userId) {
+        List<CartItem> items = cartItemRepository.findByUserId(userId);
+        cartItemRepository.deleteAll(items);
+    }
+
+    private CartItemResponse toResponse(CartItem item) {
+        Product product = productService.getProductById(item.getProductId());
+
+        BigDecimal currentPrice = product.getPrice();
+        BigDecimal lineTotal = currentPrice.multiply(
+                BigDecimal.valueOf(item.getQuantity())
+        );
+
+        return new CartItemResponse(
+                item.getId(),
+                product.getId(),
+                product.getName(),
+                product.getBrand(),
+                product.getImageUrl(),
+                item.getQuantity(),
+                currentPrice,
+                lineTotal,
+                product.getStockQuantity()
+        );
+    }
+
+    private CartItem getOwnedItem(Long userId, Long itemId) {
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart item not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Cart item not found"));
 
         if (!item.getUserId().equals(userId)) {
-            throw new SecurityException("You cannot modify another customer's cart");
+            throw new SecurityException(
+                    "You cannot modify another customer's cart"
+            );
         }
 
         return item;
@@ -121,24 +166,33 @@ public class CartService {
 
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than zero");
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
         }
     }
 
-    private int availableStock(Product product) {
-        return product.getStockQuantity() == null ? 0 : product.getStockQuantity();
-    }
+    private void validateAvailable(Product product) {
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
 
-    private void validateStock(Product product,
-                               int requestedQuantity,
-                               int stock) {
         if (Boolean.TRUE.equals(product.getOutOfStock()) || stock <= 0) {
-            throw new IllegalStateException(product.getName() + " is out of stock");
-        }
-
-        if (requestedQuantity > stock) {
             throw new IllegalStateException(
-                    "Only " + stock + " units of " + product.getName() + " are available"
+                    product.getName() + " is out of stock"
+            );
+        }
+    }
+
+    private void validateStock(Product product, int quantity) {
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if (quantity > stock) {
+            throw new IllegalStateException(
+                    "Only " + stock + " units of "
+                            + product.getName() + " are available"
             );
         }
     }
