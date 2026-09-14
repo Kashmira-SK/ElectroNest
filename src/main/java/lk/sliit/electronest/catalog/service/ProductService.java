@@ -2,6 +2,9 @@ package lk.sliit.electronest.catalog.service;
 
 import lk.sliit.electronest.catalog.model.Product;
 import lk.sliit.electronest.catalog.repository.ProductRepository;
+import lk.sliit.electronest.vendor.model.Vendor;
+import lk.sliit.electronest.vendor.model.VendorStatus;
+import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +17,17 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private VendorRepository vendorRepository;
+
     public Product createProduct(Product product) {
+        Vendor vendor = vendorRepository.findById(product.getVendorId())
+                .orElseThrow(() -> new RuntimeException("Vendor not found with id: " + product.getVendorId()));
+
+        if (vendor.getStatus() != VendorStatus.APPROVED) {
+            throw new RuntimeException("Only approved vendors can create product listings");
+        }
+
         product.setOutOfStock(product.getStockQuantity() == null || product.getStockQuantity() <= 0);
         return productRepository.save(product);
     }
@@ -30,6 +43,12 @@ public class ProductService {
 
     public Product updateProduct(Long id, Product updatedProduct) {
         Product existing = getProductById(id);
+
+        // Ensure the vendor updating is still the owner and still approved
+        if (!existing.getVendorId().equals(updatedProduct.getVendorId())) {
+            throw new RuntimeException("Cannot transfer a product to a different vendor");
+        }
+
         existing.setName(updatedProduct.getName());
         existing.setBrand(updatedProduct.getBrand());
         existing.setCategory(updatedProduct.getCategory());
@@ -38,6 +57,7 @@ public class ProductService {
         existing.setStockQuantity(updatedProduct.getStockQuantity());
         existing.setImageUrl(updatedProduct.getImageUrl());
         existing.setOutOfStock(updatedProduct.getStockQuantity() == null || updatedProduct.getStockQuantity() <= 0);
+
         return productRepository.save(existing);
     }
 
