@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Products - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/login}">Account</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Marketplace</p>
+            <h1>Explore electronics</h1>
+            <p class="en-muted">
+                Browse products from vendors across the marketplace.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-catalog-tools">
+        <input id="productSearch"
+               type="search"
+               placeholder="Search products, brands or categories">
+
+        <select id="categoryFilter">
+            <option value="">All categories</option>
+        </select>
+    </div>
+
+    <div class="en-card en-empty"
+         th:if="${#lists.isEmpty(products)}">
+        No products are available yet.
+    </div>
+
+    <section class="en-product-grid"
+             id="productGrid"
+             th:unless="${#lists.isEmpty(products)}">
+
+        <article class="en-product-card"
+                 th:each="product : ${products}"
+                 th:attr="data-name=${#strings.toLowerCase(product.name)},
+                          data-brand=${#strings.toLowerCase(product.brand)},
+                          data-category=${#strings.toLowerCase(product.category)}">
+
+            <div class="en-product-image">
+                <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                     th:src="${product.imageUrl}"
+                     th:alt="${product.name}">
+
+                <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
+                    No image
+                </span>
+            </div>
+
+            <div class="en-product-body">
+                <p class="en-eyebrow" th:text="${product.category}">
+                    Category
+                </p>
+
+                <h3 th:text="${product.name}">
+                    Product Name
+                </h3>
+
+                <p class="en-muted" th:text="${product.brand}">
+                    Brand
+                </p>
+
+                <p class="en-product-description"
+                   th:if="${product.description != null}"
+                   th:text="${product.description}">
+                    Description
+                </p>
+
+                <div class="en-product-footer">
+                    <strong class="en-price">
+                        Rs.
+                        <span th:text="${#numbers.formatDecimal(product.price, 1, 2)}">
+                            0.00
+                        </span>
+                    </strong>
+
+                    <span class="en-status en-status-active"
+                          th:if="${!product.outOfStock}">
+                        In stock
+                    </span>
+
+                    <span class="en-status en-status-suspended"
+                          th:if="${product.outOfStock}">
+                        Out of stock
+                    </span>
+                </div>
+            </div>
+
+        </article>
+
+    </section>
+
+</main>
+
+<script>
+const search = document.getElementById('productSearch');
+const categoryFilter = document.getElementById('categoryFilter');
+const cards = [...document.querySelectorAll('.en-product-card')];
+
+const categories = [...new Set(
+    cards.map(card => card.dataset.category).filter(Boolean)
+)].sort();
+
+for (const category of categories) {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category.replace(/\b\w/g, c => c.toUpperCase());
+    categoryFilter.appendChild(option);
+}
+
+function filterProducts() {
+    const query = search.value.trim().toLowerCase();
+    const category = categoryFilter.value;
+
+    for (const card of cards) {
+        const text = [
+            card.dataset.name,
+            card.dataset.brand,
+            card.dataset.category
+        ].join(' ');
+
+        const matchesSearch = !query || text.includes(query);
+        const matchesCategory =
+            !category || card.dataset.category === category;
+
+        card.hidden = !(matchesSearch && matchesCategory);
+    }
+}
+
+search.addEventListener('input', filterProducts);
+categoryFilter.addEventListener('change', filterProducts);
+</script>
+
+</body>
+</html>
