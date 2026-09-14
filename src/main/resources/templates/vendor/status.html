@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Status - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell">
+    <p class="en-eyebrow">ElectroNest / Seller</p>
+    <h1>Vendor application status</h1>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
+    <div class="en-card">
+        <h2 th:text="${vendor.businessName}">Business Name</h2>
+
+        <p class="en-meta">
+            <strong>Registration number:</strong>
+            <span th:text="${vendor.registrationNumber}"></span>
+        </p>
+
+        <p class="en-meta">
+            <strong>Address:</strong>
+            <span th:text="${vendor.businessAddress}"></span>
+        </p>
+
+        <p class="en-meta">
+            <strong>Phone:</strong>
+            <span th:text="${vendor.contactPhone}"></span>
+        </p>
+
+        <p class="en-meta">
+            <strong>Status:</strong>
+            <span class="en-status" th:text="${vendor.status}"></span>
+        </p>
+
+        <div th:if="${vendor.status.name() == 'PENDING'}">
+            <p class="en-muted">
+                Your application is waiting for administrator review.
+            </p>
+        </div>
+
+        <div th:if="${vendor.status.name() == 'APPROVED'}">
+            <div class="en-alert en-alert-success">
+                Your vendor account has been approved.
+            </div>
+
+            <a th:href="@{/vendor/profile}"
+               class="en-btn en-btn-primary">
+                Edit vendor profile
+            </a>
+        </div>
+
+        <div th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
+            <div class="en-alert en-alert-error">
+                <strong>More information is required.</strong>
+                <p th:text="${vendor.rejectionReason}"></p>
+            </div>
+
+            <a th:href="@{/vendor/profile}"
+               class="en-btn en-btn-primary">
+                Update requested information
+            </a>
+        </div>
+
+        <div th:if="${vendor.status.name() == 'REJECTED'}">
+            <div class="en-alert en-alert-error">
+                <strong>Your application was rejected.</strong>
+                <p th:if="${vendor.rejectionReason != null}"
+                   th:text="${vendor.rejectionReason}"></p>
+            </div>
+        </div>
+
+        <div th:if="${vendor.status.name() == 'SUSPENDED'}">
+            <div class="en-alert en-alert-error">
+                Your vendor account is currently suspended.
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
