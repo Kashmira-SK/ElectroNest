@@ -1,7 +1,7 @@
 package lk.sliit.electronest.search.service;
 
 import lk.sliit.electronest.catalog.model.Product;
-import lk.sliit.electronest.search.repository.ProductRepository;
+import lk.sliit.electronest.search.repository.ProductSearchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class ProductSearchService {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductSearchRepository productRepository;
 
     public Page<Product> search(String keyword, String category, String brand,
                                 BigDecimal minPrice, BigDecimal maxPrice,
