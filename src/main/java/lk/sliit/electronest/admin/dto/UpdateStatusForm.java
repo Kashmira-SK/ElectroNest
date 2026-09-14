@@ -1,6 +1,6 @@
-package lk.sliit.electronest.admin.dto;
+package com.electronest.admin.dto;
 
-import lk.sliit.electronest.common.model.AccountStatus;
+import com.electronest.admin.entity.AccountStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

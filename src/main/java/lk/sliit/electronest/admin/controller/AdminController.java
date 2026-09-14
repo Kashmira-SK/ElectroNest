@@ -2,8 +2,7 @@ package lk.sliit.electronest.admin.controller;
 
 import lk.sliit.electronest.admin.dto.UpdateRoleForm;
 import lk.sliit.electronest.admin.dto.UpdateStatusForm;
-import lk.sliit.electronest.common.model.User;
-import lk.sliit.electronest.common.security.CustomUserDetails;
+import lk.sliit.electronest.admin.entity.User;
 import lk.sliit.electronest.admin.service.ReportService;
 import lk.sliit.electronest.admin.service.UserService;
 import jakarta.validation.Valid;
@@ -27,10 +26,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final UserService userService;
     private final ReportService reportService;
+    private final UserService userService;
 
-    // GET /admin/dashboard - the analytics summary cards
+    // GET /admin/dashboard - main dashboard page with summary metrics
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         model.addAttribute("summary", reportService.getDashboardSummary());
@@ -57,6 +56,7 @@ public class AdminController {
             roleForm.setNewRole(user.getRole());
             model.addAttribute("updateRoleForm", roleForm);
         }
+
         if (!model.containsAttribute("updateStatusForm")) {
             UpdateStatusForm statusForm = new UpdateStatusForm();
             statusForm.setNewStatus(user.getStatus());
@@ -66,13 +66,13 @@ public class AdminController {
         return "admin/user-detail";
     }
 
-    // POST /admin/users/{id}/role - RBAC role assignment
+    // POST /admin/users/{id}/role - change role with audit log
     @PostMapping("/users/{id}/role")
-    public String updateRole(@PathVariable Long id,
-                              @Valid @ModelAttribute("updateRoleForm") UpdateRoleForm form,
-                              BindingResult bindingResult,
-                              @AuthenticationPrincipal CustomUserDetails currentAdmin,
-                              RedirectAttributes redirectAttributes) {
+    public String updateRole(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("updateRoleForm") UpdateRoleForm form,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.updateRoleForm", bindingResult);
@@ -80,18 +80,23 @@ public class AdminController {
             return "redirect:/admin/users/" + id;
         }
 
-        userService.updateRole(id, form, currentAdmin.getUser());
-        redirectAttributes.addFlashAttribute("successMessage", "Role updated successfully.");
+        try {
+            userService.updateUserRole(id, form.getNewRole(), form.getReason());
+            redirectAttributes.addFlashAttribute("successMessage", "User role updated successfully.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
         return "redirect:/admin/users/" + id;
     }
 
-    // POST /admin/users/{id}/status - activate / deactivate / suspend
+    // POST /admin/users/{id}/status - activate, suspend, or block user
     @PostMapping("/users/{id}/status")
-    public String updateStatus(@PathVariable Long id,
-                                @Valid @ModelAttribute("updateStatusForm") UpdateStatusForm form,
-                                BindingResult bindingResult,
-                                @AuthenticationPrincipal CustomUserDetails currentAdmin,
-                                RedirectAttributes redirectAttributes) {
+    public String updateStatus(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("updateStatusForm") UpdateStatusForm form,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.updateStatusForm", bindingResult);
@@ -99,25 +104,13 @@ public class AdminController {
             return "redirect:/admin/users/" + id;
         }
 
-        userService.updateStatus(id, form, currentAdmin.getUser());
-        redirectAttributes.addFlashAttribute("successMessage", "Account status updated successfully.");
+        try {
+            userService.updateUserStatus(id, form.getNewStatus(), form.getReason());
+            redirectAttributes.addFlashAttribute("successMessage", "User status updated successfully.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
         return "redirect:/admin/users/" + id;
-    }
-
-    // POST /admin/users/{id}/delete - deactivate (soft delete, see UserService)
-    @PostMapping("/users/{id}/delete")
-    public String deactivateUser(@PathVariable Long id,
-                                  @AuthenticationPrincipal CustomUserDetails currentAdmin,
-                                  RedirectAttributes redirectAttributes) {
-        userService.deactivateUser(id, currentAdmin.getUser());
-        redirectAttributes.addFlashAttribute("successMessage", "Account deactivated.");
-        return "redirect:/admin/users";
-    }
-
-    // GET /admin/audit-logs - full role/status change history
-    @GetMapping("/audit-logs")
-    public String auditLogs(Model model) {
-        model.addAttribute("auditLogs", userService.getAllAuditLogs());
-        return "admin/audit-logs";
     }
 }

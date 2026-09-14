@@ -1,30 +1,38 @@
-package lk.sliit.electronest.admin.service;
+package com.electronest.admin.service;
 
-import lk.sliit.electronest.admin.dto.DashboardSummary;
-import lk.sliit.electronest.common.model.AccountStatus;
-import lk.sliit.electronest.common.model.Role;
-import lk.sliit.electronest.common.repository.UserRepository;
+import com.electronest.admin.dto.DashboardSummary;
+import com.electronest.admin.entity.AccountStatus;
+import com.electronest.admin.entity.PaymentStatus;
+import com.electronest.admin.entity.Role;
+import com.electronest.admin.repository.OrderRepository;
+import com.electronest.admin.repository.PaymentRepository;
+import com.electronest.admin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 /**
  * Handles the "Platform Analytics" sub-function - the numbers shown on the
  * Admin Dashboard (Slide 6: "revenue, active vendor, order count, and
  * customer growth reports").
  *
- * User-related counts are fully implemented here since the `users` table
- * belongs to this module. Order-count and revenue are wired as placeholders
- * (0) - once Konara's Order module and Peramuna's Payment module are merged
- * into the shared database, inject their repositories here and replace the
- * placeholders with real queries (see the TODOs below).
+ * User-related counts come from this module's own `users` table.
+ * Order count and revenue are now real queries against the orders/payments
+ * tables (see OrderRepository / PaymentRepository) instead of hardcoded
+ * zeros - revenue is the sum of SUCCESSFUL payments only.
  */
 @Service
 @RequiredArgsConstructor
 public class ReportService {
 
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
 
     public DashboardSummary getDashboardSummary() {
+        BigDecimal revenue = paymentRepository.sumAmountByStatus(PaymentStatus.SUCCESSFUL);
+
         return DashboardSummary.builder()
                 .totalUsers(userRepository.count())
                 .totalCustomers(userRepository.countByRole(Role.CUSTOMER))
@@ -33,10 +41,8 @@ public class ReportService {
                 .activeAccounts(userRepository.countByStatus(AccountStatus.ACTIVE))
                 .deactivatedAccounts(userRepository.countByStatus(AccountStatus.DEACTIVATED))
                 .suspendedAccounts(userRepository.countByStatus(AccountStatus.SUSPENDED))
-                // TODO: replace with orderRepository.count() once Order module is merged
-                .totalOrders(0)
-                // TODO: replace with paymentRepository.sumSuccessfulPayments() once Payment module is merged
-                .totalRevenue(0.0)
+                .totalOrders(orderRepository.count())
+                .totalRevenue(revenue != null ? revenue.doubleValue() : 0.0)
                 .build();
     }
 }

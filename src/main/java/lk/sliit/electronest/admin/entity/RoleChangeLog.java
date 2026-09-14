@@ -1,4 +1,4 @@
-package lk.sliit.electronest.admin.entity;
+package com.electronest.admin.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
