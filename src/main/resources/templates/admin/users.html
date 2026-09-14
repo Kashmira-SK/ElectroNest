@@ -6,7 +6,7 @@
     <title>User Management - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
-<body>
+<body class="en-admin-page">
 
 <header class="en-navbar">
     <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
@@ -15,6 +15,7 @@
         <a th:href="@{/admin/dashboard}">Dashboard</a>
         <a th:href="@{/admin/users}">Users</a>
         <a th:href="@{/vendor/queue}">Vendor Queue</a>
+        <a th:href="@{/vendor/manage}">Vendors</a>
         <a th:href="@{/admin/audit-logs}">Audit Log</a>
     </nav>
 </header>
