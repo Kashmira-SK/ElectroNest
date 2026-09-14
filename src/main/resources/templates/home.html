@@ -3,77 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ElectroNest</title>
+    <title>ElectroNest — Verified Tech Marketplace</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
-<body>
+<body class="en-home">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/login}">Log in</a>
-        <a th:href="@{/register}" class="en-btn en-btn-primary en-btn-auto">
-            Create account
+<header class="en-site-header">
+    <div class="en-navbar">
+        <a th:href="@{/}" class="en-brand en-brand-light">
+            <span class="en-brand-mark"></span>
+            ElectroNest
         </a>
-    </nav>
+
+        <nav class="en-nav-center">
+            <a th:href="@{/products}">Shop</a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}"
+               th:href="@{/cart}">Cart</a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}"
+               th:href="@{/orders}">Orders</a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'VENDOR'}"
+               th:href="@{/vendor/products}">Seller Hub</a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN'}"
+               th:href="@{/admin}">Admin</a>
+        </nav>
+
+        <div class="en-nav-account">
+            <th:block th:unless="${loggedIn}">
+                <a th:href="@{/login}" class="en-nav-login">Log in</a>
+
+                <a th:href="@{/register}"
+                   class="en-btn en-btn-electric en-btn-auto">
+                    Join ElectroNest
+                </a>
+            </th:block>
+
+            <th:block th:if="${loggedIn}">
+                <div class="en-user-chip">
+                    <span class="en-user-dot"></span>
+
+                    <div>
+                        <strong th:text="${currentUser.fullName}">
+                            Account
+                        </strong>
+                        <small th:text="${currentUser.role}">
+                            CUSTOMER
+                        </small>
+                    </div>
+                </div>
+
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit"
+                            class="en-nav-logout">
+                        Log out
+                    </button>
+                </form>
+            </th:block>
+        </div>
+    </div>
 </header>
 
-<main class="en-page">
-    <section class="en-hero">
-        <div>
-            <p class="en-eyebrow">Multi-vendor electronics marketplace</p>
-            <h1>Electronics from sellers you can trust.</h1>
+<main>
+    <section class="en-home-hero">
 
-            <p class="en-hero-copy">
-                Discover electronics from verified vendors, manage orders,
-                and shop through one connected marketplace.
-            </p>
+        <div class="en-circuit-grid"></div>
+        <div class="en-hero-glow en-hero-glow-one"></div>
+        <div class="en-hero-glow en-hero-glow-two"></div>
 
-            <div class="en-actions">
-                <a th:href="@{/register}" class="en-btn en-btn-primary en-btn-auto">
-                    Get started
-                </a>
+        <div class="en-home-hero-inner">
 
-                <a th:href="@{/login}" class="en-btn en-btn-secondary">
-                    Log in
-                </a>
+            <div class="en-home-copy">
+                <div class="en-kicker">
+                    <span class="en-kicker-light"></span>
+                    VERIFIED MULTI-VENDOR MARKETPLACE
+                </div>
+
+                <h1>
+                    Tech worth
+                    <span>plugging into.</span>
+                </h1>
+
+                <p>
+                    Shop electronics from approved sellers, compare what matters,
+                    and keep everything from checkout to delivery in one place.
+                </p>
+
+                <div class="en-hero-actions">
+                    <a th:href="@{/products}"
+                       class="en-btn en-btn-electric en-btn-lg">
+                        Browse technology
+                        <span aria-hidden="true">→</span>
+                    </a>
+
+                    <a th:unless="${loggedIn}"
+                       th:href="@{/register}"
+                       class="en-text-link">
+                        Become a seller
+                        <span>↗</span>
+                    </a>
+
+                    <a th:if="${loggedIn and currentUser.role.name() == 'VENDOR'}"
+                       th:href="@{/vendor/products}"
+                       class="en-text-link">
+                        Open seller hub
+                        <span>↗</span>
+                    </a>
+                </div>
+
+                <div class="en-trust-strip">
+                    <div>
+                        <strong>Verified</strong>
+                        <span>seller onboarding</span>
+                    </div>
+
+                    <div>
+                        <strong>Live</strong>
+                        <span>inventory visibility</span>
+                    </div>
+
+                    <div>
+                        <strong>Tracked</strong>
+                        <span>order fulfilment</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="en-card en-feature-card">
-            <p class="en-eyebrow">For customers</p>
-            <h2>Find the right tech</h2>
-            <p class="en-muted">
-                Browse products, compare options, manage your cart and track orders.
-            </p>
+            <div class="en-tech-stage" aria-hidden="true">
+
+                <div class="en-stage-orbit en-stage-orbit-one"></div>
+                <div class="en-stage-orbit en-stage-orbit-two"></div>
+
+                <div class="en-device-card en-device-laptop">
+                    <div class="en-laptop-screen">
+                        <div class="en-screen-topbar">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <div class="en-screen-content">
+                            <div class="en-screen-tag">PERFORMANCE</div>
+                            <div class="en-screen-title"></div>
+                            <div class="en-screen-title short"></div>
+
+                            <div class="en-screen-specs">
+                                <span>RTX</span>
+                                <span>144Hz</span>
+                                <span>1TB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="en-laptop-base"></div>
+                </div>
+
+                <div class="en-device-card en-device-phone">
+                    <div class="en-phone-speaker"></div>
+                    <div class="en-phone-orb"></div>
+                    <div class="en-phone-copy">
+                        <span>OLED</span>
+                        <strong>PRO</strong>
+                    </div>
+                </div>
+
+                <div class="en-floating-chip en-chip-one">
+                    <span class="en-chip-icon">⌁</span>
+                    <div>
+                        <small>CATALOG</small>
+                        <strong>Live stock</strong>
+                    </div>
+                </div>
+
+                <div class="en-floating-chip en-chip-two">
+                    <span class="en-chip-icon">✓</span>
+                    <div>
+                        <small>SELLERS</small>
+                        <strong>Verified</strong>
+                    </div>
+                </div>
+
+                <div class="en-stage-code">
+                    EN / 26<br>
+                    MARKET_01
+                </div>
+            </div>
+
         </div>
     </section>
 
-    <section class="en-grid-3">
-        <article class="en-card">
-            <p class="en-eyebrow">Shop</p>
-            <h3>Product catalog</h3>
-            <p class="en-muted">
-                Explore products from multiple electronics vendors.
-            </p>
-        </article>
+    <section class="en-category-rail">
+        <div class="en-category-track">
+            <a th:href="@{/products}">
+                <span>01</span>
+                Laptops
+            </a>
 
-        <article class="en-card">
-            <p class="en-eyebrow">Sell</p>
-            <h3>Vendor marketplace</h3>
-            <p class="en-muted">
-                Register your business and manage your seller profile.
-            </p>
-        </article>
+            <a th:href="@{/products}">
+                <span>02</span>
+                Smartphones
+            </a>
 
-        <article class="en-card">
-            <p class="en-eyebrow">Manage</p>
-            <h3>One connected platform</h3>
-            <p class="en-muted">
-                Orders, payments and account management in one place.
-            </p>
-        </article>
+            <a th:href="@{/products}">
+                <span>03</span>
+                Audio
+            </a>
+
+            <a th:href="@{/products}">
+                <span>04</span>
+                Components
+            </a>
+
+            <a th:href="@{/products}">
+                <span>05</span>
+                Accessories
+            </a>
+        </div>
+    </section>
+
+    <section class="en-home-section">
+        <div class="en-section-heading">
+            <div>
+                <p class="en-eyebrow">Built around the marketplace</p>
+                <h2>Less friction between finding it and getting it.</h2>
+            </div>
+
+            <a th:href="@{/products}" class="en-arrow-link">
+                Explore catalog
+                <span>→</span>
+            </a>
+        </div>
+
+        <div class="en-home-features">
+            <article>
+                <span class="en-feature-number">01</span>
+                <div class="en-feature-line"></div>
+                <h3>Search with purpose.</h3>
+                <p>
+                    Filter products by brand, category, price and availability
+                    instead of digging through unrelated listings.
+                </p>
+            </article>
+
+            <article>
+                <span class="en-feature-number">02</span>
+                <div class="en-feature-line"></div>
+                <h3>Know who sells it.</h3>
+                <p>
+                    Vendors move through a verification workflow before managing
+                    their marketplace presence.
+                </p>
+            </article>
+
+            <article>
+                <span class="en-feature-number">03</span>
+                <div class="en-feature-line"></div>
+                <h3>Follow the order.</h3>
+                <p>
+                    Keep payment and fulfilment status visible from checkout
+                    through processing and delivery.
+                </p>
+            </article>
+        </div>
     </section>
 </main>
 
