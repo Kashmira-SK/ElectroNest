@@ -1,11 +1,11 @@
-package com.electronest.admin.service;
+package lk.sliit.electronest.admin.service;
 
-import com.electronest.admin.dto.RegisterForm;
-import com.electronest.admin.entity.AccountStatus;
-import com.electronest.admin.entity.Role;
-import com.electronest.admin.entity.User;
-import com.electronest.admin.exception.DuplicateResourceException;
-import com.electronest.admin.repository.UserRepository;
+import lk.sliit.electronest.admin.dto.RegisterForm;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.admin.exception.DuplicateResourceException;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

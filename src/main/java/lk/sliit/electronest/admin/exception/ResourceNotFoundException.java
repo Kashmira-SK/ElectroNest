@@ -1,4 +1,4 @@
-package com.electronest.admin.exception;
+package lk.sliit.electronest.admin.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

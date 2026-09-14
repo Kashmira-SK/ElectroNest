@@ -1,4 +1,4 @@
-package com.electronest.admin.exception;
+package lk.sliit.electronest.admin.exception;
 
 public class DuplicateResourceException extends RuntimeException {
     public DuplicateResourceException(String message) {
