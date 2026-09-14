@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Payment - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/cart}">Cart</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Secure Checkout</p>
+            <h1>Payment</h1>
+            <p class="en-muted">
+                Complete payment for your confirmed order.
+            </p>
+        </div>
+    </div>
+
+    <div class="en-checkout-layout">
+
+        <section class="en-card">
+            <p class="en-eyebrow">Payment method</p>
+            <h2>Card details</h2>
+
+            <div class="en-field">
+                <label>Card holder name</label>
+                <input type="text" placeholder="Name on card">
+            </div>
+
+            <div class="en-field">
+                <label>Card number</label>
+                <input type="text"
+                       inputmode="numeric"
+                       placeholder="1234 5678 9012 3456">
+            </div>
+
+            <div class="en-payment-row">
+                <div class="en-field">
+                    <label>Expiry</label>
+                    <input type="text" placeholder="MM/YY">
+                </div>
+
+                <div class="en-field">
+                    <label>CVV</label>
+                    <input type="password"
+                           inputmode="numeric"
+                           maxlength="4"
+                           placeholder="•••">
+                </div>
+            </div>
+
+            <div class="en-alert en-alert-error">
+                Payment processing will be enabled once the backend is tied to
+                the authenticated customer's order.
+            </div>
+        </section>
+
+        <aside class="en-card en-cart-summary">
+            <p class="en-eyebrow">Order</p>
+            <h2>Payment summary</h2>
+
+            <div class="en-summary-row">
+                <span>Order</span>
+                <strong id="paymentOrder">Pending checkout</strong>
+            </div>
+
+            <div class="en-summary-row en-summary-total">
+                <span>Amount</span>
+                <strong id="paymentAmount">Rs. 0.00</strong>
+            </div>
+
+            <button type="button"
+                    class="en-btn en-btn-primary"
+                    disabled
+                    title="Payment backend integration pending">
+                Pay securely
+            </button>
+        </aside>
+
+    </div>
+
+</main>
+</body>
+</html>

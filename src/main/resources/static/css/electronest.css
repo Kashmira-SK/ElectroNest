@@ -691,3 +691,46 @@ a:hover {
     position: static;
   }
 }
+
+.en-payment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.en-receipt {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px;
+}
+
+.en-receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.en-receipt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 24px 0;
+}
+
+.en-receipt-grid div {
+  display: grid;
+  gap: 5px;
+}
+
+@media (max-width: 600px) {
+  .en-payment-row,
+  .en-receipt-grid {
+    grid-template-columns: 1fr;
+  }
+}

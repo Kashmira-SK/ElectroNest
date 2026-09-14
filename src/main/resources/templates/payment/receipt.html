@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Receipt - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/products}">Products</a>
+        <a th:href="@{/orders}">My Orders</a>
+    </nav>
+</header>
+
+<main class="en-page">
+
+    <div class="en-receipt">
+
+        <div class="en-receipt-header">
+            <div>
+                <p class="en-eyebrow">ElectroNest</p>
+                <h1>Payment receipt</h1>
+            </div>
+
+            <span class="en-status en-status-active">
+                Paid
+            </span>
+        </div>
+
+        <div class="en-receipt-grid">
+            <div>
+                <span class="en-muted">Receipt number</span>
+                <strong>Pending</strong>
+            </div>
+
+            <div>
+                <span class="en-muted">Transaction</span>
+                <strong>Pending</strong>
+            </div>
+
+            <div>
+                <span class="en-muted">Order</span>
+                <strong>Pending</strong>
+            </div>
+
+            <div>
+                <span class="en-muted">Payment method</span>
+                <strong>Pending</strong>
+            </div>
+        </div>
+
+        <div class="en-summary-row en-summary-total">
+            <span>Total paid</span>
+            <strong>Rs. 0.00</strong>
+        </div>
+
+        <p class="en-muted">
+            Receipt information will be populated automatically after the
+            payment backend generates the invoice.
+        </p>
+
+        <div class="en-actions">
+            <a th:href="@{/orders}" class="en-btn en-btn-primary en-btn-auto">
+                View my orders
+            </a>
+
+            <a th:href="@{/products}" class="en-btn en-btn-secondary">
+                Continue shopping
+            </a>
+        </div>
+
+    </div>
+
+</main>
+</body>
+</html>
