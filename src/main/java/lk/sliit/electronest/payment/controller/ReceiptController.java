@@ -1,8 +1,11 @@
 package lk.sliit.electronest.payment.controller;
 
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.payment.model.Receipt;
-import lk.sliit.electronest.payment.service.ReceiptService;
+import lk.sliit.electronest.payment.service.PaymentWorkflowService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,68 +14,81 @@ import java.util.List;
 @RequestMapping("/api/v1/receipts")
 public class ReceiptController {
 
-    private final ReceiptService receiptService;
+    private final PaymentWorkflowService paymentService;
 
-    public ReceiptController(ReceiptService receiptService) {
-        this.receiptService = receiptService;
+    public ReceiptController(PaymentWorkflowService paymentService) {
+        this.paymentService = paymentService;
     }
 
-    // Create receipt
-    @PostMapping
-    public ResponseEntity<Receipt> createReceipt(
-            @RequestBody Receipt receipt) {
+    @GetMapping("/my-receipts")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<Receipt>> myReceipts(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
-        Receipt savedReceipt = receiptService.createReceipt(receipt);
-
-        return ResponseEntity.ok(savedReceipt);
+        return ResponseEntity.ok(
+                paymentService.myReceipts(currentUser.getUser())
+        );
     }
 
-    // Get receipt by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Receipt> getReceiptById(
-            @PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Receipt> getById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                receiptService.getReceiptById(id)
+                paymentService.getReceiptForViewer(
+                        id,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get receipt by receipt number
     @GetMapping("/number/{receiptNumber}")
-    public ResponseEntity<Receipt> getReceiptByReceiptNumber(
-            @PathVariable String receiptNumber) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Receipt> getByNumber(
+            @PathVariable String receiptNumber,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                receiptService.getReceiptByReceiptNumber(receiptNumber)
+                paymentService.getReceiptByNumberForViewer(
+                        receiptNumber,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get receipt by payment ID
     @GetMapping("/payment/{paymentId}")
-    public ResponseEntity<Receipt> getReceiptByPaymentId(
-            @PathVariable Long paymentId) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Receipt> getByPayment(
+            @PathVariable Long paymentId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                receiptService.getReceiptByPaymentId(paymentId)
+                paymentService.getReceiptByPaymentForViewer(
+                        paymentId,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get receipt by transaction ID
     @GetMapping("/transaction/{transactionId}")
-    public ResponseEntity<Receipt> getReceiptByTransactionId(
-            @PathVariable String transactionId) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Receipt> getByTransaction(
+            @PathVariable String transactionId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                receiptService.getReceiptByTransactionId(transactionId)
+                paymentService.getReceiptByTransactionForViewer(
+                        transactionId,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get all receipts
     @GetMapping
-    public ResponseEntity<List<Receipt>> getAllReceipts() {
-
-        return ResponseEntity.ok(
-                receiptService.getAllReceipts()
-        );
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Receipt>> getAll() {
+        return ResponseEntity.ok(paymentService.allReceipts());
     }
 }

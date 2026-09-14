@@ -1,10 +1,13 @@
 package lk.sliit.electronest.payment.controller;
 
+import lk.sliit.electronest.common.security.CustomUserDetails;
 import lk.sliit.electronest.payment.model.Payment;
 import lk.sliit.electronest.payment.model.PaymentRequest;
 import lk.sliit.electronest.payment.model.PaymentStatus;
-import lk.sliit.electronest.payment.service.PaymentService;
+import lk.sliit.electronest.payment.service.PaymentWorkflowService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,65 +16,85 @@ import java.util.List;
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final PaymentWorkflowService paymentService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentWorkflowService paymentService) {
         this.paymentService = paymentService;
     }
 
-    // Create / process a payment
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<Payment> processPayment(
-            @RequestBody PaymentRequest request) {
+            @RequestBody PaymentRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
-        Payment savedPayment = paymentService.processPayment(request);
-
-        return ResponseEntity.ok(savedPayment);
+        return ResponseEntity.ok(
+                paymentService.processPayment(request, currentUser.getUser())
+        );
     }
 
-    // Get payment by ID
+    @GetMapping("/my-payments")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<Payment>> myPayments(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        return ResponseEntity.ok(
+                paymentService.myPayments(currentUser.getUser())
+        );
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Payment> getPaymentById(
-            @PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Payment> getPayment(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                paymentService.getPaymentById(id)
+                paymentService.getPaymentForViewer(id, currentUser.getUser())
         );
     }
 
-    // Get payment by transaction ID
     @GetMapping("/transaction/{transactionId}")
-    public ResponseEntity<Payment> getPaymentByTransactionId(
-            @PathVariable String transactionId) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Payment> getByTransaction(
+            @PathVariable String transactionId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                paymentService.getPaymentByTransactionId(transactionId)
+                paymentService.getByTransactionForViewer(
+                        transactionId,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get payments by order ID
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<Payment>> getPaymentsByOrderId(
-            @PathVariable Long orderId) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<List<Payment>> getByOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                paymentService.getPaymentsByOrderId(orderId)
+                paymentService.getOrderPaymentsForViewer(
+                        orderId,
+                        currentUser.getUser()
+                )
         );
     }
 
-    // Get payments by customer ID
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<Payment>> getPaymentsByCustomerId(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Payment>> getByCustomer(
             @PathVariable Long customerId) {
 
         return ResponseEntity.ok(
-                paymentService.getPaymentsByCustomerId(customerId)
+                paymentService.getCustomerPayments(customerId)
         );
     }
 
-    // Get all payments, optionally filtered by status
     @GetMapping
-    public ResponseEntity<List<Payment>> getAllPayments(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Payment>> getAll(
             @RequestParam(required = false) PaymentStatus status) {
 
         return ResponseEntity.ok(
@@ -79,34 +102,31 @@ public class PaymentController {
         );
     }
 
-    // Update payment status
     @PutMapping("/{id}/status")
-    public ResponseEntity<Payment> updatePaymentStatus(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Payment> updateStatus(
             @PathVariable Long id,
             @RequestParam PaymentStatus status) {
 
         return ResponseEntity.ok(
-                paymentService.updatePaymentStatus(id, status)
+                paymentService.updateStatus(id, status)
         );
     }
 
-    // Cancel payment
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelPayment(
-            @PathVariable Long id) {
-
-        paymentService.cancelPayment(id);
-
-        return ResponseEntity.ok().build();
-    }
-
-    // Refund payment
-    @PutMapping("/{id}/refund")
-    public ResponseEntity<Payment> processRefund(
-            @PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
+    public ResponseEntity<Payment> cancel(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         return ResponseEntity.ok(
-                paymentService.processRefund(id)
+                paymentService.cancel(id, currentUser.getUser())
         );
+    }
+
+    @PutMapping("/{id}/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Payment> refund(@PathVariable Long id) {
+        return ResponseEntity.ok(paymentService.refund(id));
     }
 }
