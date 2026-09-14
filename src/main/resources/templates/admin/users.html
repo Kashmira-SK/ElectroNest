@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Management - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
+
+    <nav class="en-admin-nav">
+        <a th:href="@{/admin/dashboard}">Dashboard</a>
+        <a th:href="@{/admin/users}">Users</a>
+        <a th:href="@{/vendor/queue}">Vendor Queue</a>
+        <a th:href="@{/admin/audit-logs}">Audit Log</a>
+    </nav>
+</header>
+
+<main class="en-admin-shell">
+
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Account Management</p>
+            <h1>Users</h1>
+            <p class="en-muted">Search and manage ElectroNest accounts.</p>
+        </div>
+    </div>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <form class="en-search" th:action="@{/admin/users}" method="get">
+        <input type="search"
+               name="keyword"
+               th:value="${keyword}"
+               placeholder="Search by name or email">
+
+        <button class="en-btn en-btn-primary en-btn-auto" type="submit">
+            Search
+        </button>
+
+        <a th:if="${keyword != null and !keyword.isBlank()}"
+           th:href="@{/admin/users}"
+           class="en-btn en-btn-secondary">
+            Clear
+        </a>
+    </form>
+
+    <div class="en-card en-empty" th:if="${#lists.isEmpty(users)}">
+        No users found.
+    </div>
+
+    <div class="en-table-wrap" th:unless="${#lists.isEmpty(users)}">
+        <table class="en-table">
+            <thead>
+            <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Contact</th>
+                <th></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="user : ${users}">
+                <td>
+                    <strong th:text="${user.fullName}">Name</strong>
+                    <div class="en-muted" th:text="${user.email}">
+                        email@example.com
+                    </div>
+                </td>
+
+                <td th:text="${user.role}">CUSTOMER</td>
+
+                <td>
+                    <span class="en-status"
+                          th:classappend="' en-status-' + ${#strings.toLowerCase(user.status.name())}"
+                          th:text="${user.status}">
+                        ACTIVE
+                    </span>
+                </td>
+
+                <td th:text="${user.contactNumber != null ? user.contactNumber : '—'}">
+                    —
+                </td>
+
+                <td>
+                    <a th:href="@{/admin/users/{id}(id=${user.id})}"
+                       class="en-btn en-btn-secondary en-btn-sm">
+                        Manage
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+</body>
+</html>
