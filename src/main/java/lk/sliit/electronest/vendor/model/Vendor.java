@@ -1,6 +1,8 @@
 package lk.sliit.electronest.vendor.model;
 
 import jakarta.persistence.*;
+import lk.sliit.electronest.common.model.User;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,9 +13,9 @@ public class Vendor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // References common.User once it exists — plain ID for now, no hard dependency
-    @Column(nullable = false, unique = true)
-    private Long userId;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
     @Column(nullable = false)
     private String businessName;
@@ -55,8 +57,8 @@ public class Vendor {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public String getBusinessName() { return businessName; }
     public void setBusinessName(String businessName) { this.businessName = businessName; }

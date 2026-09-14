@@ -1,11 +1,14 @@
 package lk.sliit.electronest.vendor.service;
 
+import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.repository.UserRepository;
 import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorReviewReasonException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorStatusTransitionException;
 import lk.sliit.electronest.vendor.exception.VendorNotFoundException;
 import lk.sliit.electronest.vendor.model.Vendor;
 import lk.sliit.electronest.vendor.model.VendorStatus;
+import lk.sliit.electronest.vendor.model.dto.VendorProfileUpdateRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.springframework.stereotype.Service;
@@ -18,14 +21,26 @@ import java.util.Locale;
 public class VendorService {
 
     private final VendorRepository vendorRepository;
+    private final UserRepository userRepository;
 
-    public VendorService(VendorRepository vendorRepository) {
+    public VendorService(
+            VendorRepository vendorRepository,
+            UserRepository userRepository) {
         this.vendorRepository = vendorRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
-        if (vendorRepository.existsByUserId(userId)) {
+        return registerVendor(userId, request, null);
+    }
+
+    @Transactional
+    public Vendor registerVendor(
+            Long userId,
+            VendorRegistrationRequest request,
+            String documentPath) {
+        if (vendorRepository.existsByUser_Id(userId)) {
             throw new DuplicateVendorApplicationException(
                     "You already have a vendor application"
             );
@@ -40,18 +55,26 @@ public class VendorService {
             );
         }
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
         Vendor vendor = new Vendor();
-        vendor.setUserId(userId);
+        vendor.setUser(user);
         vendor.setBusinessName(request.getBusinessName().trim());
         vendor.setRegistrationNumber(registrationNumber);
         vendor.setBusinessAddress(request.getBusinessAddress().trim());
         vendor.setContactPhone(request.getContactPhone().trim());
+        vendor.setIdDocumentPath(documentPath);
         vendor.setStatus(VendorStatus.PENDING);
         return vendorRepository.save(vendor);
     }
 
     public List<Vendor> getVerificationQueue() {
         return vendorRepository.findByStatus(VendorStatus.PENDING);
+    }
+
+    public List<Vendor> getAllVendors() {
+        return vendorRepository.findAll();
     }
 
     public Vendor approveVendor(Long id) {
@@ -102,10 +125,33 @@ public class VendorService {
     }
 
     public Vendor getVendorForUser(Long userId) {
-        return vendorRepository.findByUserId(userId)
+        return vendorRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new VendorNotFoundException(
                         "Vendor application not found for the current user"
                 ));
+    }
+
+    @Transactional
+    public Vendor updateVendorDetails(Long userId, VendorProfileUpdateRequest request) {
+        Vendor vendor = getVendorForUser(userId);
+
+        if (vendor.getStatus() != VendorStatus.APPROVED
+                && vendor.getStatus() != VendorStatus.INFO_REQUESTED) {
+            throw new InvalidVendorStatusTransitionException(
+                    "Vendor details can only be edited after approval or when more information is requested"
+            );
+        }
+
+        vendor.setBusinessName(request.getBusinessName().trim());
+        vendor.setBusinessAddress(request.getBusinessAddress().trim());
+        vendor.setContactPhone(request.getContactPhone().trim());
+
+        if (vendor.getStatus() == VendorStatus.INFO_REQUESTED) {
+            vendor.setStatus(VendorStatus.PENDING);
+            vendor.setRejectionReason(null);
+        }
+
+        return vendorRepository.save(vendor);
     }
 
     private void requireStatus(Vendor vendor, VendorStatus requiredStatus, String action) {
