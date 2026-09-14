@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header class="en-navbar">
+    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+
+    <nav class="en-nav-links">
+        <a th:href="@{/login}">Log in</a>
+        <a th:href="@{/register}" class="en-btn en-btn-primary en-btn-auto">
+            Create account
+        </a>
+    </nav>
+</header>
+
+<main class="en-page">
+    <section class="en-hero">
+        <div>
+            <p class="en-eyebrow">Multi-vendor electronics marketplace</p>
+            <h1>Electronics from sellers you can trust.</h1>
+
+            <p class="en-hero-copy">
+                Discover electronics from verified vendors, manage orders,
+                and shop through one connected marketplace.
+            </p>
+
+            <div class="en-actions">
+                <a th:href="@{/register}" class="en-btn en-btn-primary en-btn-auto">
+                    Get started
+                </a>
+
+                <a th:href="@{/login}" class="en-btn en-btn-secondary">
+                    Log in
+                </a>
+            </div>
+        </div>
+
+        <div class="en-card en-feature-card">
+            <p class="en-eyebrow">For customers</p>
+            <h2>Find the right tech</h2>
+            <p class="en-muted">
+                Browse products, compare options, manage your cart and track orders.
+            </p>
+        </div>
+    </section>
+
+    <section class="en-grid-3">
+        <article class="en-card">
+            <p class="en-eyebrow">Shop</p>
+            <h3>Product catalog</h3>
+            <p class="en-muted">
+                Explore products from multiple electronics vendors.
+            </p>
+        </article>
+
+        <article class="en-card">
+            <p class="en-eyebrow">Sell</p>
+            <h3>Vendor marketplace</h3>
+            <p class="en-muted">
+                Register your business and manage your seller profile.
+            </p>
+        </article>
+
+        <article class="en-card">
+            <p class="en-eyebrow">Manage</p>
+            <h3>One connected platform</h3>
+            <p class="en-muted">
+                Orders, payments and account management in one place.
+            </p>
+        </article>
+    </section>
+</main>
+
+</body>
+</html>

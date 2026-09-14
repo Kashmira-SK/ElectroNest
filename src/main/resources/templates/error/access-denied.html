@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Access Denied - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<div class="en-shell en-center">
+    <p class="en-eyebrow">403 / Access denied</p>
+    <h1>You don't have access to this page.</h1>
+    <p class="en-muted">
+        Your account doesn't have permission to open this area.
+    </p>
+
+    <a th:href="@{/}" class="en-btn en-btn-primary en-btn-auto">
+        Back to ElectroNest
+    </a>
+</div>
+</body>
+</html>
