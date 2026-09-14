@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root {
+  --paper: #F7F8F5;
+  --ink: #1B2430;
+  --ink-soft: #4A5568;
+  --line: #DCE1DD;
+  --green: #2F6F4E;
+  --green-soft: #E7F0EA;
+  --copper: #C97A2B;
+  --copper-soft: #FBF0E2;
+  --red: #B23A48;
+  --red-soft: #FBEBEC;
+  --card: #FFFFFF;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+.en-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+
+.en-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin: 0 0 8px;
+}
+
+h1, h2, h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 24px;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 28px; }
+h3 { font-size: 22px; margin-bottom: 20px; }
+
+.en-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin-bottom: 20px;
+}
+
+.en-field { margin-bottom: 18px; }
+
+.en-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.en-field input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  transition: border-color 0.15s ease;
+}
+
+.en-field input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--card);
+}
+
+.en-field-error {
+  color: var(--red);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+.en-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 6px;
+  padding: 11px 20px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.en-btn:hover { opacity: 0.88; }
+.en-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.en-btn-primary { background: var(--green); color: white; width: 100%; }
+.en-btn-approve { background: var(--green-soft); color: var(--green); }
+.en-btn-reject { background: var(--red-soft); color: var(--red); }
+.en-btn-sm { padding: 7px 14px; font-size: 13px; }
+
+.en-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.en-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.en-status-pending { background: var(--copper-soft); color: var(--copper); }
+.en-status-approved { background: var(--green-soft); color: var(--green); }
+.en-status-rejected { background: var(--red-soft); color: var(--red); }
+
+.en-vendor-row {
+  border-left: 3px solid var(--copper);
+  padding: 20px 24px;
+}
+
+.en-vendor-row h3 { font-size: 18px; margin-bottom: 12px; }
+
+.en-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+
+.en-meta strong { color: var(--ink); font-weight: 600; }
+
+.en-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.en-actions input[type="text"] {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.en-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.en-alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.en-alert-error { background: var(--red-soft); color: var(--red); }
+.en-alert-success { background: var(--green-soft); color: var(--green); }
+
+.en-center { text-align: center; }
+.en-muted { color: var(--ink-soft); font-size: 14px; }

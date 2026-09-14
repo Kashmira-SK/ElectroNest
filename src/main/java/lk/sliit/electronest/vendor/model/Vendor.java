@@ -12,7 +12,7 @@ public class Vendor {
     private Long id;
 
     // References common.User once it exists — plain ID for now, no hard dependency
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Long userId;
 
     @Column(nullable = false)
@@ -31,6 +31,7 @@ public class Vendor {
     @Column(nullable = false)
     private VendorStatus status = VendorStatus.PENDING;
 
+    @Column(length = 500)
     private String rejectionReason;
 
     @Column(nullable = false, updatable = false)
