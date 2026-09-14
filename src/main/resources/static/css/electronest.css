@@ -534,3 +534,26 @@ a:hover {
     flex-direction: column;
   }
 }
+
+.en-catalog-tools {
+  flex-wrap: wrap;
+}
+
+.en-catalog-tools input[type="number"],
+.en-catalog-tools input[type="search"] {
+  min-width: 140px;
+}
+
+.en-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.en-filter-check input {
+  min-width: auto;
+}

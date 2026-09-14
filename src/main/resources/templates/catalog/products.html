@@ -24,128 +24,256 @@
             <p class="en-eyebrow">ElectroNest / Marketplace</p>
             <h1>Explore electronics</h1>
             <p class="en-muted">
-                Browse products from vendors across the marketplace.
+                Search and filter products from vendors across the marketplace.
             </p>
         </div>
     </div>
 
     <div class="en-catalog-tools">
-        <input id="productSearch"
+        <input id="keyword"
                type="search"
-               placeholder="Search products, brands or categories">
+               placeholder="Search products">
 
-        <select id="categoryFilter">
-            <option value="">All categories</option>
-        </select>
+        <input id="brand"
+               type="search"
+               placeholder="Brand">
+
+        <input id="category"
+               type="search"
+               placeholder="Category">
+
+        <input id="minPrice"
+               type="number"
+               min="0"
+               step="0.01"
+               placeholder="Min price">
+
+        <input id="maxPrice"
+               type="number"
+               min="0"
+               step="0.01"
+               placeholder="Max price">
+
+        <label class="en-filter-check">
+            <input id="inStockOnly" type="checkbox">
+            In stock only
+        </label>
+
+        <button id="searchButton"
+                class="en-btn en-btn-primary en-btn-auto"
+                type="button">
+            Search
+        </button>
+
+        <button id="clearButton"
+                class="en-btn en-btn-secondary"
+                type="button">
+            Clear
+        </button>
     </div>
 
-    <div class="en-card en-empty"
-         th:if="${#lists.isEmpty(products)}">
-        No products are available yet.
+    <p id="resultCount" class="en-muted"></p>
+
+    <div id="catalogEmpty"
+         class="en-card en-empty"
+         hidden>
+        No products match those filters.
     </div>
 
-    <section class="en-product-grid"
-             id="productGrid"
-             th:unless="${#lists.isEmpty(products)}">
+    <section id="productGrid" class="en-product-grid"></section>
 
-        <article class="en-product-card"
-                 th:each="product : ${products}"
-                 th:attr="data-name=${#strings.toLowerCase(product.name)},
-                          data-brand=${#strings.toLowerCase(product.brand)},
-                          data-category=${#strings.toLowerCase(product.category)}">
+    <div class="en-actions" style="justify-content: center; margin-top: 28px;">
+        <button id="previousPage"
+                type="button"
+                class="en-btn en-btn-secondary"
+                disabled>
+            Previous
+        </button>
 
-            <div class="en-product-image">
-                <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
-                     th:src="${product.imageUrl}"
-                     th:alt="${product.name}">
+        <span id="pageInfo" class="en-muted"></span>
 
-                <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
-                    No image
-                </span>
-            </div>
-
-            <div class="en-product-body">
-                <p class="en-eyebrow" th:text="${product.category}">
-                    Category
-                </p>
-
-                <h3 th:text="${product.name}">
-                    Product Name
-                </h3>
-
-                <p class="en-muted" th:text="${product.brand}">
-                    Brand
-                </p>
-
-                <p class="en-product-description"
-                   th:if="${product.description != null}"
-                   th:text="${product.description}">
-                    Description
-                </p>
-
-                <div class="en-product-footer">
-                    <strong class="en-price">
-                        Rs.
-                        <span th:text="${#numbers.formatDecimal(product.price, 1, 2)}">
-                            0.00
-                        </span>
-                    </strong>
-
-                    <span class="en-status en-status-active"
-                          th:if="${!product.outOfStock}">
-                        In stock
-                    </span>
-
-                    <span class="en-status en-status-suspended"
-                          th:if="${product.outOfStock}">
-                        Out of stock
-                    </span>
-                </div>
-            </div>
-
-        </article>
-
-    </section>
+        <button id="nextPage"
+                type="button"
+                class="en-btn en-btn-secondary"
+                disabled>
+            Next
+        </button>
+    </div>
 
 </main>
 
 <script>
-const search = document.getElementById('productSearch');
-const categoryFilter = document.getElementById('categoryFilter');
-const cards = [...document.querySelectorAll('.en-product-card')];
+const grid = document.getElementById('productGrid');
+const emptyState = document.getElementById('catalogEmpty');
+const resultCount = document.getElementById('resultCount');
+const pageInfo = document.getElementById('pageInfo');
 
-const categories = [...new Set(
-    cards.map(card => card.dataset.category).filter(Boolean)
-)].sort();
+const keyword = document.getElementById('keyword');
+const brand = document.getElementById('brand');
+const category = document.getElementById('category');
+const minPrice = document.getElementById('minPrice');
+const maxPrice = document.getElementById('maxPrice');
+const inStockOnly = document.getElementById('inStockOnly');
 
-for (const category of categories) {
-    const option = document.createElement('option');
-    option.value = category;
-    option.textContent = category.replace(/\b\w/g, c => c.toUpperCase());
-    categoryFilter.appendChild(option);
-}
+const previousButton = document.getElementById('previousPage');
+const nextButton = document.getElementById('nextPage');
 
-function filterProducts() {
-    const query = search.value.trim().toLowerCase();
-    const category = categoryFilter.value;
+let currentPage = 0;
+const pageSize = 12;
 
-    for (const card of cards) {
-        const text = [
-            card.dataset.name,
-            card.dataset.brand,
-            card.dataset.category
-        ].join(' ');
-
-        const matchesSearch = !query || text.includes(query);
-        const matchesCategory =
-            !category || card.dataset.category === category;
-
-        card.hidden = !(matchesSearch && matchesCategory);
+function addParameter(params, name, value) {
+    if (value !== null && value !== undefined && String(value).trim() !== '') {
+        params.set(name, value);
     }
 }
 
-search.addEventListener('input', filterProducts);
-categoryFilter.addEventListener('change', filterProducts);
+function createProductCard(product) {
+    const card = document.createElement('article');
+    card.className = 'en-product-card';
+
+    const image = document.createElement('div');
+    image.className = 'en-product-image';
+
+    if (product.imageUrl) {
+        const img = document.createElement('img');
+        img.src = product.imageUrl;
+        img.alt = product.name;
+        image.appendChild(img);
+    } else {
+        image.textContent = 'No image';
+    }
+
+    const body = document.createElement('div');
+    body.className = 'en-product-body';
+
+    const categoryLabel = document.createElement('p');
+    categoryLabel.className = 'en-eyebrow';
+    categoryLabel.textContent = product.category || 'Electronics';
+
+    const title = document.createElement('h3');
+    title.textContent = product.name;
+
+    const brandLabel = document.createElement('p');
+    brandLabel.className = 'en-muted';
+    brandLabel.textContent = product.brand || '';
+
+    const description = document.createElement('p');
+    description.className = 'en-product-description';
+    description.textContent = product.description || '';
+
+    const footer = document.createElement('div');
+    footer.className = 'en-product-footer';
+
+    const price = document.createElement('strong');
+    price.className = 'en-price';
+    price.textContent =
+        'Rs. ' + Number(product.price || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    const stock = document.createElement('span');
+    stock.className = product.outOfStock
+        ? 'en-status en-status-suspended'
+        : 'en-status en-status-active';
+    stock.textContent = product.outOfStock ? 'Out of stock' : 'In stock';
+
+    footer.append(price, stock);
+    body.append(categoryLabel, title, brandLabel, description, footer);
+    card.append(image, body);
+
+    return card;
+}
+
+async function loadProducts(page = 0) {
+    const params = new URLSearchParams();
+
+    addParameter(params, 'keyword', keyword.value);
+    addParameter(params, 'brand', brand.value);
+    addParameter(params, 'category', category.value);
+    addParameter(params, 'minPrice', minPrice.value);
+    addParameter(params, 'maxPrice', maxPrice.value);
+
+    if (inStockOnly.checked) {
+        params.set('inStockOnly', 'true');
+    }
+
+    params.set('page', page);
+    params.set('size', pageSize);
+
+    try {
+        const response = await fetch('/api/search/products?' + params.toString());
+
+        if (!response.ok) {
+            throw new Error('Could not load products');
+        }
+
+        const data = await response.json();
+
+        grid.replaceChildren();
+
+        for (const product of data.content) {
+            grid.appendChild(createProductCard(product));
+        }
+
+        currentPage = data.number;
+
+        emptyState.hidden = data.content.length !== 0;
+
+        resultCount.textContent =
+            data.totalElements + (data.totalElements === 1 ? ' product found' : ' products found');
+
+        pageInfo.textContent =
+            data.totalPages === 0
+                ? ''
+                : 'Page ' + (data.number + 1) + ' of ' + data.totalPages;
+
+        previousButton.disabled = data.first;
+        nextButton.disabled = data.last || data.totalPages === 0;
+
+    } catch (error) {
+        grid.replaceChildren();
+        emptyState.hidden = false;
+        emptyState.textContent = 'Products could not be loaded right now.';
+        resultCount.textContent = '';
+        pageInfo.textContent = '';
+        previousButton.disabled = true;
+        nextButton.disabled = true;
+    }
+}
+
+document.getElementById('searchButton').addEventListener('click', () => {
+    loadProducts(0);
+});
+
+document.getElementById('clearButton').addEventListener('click', () => {
+    keyword.value = '';
+    brand.value = '';
+    category.value = '';
+    minPrice.value = '';
+    maxPrice.value = '';
+    inStockOnly.checked = false;
+
+    loadProducts(0);
+});
+
+keyword.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        loadProducts(0);
+    }
+});
+
+previousButton.addEventListener('click', () => {
+    if (currentPage > 0) {
+        loadProducts(currentPage - 1);
+    }
+});
+
+nextButton.addEventListener('click', () => {
+    loadProducts(currentPage + 1);
+});
+
+loadProducts();
 </script>
 
 </body>
