@@ -22,6 +22,14 @@
         </div>
     </div>
 
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(orders)}">
         You haven't placed any orders yet.
@@ -31,7 +39,8 @@
          th:unless="${#lists.isEmpty(orders)}">
 
         <article class="en-card en-order-card"
-                 th:each="order : ${orders}">
+                 th:each="view : ${orders}"
+                 th:with="order=${view.order}">
 
             <div class="en-order-heading">
                 <div>
@@ -40,7 +49,7 @@
                         <span th:text="'#' + ${order.id}">#1</span>
                     </p>
 
-                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(order.totalAmount(), 1, 2)}">
+                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(view.displayTotal, 1, 2)}">
                         Rs. 0.00
                     </h3>
                 </div>
@@ -49,6 +58,32 @@
                       th:text="${order.status}">
                     PENDING
                 </span>
+            </div>
+
+            <div class="en-order-details">
+                <section>
+                    <h4>Delivery</h4>
+                    <p th:text="${order.deliveryName}">Customer</p>
+                    <p th:text="${order.deliveryPhone}">Phone</p>
+                    <p>
+                        <span th:text="${order.addressLine1}">Address</span>
+                        <span th:if="${order.addressLine2 != null}" th:text="${', ' + order.addressLine2}"></span>
+                        <span th:text="${', ' + order.city}"></span>
+                        <span th:if="${order.postalCode != null}" th:text="${' ' + order.postalCode}"></span>
+                        <span th:text="${', ' + order.country}"></span>
+                    </p>
+                </section>
+
+                <section>
+                    <h4>Items</h4>
+                    <div class="en-order-item" th:each="item : ${view.items}">
+                        <div>
+                            <strong th:text="${item.productName}">Product</strong>
+                            <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}"></span>
+                        </div>
+                        <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 2)}">Rs. 0.00</strong>
+                    </div>
+                </section>
             </div>
 
             <div class="en-order-meta">
@@ -98,6 +133,24 @@
                  th:if="${order.status.name() == 'CANCELLED'}"
                  style="margin-top: 18px;">
                 This order was cancelled.
+            </div>
+
+            <div class="en-actions"
+                 th:if="${!order.status.isTerminal() and !order.cancellationRequested}">
+                <form th:action="@{/orders/{id}/cancel(id=${order.id})}"
+                      method="post"
+                      onsubmit="return confirm('Cancel this order or request cancellation?')">
+                    <button type="submit" class="en-btn en-btn-reject en-btn-sm"
+                            th:text="${order.status.name() == 'PENDING' ? 'Cancel order' : 'Request cancellation'}">
+                        Cancel order
+                    </button>
+                </form>
+            </div>
+
+            <div class="en-alert en-alert-error"
+                 th:if="${order.cancellationRequested}"
+                 style="margin-top: 18px;">
+                Cancellation has been requested and is awaiting seller action.
             </div>
 
         </article>

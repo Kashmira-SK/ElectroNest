@@ -3311,6 +3311,55 @@ body {
   background: var(--en-blue);
 }
 
+.en-order-details {
+  display: grid;
+  grid-template-columns: minmax(220px, .8fr) minmax(300px, 1.2fr);
+  gap: 24px;
+  padding: 22px 0 4px;
+}
+
+.en-order-details h4 {
+  margin-bottom: 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.en-order-details p {
+  margin: 4px 0;
+  color: var(--en-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.en-order-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 9px 0;
+  border-bottom: 1px solid #eceef1;
+  font-size: 13px;
+}
+
+.en-order-item:last-child {
+  border-bottom: 0;
+}
+
+.en-order-item div {
+  display: grid;
+  gap: 3px;
+}
+
+.en-order-item span {
+  color: var(--en-muted);
+}
+
+@media (max-width: 720px) {
+  .en-order-details {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ----- payment ----- */
 
 .en-payment-row {
