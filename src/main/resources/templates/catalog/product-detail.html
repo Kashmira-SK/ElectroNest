@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${product.name + ' - ElectroNest'}">Product - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-customer-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('products')}"></header>
+
+<main class="en-page en-product-detail">
+    <a th:href="@{/products}" class="en-arrow-link">← Back to shop</a>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
+    <section class="en-product-detail-hero">
+        <div class="en-product-detail-media">
+            <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                 th:src="${product.imageUrl}"
+                 th:alt="${product.name}">
+            <div th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                 class="en-product-fallback">
+                <span>ELECTRONEST</span>
+                <strong th:text="${#strings.substring(product.name, 0, 1)}">E</strong>
+            </div>
+        </div>
+
+        <div class="en-product-detail-copy">
+            <p class="en-eyebrow" th:text="${product.brand + ' / ' + product.category}">Brand / Category</p>
+            <h1 th:text="${product.name}">Product</h1>
+            <p class="en-product-detail-description"
+               th:text="${product.description != null and !product.description.isBlank()
+                    ? product.description
+                    : 'No description is available for this product.'}"></p>
+
+            <div class="en-product-detail-price"
+                 th:text="${'Rs. ' + #numbers.formatDecimal(product.price, 1, 2)}">
+                Rs. 0.00
+            </div>
+
+            <p class="en-stock-line"
+               th:text="${product.stockQuantity > 0
+                    ? product.stockQuantity + ' available'
+                    : 'Out of stock'}"></p>
+
+            <form th:if="${customerAccount and product.stockQuantity > 0 and product.outOfStock != true}"
+                  th:action="@{/cart/add}"
+                  method="post"
+                  class="en-actions">
+                <input type="hidden" name="productId" th:value="${product.id}">
+                <label>
+                    Quantity
+                    <input type="number" name="quantity" value="1" min="1"
+                           th:max="${product.stockQuantity}">
+                </label>
+                <button type="submit" class="en-btn en-btn-primary">Add to cart</button>
+            </form>
+
+            <a th:if="${!loggedIn and product.stockQuantity > 0}"
+               th:href="@{/login}"
+               class="en-btn en-btn-primary en-btn-auto">
+                Log in to add to cart
+            </a>
+
+            <p class="en-muted" th:if="${loggedIn and !customerAccount}">
+                Product purchases require a customer account.
+            </p>
+        </div>
+    </section>
+
+    <section class="en-reviews-section">
+        <div class="en-page-header">
+            <div>
+                <p class="en-eyebrow">Verified feedback</p>
+                <h2>Customer reviews</h2>
+            </div>
+            <div class="en-review-summary">
+                <strong th:text="${reviewCount == 0 ? 'No rating' : #numbers.formatDecimal(averageRating, 1, 1) + ' / 5'}">No rating</strong>
+                <span th:text="${reviewCount + (reviewCount == 1 ? ' review' : ' reviews')}">0 reviews</span>
+            </div>
+        </div>
+
+        <div class="en-card en-review-form" th:if="${reviewEligible}">
+            <h3>Review your purchase</h3>
+            <p class="en-muted">Your delivered order makes this a verified-purchase review.</p>
+            <form th:action="@{/products/{id}/reviews(id=${product.id})}" method="post">
+                <div class="en-field">
+                    <label for="rating">Rating</label>
+                    <select id="rating" name="rating" required>
+                        <option value="">Choose a rating</option>
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Good</option>
+                        <option value="3">3 - Average</option>
+                        <option value="2">2 - Poor</option>
+                        <option value="1">1 - Very poor</option>
+                    </select>
+                </div>
+                <div class="en-field">
+                    <label for="reviewText">Review</label>
+                    <textarea id="reviewText" name="reviewText" maxlength="2000" rows="5"
+                              placeholder="Share your experience with this product."></textarea>
+                </div>
+                <button type="submit" class="en-btn en-btn-primary">Publish review</button>
+            </form>
+        </div>
+
+        <div class="en-alert"
+             th:if="${customerAccount and !reviewEligible and !alreadyReviewed}">
+            You can review this product after an order containing it has been delivered.
+        </div>
+
+        <div class="en-alert" th:if="${!loggedIn}">
+            Log in as a customer to review a delivered purchase.
+        </div>
+
+        <div class="en-card en-empty" th:if="${#lists.isEmpty(reviews)}">
+            No reviews yet. A verified buyer can be the first to share feedback.
+        </div>
+
+        <div class="en-review-list" th:unless="${#lists.isEmpty(reviews)}">
+            <article class="en-card en-review-card" th:each="review : ${reviews}">
+                <div class="en-review-heading">
+                    <div>
+                        <strong th:text="${review.customerName}">Customer</strong>
+                        <span class="en-status en-status-approved" th:if="${review.verified}">Verified purchase</span>
+                    </div>
+                    <strong th:text="${review.rating + ' / 5'}">5 / 5</strong>
+                </div>
+                <p th:if="${review.reviewText != null}" th:text="${review.reviewText}"></p>
+                <small class="en-muted" th:text="${#temporals.format(review.createdAt, 'dd MMM yyyy, HH:mm')}">Date</small>
+
+                <details th:if="${review.ownedByViewer}" class="en-review-edit">
+                    <summary>Edit your review</summary>
+                    <form th:action="@{/products/{productId}/reviews/{reviewId}(productId=${product.id}, reviewId=${review.id})}"
+                          method="post">
+                        <div class="en-field">
+                            <label th:for="${'rating-' + review.id}">Rating</label>
+                            <select th:id="${'rating-' + review.id}" name="rating" required>
+                                <option th:each="score : ${#numbers.sequence(1, 5)}"
+                                        th:value="${score}"
+                                        th:text="${score + ' / 5'}"
+                                        th:selected="${score == review.rating}"></option>
+                            </select>
+                        </div>
+                        <div class="en-field">
+                            <label th:for="${'review-' + review.id}">Review</label>
+                            <textarea th:id="${'review-' + review.id}" name="reviewText"
+                                      maxlength="2000" rows="4"
+                                      th:text="${review.reviewText}"></textarea>
+                        </div>
+                        <div class="en-actions">
+                            <button type="submit" class="en-btn en-btn-primary">Save review</button>
+                        </div>
+                    </form>
+                    <form th:action="@{/products/{productId}/reviews/{reviewId}/delete(productId=${product.id}, reviewId=${review.id})}"
+                          method="post"
+                          onsubmit="return confirm('Delete your review?')">
+                        <button type="submit" class="en-btn en-btn-reject en-btn-sm">Delete review</button>
+                    </form>
+                </details>
+            </article>
+        </div>
+    </section>
+</main>
+
+</body>
+</html>

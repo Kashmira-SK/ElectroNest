@@ -29,6 +29,7 @@ const ui = {
     label: $('resultLabel'),
     empty: $('emptyState'),
     loading: $('loadingState'),
+    error: $('searchError'),
     previous: $('previousPage'),
     next: $('nextPage'),
     pageIndicator: $('pageIndicator')
@@ -186,6 +187,10 @@ function card(product) {
     const title = document.createElement('h2');
     title.textContent = product.name || 'Unnamed product';
 
+    const titleLink = document.createElement('a');
+    titleLink.href = `/products/${product.id}`;
+    titleLink.append(title);
+
     const description = document.createElement('p');
     description.textContent =
         product.description || 'Electronics marketplace listing.';
@@ -250,19 +255,23 @@ function card(product) {
         cartForm.append(addButton);
     }
 
-    const arrow = document.createElement('span');
+    const arrow = document.createElement('a');
     arrow.className = 'en-card-arrow';
-    arrow.textContent = '↗';
+    arrow.href = `/products/${product.id}`;
+    arrow.textContent = 'View details ↗';
 
     footer.append(price, cartForm, arrow);
-    body.append(meta, title, description, footer);
+    body.append(meta, titleLink, description, footer);
     article.append(media, body);
 
     return article;
 }
 
 async function load() {
+    if (!validateFilters()) return;
+
     ui.loading.hidden = false;
+    ui.error.hidden = true;
     ui.empty.hidden = true;
     ui.grid.replaceChildren();
 
@@ -310,6 +319,22 @@ async function load() {
     } finally {
         ui.loading.hidden = true;
     }
+}
+
+function validateFilters() {
+    const minimum = ui.minPrice.value === '' ? null : Number(ui.minPrice.value);
+    const maximum = ui.maxPrice.value === '' ? null : Number(ui.maxPrice.value);
+    let message = '';
+
+    if ((minimum !== null && minimum < 0) || (maximum !== null && maximum < 0)) {
+        message = 'Prices cannot be negative.';
+    } else if (minimum !== null && maximum !== null && minimum > maximum) {
+        message = 'Minimum price cannot exceed maximum price.';
+    }
+
+    ui.error.textContent = message;
+    ui.error.hidden = !message;
+    return !message;
 }
 
 function search() {

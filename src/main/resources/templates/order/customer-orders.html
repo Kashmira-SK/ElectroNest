@@ -80,6 +80,10 @@
                         <div>
                             <strong th:text="${item.productName}">Product</strong>
                             <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}"></span>
+                            <a th:if="${order.status.name() == 'DELIVERED'}"
+                               th:href="@{/products/{id}(id=${item.productId})}">
+                                Review product
+                            </a>
                         </div>
                         <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 2)}">Rs. 0.00</strong>
                     </div>

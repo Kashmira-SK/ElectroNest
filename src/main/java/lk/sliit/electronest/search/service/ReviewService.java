@@ -83,6 +83,12 @@ public class ReviewService {
                     );
                 });
 
+        if (!hasDeliveredPurchase(customer.getId(), productId)) {
+            throw new IllegalStateException(
+                    "You can review this product after a delivered purchase"
+            );
+        }
+
         Review review = new Review();
 
         review.setProductId(productId);
@@ -90,12 +96,27 @@ public class ReviewService {
         review.setRating(request.rating());
         review.setReviewText(clean(request.reviewText()));
         review.setPhotoPath(clean(request.photoPath()));
-        review.setVerified(
-                hasDeliveredPurchase(customer.getId(), productId)
-        );
+        review.setVerified(true);
         review.setStatus("ACTIVE");
 
         return reviewRepository.save(review);
+    }
+
+    public boolean hasReviewed(Long productId, User customer) {
+        return reviewRepository
+                .findByCustomerIdAndProductId(customer.getId(), productId)
+                .isPresent();
+    }
+
+    public boolean isEligibleToReview(Long productId, User customer) {
+        if (customer == null || customer.getRole() != Role.CUSTOMER) {
+            return false;
+        }
+
+        productService.getProductById(productId);
+
+        return !hasReviewed(productId, customer)
+                && hasDeliveredPurchase(customer.getId(), productId);
     }
 
     @Transactional
