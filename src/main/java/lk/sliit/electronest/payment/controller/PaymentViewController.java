@@ -44,6 +44,17 @@ public class PaymentViewController {
                 currentUser.getUser()
         );
 
+        Payment completedPayment = paymentService
+                .findSuccessfulPaymentForOrderForViewer(
+                        orderId,
+                        currentUser.getUser()
+                )
+                .orElse(null);
+
+        if (completedPayment != null) {
+            return "redirect:/receipt?paymentId=" + completedPayment.getId();
+        }
+
         model.addAttribute("order", order);
         model.addAttribute("paymentMethods", PaymentMethod.values());
 

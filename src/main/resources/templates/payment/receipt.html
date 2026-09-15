@@ -65,6 +65,20 @@
             </div>
 
             <div>
+                <span class="en-muted">Customer email</span>
+                <strong th:text="${receipt.customerEmail}">
+                    customer@example.com
+                </strong>
+            </div>
+
+            <div th:if="${receipt.payment.maskedCardNumber != null}">
+                <span class="en-muted">Card</span>
+                <strong th:text="${receipt.payment.maskedCardNumber}">
+                    **** 1234
+                </strong>
+            </div>
+
+            <div>
                 <span class="en-muted">Issued</span>
 
                 <strong th:text="${#temporals.format(

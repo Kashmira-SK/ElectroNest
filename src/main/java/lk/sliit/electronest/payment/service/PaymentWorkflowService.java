@@ -8,6 +8,7 @@ import lk.sliit.electronest.order.model.Order;
 import lk.sliit.electronest.order.model.OrderLineItem;
 import lk.sliit.electronest.order.repository.OrderRepository;
 import lk.sliit.electronest.payment.model.Payment;
+import lk.sliit.electronest.payment.model.PaymentMethod;
 import lk.sliit.electronest.payment.model.PaymentRequest;
 import lk.sliit.electronest.payment.model.PaymentStatus;
 import lk.sliit.electronest.payment.model.Receipt;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -48,6 +50,8 @@ public class PaymentWorkflowService {
         if (request.getPaymentMethod() == null) {
             throw new IllegalArgumentException("Payment method is required");
         }
+
+        validateMethodDetails(request);
 
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new NoSuchElementException("Order not found"));
@@ -96,6 +100,16 @@ public class PaymentWorkflowService {
 
     public List<Payment> myPayments(User customer) {
         return paymentRepository.findByCustomerId(customer.getId());
+    }
+
+    public Optional<Payment> findSuccessfulPaymentForOrderForViewer(
+            Long orderId,
+            User viewer) {
+
+        return paymentRepository.findByOrderId(orderId).stream()
+                .filter(payment -> payment.getPaymentStatus() == PaymentStatus.SUCCESSFUL)
+                .peek(payment -> assertCanView(payment, viewer))
+                .findFirst();
     }
 
     public Payment getPaymentForViewer(Long id, User viewer) {
@@ -312,10 +326,10 @@ public class PaymentWorkflowService {
             return null;
         }
 
-        String digits = cardNumber.replaceAll("\\s+", "");
+        String digits = cardNumber.replaceAll("[\\s-]", "");
 
-        if (digits.length() < 4) {
-            throw new IllegalArgumentException("Invalid card number");
+        if (!digits.matches("\\d{12,19}")) {
+            throw new IllegalArgumentException("Enter a valid card number");
         }
 
         return "**** **** **** " + digits.substring(digits.length() - 4);
@@ -323,5 +337,21 @@ public class PaymentWorkflowService {
 
     private String clean(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void validateMethodDetails(PaymentRequest request) {
+        boolean cardPayment = request.getPaymentMethod() == PaymentMethod.CREDIT_CARD
+                || request.getPaymentMethod() == PaymentMethod.DEBIT_CARD;
+
+        if (!cardPayment) {
+            return;
+        }
+
+        if (request.getCardHolderName() == null
+                || request.getCardHolderName().isBlank()) {
+            throw new IllegalArgumentException("Card holder name is required");
+        }
+
+        maskCard(request.getCardNumber());
     }
 }
