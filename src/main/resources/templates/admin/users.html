@@ -8,17 +8,7 @@
 </head>
 <body class="en-admin-page">
 
-<header class="en-navbar">
-    <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
-
-    <nav class="en-admin-nav">
-        <a th:href="@{/admin/dashboard}">Dashboard</a>
-        <a th:href="@{/admin/users}">Users</a>
-        <a th:href="@{/vendor/queue}">Vendor Queue</a>
-        <a th:href="@{/vendor/manage}">Vendors</a>
-        <a th:href="@{/admin/audit-logs}">Audit Log</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('admin-users')}"></header>
 
 <main class="en-admin-shell">
 
@@ -33,6 +23,10 @@
     <div class="en-alert en-alert-success"
          th:if="${successMessage}"
          th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
 
     <form class="en-search" th:action="@{/admin/users}" method="get">
         <input type="search"

@@ -7,17 +7,7 @@
 </head>
 <body class="en-admin-page en-vendor-page">
 
-<header class="en-navbar">
-    <a href="/admin/dashboard" class="en-brand">ElectroNest Admin</a>
-
-    <nav class="en-admin-nav">
-        <a href="/admin/dashboard">Dashboard</a>
-        <a href="/admin/users">Users</a>
-        <a href="/vendor/queue">Vendor Queue</a>
-        <a href="/vendor/manage">Vendors</a>
-        <a href="/admin/audit-logs">Audit Log</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('admin-vendor-queue')}"></header>
 <div class="en-shell" style="max-width: 780px;">
     <p class="en-eyebrow">ElectroNest / Admin</p>
     <h1>Vendor verification queue</h1>

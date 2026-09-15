@@ -8,17 +8,7 @@
 </head>
 <body class="en-admin-page">
 
-<header class="en-navbar">
-    <a th:href="@{/admin/dashboard}" class="en-brand">ElectroNest Admin</a>
-
-    <nav class="en-admin-nav">
-        <a th:href="@{/admin/dashboard}">Dashboard</a>
-        <a th:href="@{/admin/users}">Users</a>
-        <a th:href="@{/vendor/queue}">Vendor Queue</a>
-        <a th:href="@{/vendor/manage}">Vendors</a>
-        <a th:href="@{/admin/audit-logs}">Audit Log</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('admin-users')}"></header>
 
 <main class="en-admin-shell">
 
@@ -39,6 +29,15 @@
     <div class="en-alert en-alert-success"
          th:if="${successMessage}"
          th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
+    <div class="en-alert"
+         th:if="${targetUser.id == currentUser.id}">
+        Your own administrator role and account status cannot be changed from this session.
+    </div>
 
     <section class="en-grid-3">
 
@@ -76,7 +75,7 @@
             </p>
         </div>
 
-        <div class="en-card">
+        <div class="en-card" th:if="${targetUser.id != currentUser.id}">
             <p class="en-eyebrow">RBAC</p>
             <h3>Change role</h3>
 
@@ -112,7 +111,7 @@
             </form>
         </div>
 
-        <div class="en-card">
+        <div class="en-card" th:if="${targetUser.id != currentUser.id}">
             <p class="en-eyebrow">Governance</p>
             <h3>Account status</h3>
 
@@ -188,7 +187,7 @@
 
             <tbody>
             <tr th:each="log : ${auditLogs}">
-                <td th:text="${log.changedAt}">Date</td>
+                <td th:text="${#temporals.format(log.changedAt, 'dd MMM yyyy, HH:mm')}">Date</td>
 
                 <td>
                     <span th:if="${log.newRole != null}">

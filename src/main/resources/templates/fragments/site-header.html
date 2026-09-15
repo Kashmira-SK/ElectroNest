@@ -57,10 +57,39 @@
                 Vendor Status
             </a>
 
-            <a th:if="${loggedIn
-                    and currentUser.role.name() == 'ADMIN'}"
-               th:href="@{/admin}">
-                Admin
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-dashboard'}"
+               th:href="@{/admin/dashboard}">
+                Dashboard
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-users'}"
+               th:href="@{/admin/users}">
+                Users
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-vendor-queue'}"
+               th:href="@{/vendor/queue}">
+                Vendor Queue
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-vendors'}"
+               th:href="@{/vendor/manage}">
+                Vendors
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-reports'}"
+               th:href="@{/admin/reports}">
+                Reports
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-reviews'}"
+               th:href="@{/admin/reviews}">
+                Reviews
+            </a>
+
+            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-audit'}"
+               th:href="@{/admin/audit-logs}">
+                Audit
             </a>
 
         </nav>

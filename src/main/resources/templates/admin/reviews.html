@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review Moderation - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('admin-reviews')}"></header>
+
+<main class="en-admin-shell">
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Feedback / Moderation</p>
+            <h1>Product reviews</h1>
+            <p class="en-muted">Show or hide customer feedback without deleting its audit-relevant record.</p>
+        </div>
+    </div>
+
+    <div class="en-alert en-alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <div class="en-card en-empty" th:if="${#lists.isEmpty(reviews)}">No reviews have been submitted.</div>
+
+    <div class="en-review-list" th:unless="${#lists.isEmpty(reviews)}">
+        <article class="en-card en-review-card" th:each="view : ${reviews}">
+            <div class="en-review-heading">
+                <div>
+                    <strong th:text="${view.productName}">Product</strong>
+                    <span class="en-status" th:text="${view.review.status}">ACTIVE</span>
+                    <span class="en-status en-status-approved" th:if="${view.review.verified}">Verified</span>
+                </div>
+                <strong th:text="${view.review.rating + ' / 5'}">5 / 5</strong>
+            </div>
+            <p class="en-muted">
+                <span th:text="${view.customerName}">Customer</span>
+                ·
+                <span th:text="${#temporals.format(view.review.createdAt, 'dd MMM yyyy, HH:mm')}">Date</span>
+            </p>
+            <p th:if="${view.review.reviewText != null}" th:text="${view.review.reviewText}"></p>
+
+            <form th:action="@{/admin/reviews/{id}/status(id=${view.review.id})}" method="post">
+                <input type="hidden" name="status"
+                       th:value="${view.review.status == 'ACTIVE' ? 'HIDDEN' : 'ACTIVE'}">
+                <button type="submit" class="en-btn en-btn-secondary en-btn-auto"
+                        th:text="${view.review.status == 'ACTIVE' ? 'Hide review' : 'Restore review'}">
+                    Hide review
+                </button>
+            </form>
+        </article>
+    </div>
+</main>
+</body>
+</html>

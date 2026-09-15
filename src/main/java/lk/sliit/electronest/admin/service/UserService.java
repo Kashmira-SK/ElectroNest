@@ -60,6 +60,7 @@ public class UserService {
 
     @Transactional
     public void updateRole(Long targetUserId, UpdateRoleForm form, User performingAdmin) {
+        preventSelfChange(targetUserId, performingAdmin);
         User user = findUserOrThrow(targetUserId);
         String previousRole = user.getRole().name();
 
@@ -81,6 +82,7 @@ public class UserService {
 
     @Transactional
     public void updateStatus(Long targetUserId, UpdateStatusForm form, User performingAdmin) {
+        preventSelfChange(targetUserId, performingAdmin);
         User user = findUserOrThrow(targetUserId);
         String previousStatus = user.getStatus().name();
 
@@ -108,6 +110,7 @@ public class UserService {
      */
     @Transactional
     public void deactivateUser(Long targetUserId, User performingAdmin) {
+        preventSelfChange(targetUserId, performingAdmin);
         User user = findUserOrThrow(targetUserId);
         String previousStatus = user.getStatus().name();
 
@@ -130,5 +133,15 @@ public class UserService {
     private User findUserOrThrow(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
+    private void preventSelfChange(Long targetUserId, User performingAdmin) {
+        if (performingAdmin != null
+                && performingAdmin.getId() != null
+                && performingAdmin.getId().equals(targetUserId)) {
+            throw new IllegalArgumentException(
+                    "Use another administrator account to change your own role or status"
+            );
+        }
     }
 }

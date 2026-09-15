@@ -8,17 +8,7 @@
 </head>
 <body class="en-admin-page">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-admin-nav">
-        <a th:href="@{/admin/dashboard}">Dashboard</a>
-        <a th:href="@{/admin/users}">Users</a>
-        <a th:href="@{/vendor/queue}">Vendor Queue</a>
-        <a th:href="@{/vendor/manage}">Vendors</a>
-        <a th:href="@{/admin/audit-logs}">Audit Log</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('admin-dashboard')}"></header>
 
 <main class="en-admin-shell">
 
@@ -93,6 +83,18 @@
 
             <a th:href="@{/admin/audit-logs}" class="en-btn en-btn-secondary">
                 View audit log
+            </a>
+
+            <a th:href="@{/vendor/queue}" class="en-btn en-btn-secondary">
+                Review vendor applications
+            </a>
+
+            <a th:href="@{/admin/reports}" class="en-btn en-btn-secondary">
+                Open reports
+            </a>
+
+            <a th:href="@{/admin/reviews}" class="en-btn en-btn-secondary">
+                Moderate reviews
             </a>
         </div>
     </div>

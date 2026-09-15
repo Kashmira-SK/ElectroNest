@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Platform Reports - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('admin-reports')}"></header>
+
+<main class="en-admin-shell">
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Reports / Live database</p>
+            <h1>Platform reports</h1>
+            <p class="en-muted">Current account, order, payment and revenue totals from persisted records.</p>
+        </div>
+    </div>
+
+    <h2>Marketplace activity</h2>
+    <section class="en-stat-grid">
+        <div class="en-stat"><p class="en-eyebrow">Orders</p><p class="en-stat-value" th:text="${summary.totalOrders}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Payments</p><p class="en-stat-value" th:text="${summary.totalPayments}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Successful</p><p class="en-stat-value" th:text="${summary.successfulPayments}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Revenue</p><p class="en-stat-value" th:text="${'Rs. ' + #numbers.formatDecimal(summary.totalRevenue, 1, 2)}">Rs. 0.00</p></div>
+    </section>
+
+    <h2>Payment states</h2>
+    <section class="en-stat-grid">
+        <div class="en-stat"><p class="en-eyebrow">Pending</p><p class="en-stat-value" th:text="${summary.pendingPayments}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Failed</p><p class="en-stat-value" th:text="${summary.failedPayments}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Cancelled</p><p class="en-stat-value" th:text="${summary.cancelledPayments}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Refunded</p><p class="en-stat-value" th:text="${summary.refundedPayments}">0</p></div>
+    </section>
+
+    <h2>Accounts</h2>
+    <section class="en-stat-grid">
+        <div class="en-stat"><p class="en-eyebrow">Total</p><p class="en-stat-value" th:text="${summary.totalUsers}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Customers</p><p class="en-stat-value" th:text="${summary.totalCustomers}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Vendors</p><p class="en-stat-value" th:text="${summary.totalVendors}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Active vendors</p><p class="en-stat-value" th:text="${summary.activeVendors}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Admins</p><p class="en-stat-value" th:text="${summary.totalAdmins}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Active</p><p class="en-stat-value" th:text="${summary.activeAccounts}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Deactivated</p><p class="en-stat-value" th:text="${summary.deactivatedAccounts}">0</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Suspended</p><p class="en-stat-value" th:text="${summary.suspendedAccounts}">0</p></div>
+    </section>
+</main>
+</body>
+</html>
