@@ -92,6 +92,23 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    @Transactional
+    public Product updateStockForVendor(Long id,
+                                        Integer stockQuantity,
+                                        Long vendorId) {
+        if (stockQuantity == null || stockQuantity < 0) {
+            throw new IllegalArgumentException("Stock quantity cannot be negative");
+        }
+
+        Product product = getProductById(id);
+        assertOwnedByVendor(product, vendorId);
+
+        product.setStockQuantity(stockQuantity);
+        product.setOutOfStock(stockQuantity == 0);
+
+        return productRepository.save(product);
+    }
+
     public List<Product> getLowStockProducts(int threshold) {
         if (threshold < 0) {
             throw new IllegalArgumentException("Threshold cannot be negative");

@@ -10,14 +10,7 @@
 </head>
 <body>
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/vendor/products}">My Products</a>
-        <a th:href="@{/vendor/orders}">Orders</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('seller')}"></header>
 
 <main class="en-page">
 
@@ -32,6 +25,10 @@
             Enter the listing and inventory details below.
         </p>
 
+        <div class="en-alert en-alert-error"
+             th:if="${errorMessage}"
+             th:text="${errorMessage}"></div>
+
         <form th:object="${product}"
               th:action="${product.id == null}
                 ? @{/vendor/products}
@@ -41,17 +38,26 @@
             <div class="en-field">
                 <label>Product name</label>
                 <input th:field="*{name}" required maxlength="150">
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('name')}"
+                   th:errors="*{name}"></p>
             </div>
 
             <div class="en-form-grid">
                 <div class="en-field">
                     <label>Brand</label>
                     <input th:field="*{brand}" required>
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('brand')}"
+                       th:errors="*{brand}"></p>
                 </div>
 
                 <div class="en-field">
                     <label>Category</label>
                     <input th:field="*{category}" required>
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('category')}"
+                       th:errors="*{category}"></p>
                 </div>
             </div>
 
@@ -60,6 +66,9 @@
                 <textarea th:field="*{description}"
                           rows="5"
                           maxlength="1000"></textarea>
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('description')}"
+                   th:errors="*{description}"></p>
             </div>
 
             <div class="en-form-grid">
@@ -70,6 +79,9 @@
                            min="0.01"
                            step="0.01"
                            required>
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('price')}"
+                       th:errors="*{price}"></p>
                 </div>
 
                 <div class="en-field">
@@ -78,6 +90,9 @@
                            type="number"
                            min="0"
                            required>
+                    <p class="en-field-error"
+                       th:if="${#fields.hasErrors('stockQuantity')}"
+                       th:errors="*{stockQuantity}"></p>
                 </div>
             </div>
 

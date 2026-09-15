@@ -755,6 +755,34 @@ a:hover {
   color: var(--ink-soft);
 }
 
+.en-stock-line .en-status {
+  margin-left: 8px;
+}
+
+.en-inline-stock {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 86px auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.en-inline-stock label {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.en-inline-stock input {
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+@media (max-width: 480px) {
+  .en-inline-stock {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 620px) {
   .en-form-grid {
     grid-template-columns: 1fr;

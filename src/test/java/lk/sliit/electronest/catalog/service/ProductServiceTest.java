@@ -141,4 +141,28 @@ class ProductServiceTest {
 
         assertEquals(1, result.size());
     }
+
+    @Test
+    void updateStockForVendor_shouldUpdateQuantityAndAvailability() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.save(sampleProduct)).thenReturn(sampleProduct);
+
+        Product result = productService.updateStockForVendor(1L, 0, 1L);
+
+        assertEquals(0, result.getStockQuantity());
+        assertTrue(result.getOutOfStock());
+        verify(productRepository).save(sampleProduct);
+    }
+
+    @Test
+    void updateStockForVendor_shouldRejectAnotherVendor() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+
+        assertThrows(
+                SecurityException.class,
+                () -> productService.updateStockForVendor(1L, 4, 2L)
+        );
+
+        verify(productRepository, never()).save(any(Product.class));
+    }
 }

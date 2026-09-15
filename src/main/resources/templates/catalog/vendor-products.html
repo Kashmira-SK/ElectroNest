@@ -8,15 +8,7 @@
 </head>
 <body>
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/vendor/status}">Vendor Profile</a>
-        <a th:href="@{/vendor/products}">Products</a>
-        <a th:href="@{/vendor/orders}">Orders</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('seller')}"></header>
 
 <main class="en-page">
 
@@ -25,7 +17,8 @@
             <p class="en-eyebrow">ElectroNest / Seller</p>
             <h1>My products</h1>
             <p class="en-muted">
-                Manage listings, pricing and inventory.
+                Manage listings, pricing and inventory for
+                <strong th:text="${vendor.businessName}">your store</strong>.
             </p>
         </div>
 
@@ -38,6 +31,10 @@
     <div class="en-alert en-alert-success"
          th:if="${successMessage}"
          th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
 
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(products)}">
@@ -80,7 +77,30 @@
                 <p class="en-stock-line">
                     Stock:
                     <strong th:text="${product.stockQuantity}">0</strong>
+                    <span class="en-status en-status-rejected"
+                          th:if="${product.stockQuantity == 0}">
+                        Out of stock
+                    </span>
+                    <span class="en-status en-status-pending"
+                          th:if="${product.stockQuantity > 0 and product.stockQuantity < lowStockThreshold}">
+                        Low stock
+                    </span>
                 </p>
+
+                <form class="en-inline-stock"
+                      th:action="@{/vendor/products/{id}/stock(id=${product.id})}"
+                      method="post">
+                    <label th:for="${'stock-' + product.id}">Update stock</label>
+                    <input th:id="${'stock-' + product.id}"
+                           name="stockQuantity"
+                           type="number"
+                           min="0"
+                           th:value="${product.stockQuantity}"
+                           required>
+                    <button type="submit" class="en-btn en-btn-secondary">
+                        Save stock
+                    </button>
+                </form>
 
                 <div class="en-actions">
                     <a th:href="@{/vendor/products/{id}/edit(id=${product.id})}"
