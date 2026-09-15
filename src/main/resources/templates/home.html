@@ -140,29 +140,29 @@
 
     <section class="en-category-rail">
         <div class="en-category-track">
-            <a th:href="@{/products}">
+            <a th:href="@{/products(category='Audio')}">
                 <span>01</span>
-                Laptops
-            </a>
-
-            <a th:href="@{/products}">
-                <span>02</span>
-                Smartphones
-            </a>
-
-            <a th:href="@{/products}">
-                <span>03</span>
                 Audio
             </a>
 
-            <a th:href="@{/products}">
+            <a th:href="@{/products(category='Accessories')}">
+                <span>02</span>
+                Accessories
+            </a>
+
+            <a th:href="@{/products(category='Storage')}">
+                <span>03</span>
+                Storage
+            </a>
+
+            <a th:href="@{/products(category='Monitors')}">
                 <span>04</span>
-                Components
+                Monitors
             </a>
 
             <a th:href="@{/products}">
                 <span>05</span>
-                Accessories
+                All products
             </a>
         </div>
     </section>

@@ -7,7 +7,10 @@
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body>
-<div class="en-shell en-center">
+
+<header th:replace="~{fragments/site-header :: siteHeader('access-denied')}"></header>
+
+<main class="en-shell en-center">
     <p class="en-eyebrow">403 / Access denied</p>
     <h1>You don't have access to this page.</h1>
     <p class="en-muted">
@@ -17,6 +20,6 @@
     <a th:href="@{/}" class="en-btn en-btn-primary en-btn-auto">
         Back to ElectroNest
     </a>
-</div>
+</main>
 </body>
 </html>

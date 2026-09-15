@@ -6,8 +6,11 @@
     <title>Create Account - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
-<body>
-<div class="en-shell" style="max-width: 520px;">
+<body class="en-auth-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('register')}"></header>
+
+<main class="en-shell" style="max-width: 520px;">
     <p class="en-eyebrow">ElectroNest</p>
     <h1>Create your account</h1>
     <p class="en-muted">Shop electronics or register as a seller.</p>
@@ -78,6 +81,6 @@
             <a th:href="@{/login}">Log in</a>
         </p>
     </div>
-</div>
+</main>
 </body>
 </html>
