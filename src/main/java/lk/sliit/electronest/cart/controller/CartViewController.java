@@ -1,6 +1,7 @@
 package lk.sliit.electronest.cart.controller;
 
 import lk.sliit.electronest.cart.dto.CartItemView;
+import lk.sliit.electronest.cart.dto.DeliveryDetailsForm;
 import lk.sliit.electronest.cart.service.CartService;
 import lk.sliit.electronest.common.model.User;
 import lk.sliit.electronest.common.repository.UserRepository;
@@ -13,8 +14,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -89,6 +93,10 @@ public class CartViewController {
                     itemId,
                     quantity
             );
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Cart quantity updated."
+            );
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
@@ -109,6 +117,10 @@ public class CartViewController {
             cartService.removeItemFromCart(
                     currentUser.getUser().getId(),
                     itemId
+            );
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Product removed from your cart."
             );
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute(
@@ -140,6 +152,16 @@ public class CartViewController {
         model.addAttribute("subtotal", cartService.calculateSubtotal(userId));
         model.addAttribute("customer", user);
         model.addAttribute("hasSavedDelivery", hasSavedDelivery(user));
+        model.addAttribute(
+                "editingDelivery",
+                model.containsAttribute(
+                        "org.springframework.validation.BindingResult.deliveryDetailsForm"
+                )
+        );
+
+        if (!model.containsAttribute("deliveryDetailsForm")) {
+            model.addAttribute("deliveryDetailsForm", deliveryDetailsFrom(user));
+        }
 
         return "cart/checkout";
     }
@@ -147,27 +169,35 @@ public class CartViewController {
     @PostMapping("/checkout/delivery/save")
     public String saveDeliveryDetails(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @RequestParam String deliveryName,
-            @RequestParam String deliveryPhone,
-            @RequestParam String deliveryAddressLine1,
-            @RequestParam(required = false) String deliveryAddressLine2,
-            @RequestParam String deliveryCity,
-            @RequestParam(required = false) String deliveryPostalCode,
-            @RequestParam String deliveryCountry,
+            @Valid @ModelAttribute("deliveryDetailsForm") DeliveryDetailsForm form,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.deliveryDetailsForm",
+                    bindingResult
+            );
+            redirectAttributes.addFlashAttribute("deliveryDetailsForm", form);
+            redirectAttributes.addFlashAttribute(
+                    "errorMessage",
+                    bindingResult.getAllErrors().getFirst().getDefaultMessage()
+            );
+            return "redirect:/checkout";
+        }
 
         User user = userRepository.findById(
                         currentUser.getUser().getId())
                 .orElseThrow(() ->
                         new IllegalStateException("User not found"));
 
-        user.setDeliveryName(deliveryName.trim());
-        user.setDeliveryPhone(deliveryPhone.trim());
-        user.setDeliveryAddressLine1(deliveryAddressLine1.trim());
-        user.setDeliveryAddressLine2(cleanOptional(deliveryAddressLine2));
-        user.setDeliveryCity(deliveryCity.trim());
-        user.setDeliveryPostalCode(cleanOptional(deliveryPostalCode));
-        user.setDeliveryCountry(deliveryCountry.trim());
+        user.setDeliveryName(form.getDeliveryName().trim());
+        user.setDeliveryPhone(form.getDeliveryPhone().trim());
+        user.setDeliveryAddressLine1(form.getDeliveryAddressLine1().trim());
+        user.setDeliveryAddressLine2(cleanOptional(form.getDeliveryAddressLine2()));
+        user.setDeliveryCity(form.getDeliveryCity().trim());
+        user.setDeliveryPostalCode(cleanOptional(form.getDeliveryPostalCode()));
+        user.setDeliveryCountry(form.getDeliveryCountry().trim());
 
         userRepository.save(user);
 
@@ -262,5 +292,21 @@ public class CartViewController {
         }
 
         return value.trim();
+    }
+
+    private DeliveryDetailsForm deliveryDetailsFrom(User user) {
+        DeliveryDetailsForm form = new DeliveryDetailsForm();
+        form.setDeliveryName(hasText(user.getDeliveryName())
+                ? user.getDeliveryName()
+                : user.getFullName());
+        form.setDeliveryPhone(hasText(user.getDeliveryPhone())
+                ? user.getDeliveryPhone()
+                : user.getContactNumber());
+        form.setDeliveryAddressLine1(user.getDeliveryAddressLine1());
+        form.setDeliveryAddressLine2(user.getDeliveryAddressLine2());
+        form.setDeliveryCity(user.getDeliveryCity());
+        form.setDeliveryPostalCode(user.getDeliveryPostalCode());
+        form.setDeliveryCountry(user.getDeliveryCountry());
+        return form;
     }
 }

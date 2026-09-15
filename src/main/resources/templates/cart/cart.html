@@ -70,7 +70,10 @@
                         Brand
                     </p>
 
-                    <h2 th:text="${item.name()}">Product</h2>
+                    <h2>
+                        <a th:href="@{/products/{id}(id=${item.productId()})}"
+                           th:text="${item.name()}">Product</a>
+                    </h2>
 
                     <p class="en-muted">
                         <span th:text="'Rs. ' + ${#numbers.formatDecimal(item.unitPrice(), 1, 2)}">

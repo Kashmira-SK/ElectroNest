@@ -40,7 +40,7 @@
                 <p class="en-eyebrow">Delivery</p>
                 <h2>Delivery details</h2>
 
-                <div th:if="${hasSavedDelivery}" id="savedDelivery">
+                <div th:if="${hasSavedDelivery and !editingDelivery}" id="savedDelivery">
 
                     <div class="en-saved-address">
                         <strong th:text="${customer.deliveryName}">
@@ -84,9 +84,10 @@
                 </div>
 
                 <form th:action="@{/checkout/delivery/save}"
+                      th:object="${deliveryDetailsForm}"
                       method="post"
                       id="deliveryForm"
-                      th:style="${hasSavedDelivery}
+                      th:style="${hasSavedDelivery and !editingDelivery}
                             ? 'display:none'
                             : 'display:block'">
 
@@ -95,11 +96,11 @@
 
                         <input id="deliveryName"
                                type="text"
-                               name="deliveryName"
+                               th:field="*{deliveryName}"
                                required
-                               th:value="${customer.deliveryName != null
-                                    ? customer.deliveryName
-                                    : customer.fullName}">
+                               maxlength="100">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryName')}"
+                               th:errors="*{deliveryName}"></small>
                     </div>
 
                     <div class="en-field">
@@ -107,11 +108,11 @@
 
                         <input id="deliveryPhone"
                                type="tel"
-                               name="deliveryPhone"
+                               th:field="*{deliveryPhone}"
                                required
-                               th:value="${customer.deliveryPhone != null
-                                    ? customer.deliveryPhone
-                                    : customer.contactNumber}">
+                               maxlength="20">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryPhone')}"
+                               th:errors="*{deliveryPhone}"></small>
                     </div>
 
                     <div class="en-field">
@@ -121,9 +122,11 @@
 
                         <input id="deliveryAddressLine1"
                                type="text"
-                               name="deliveryAddressLine1"
+                               th:field="*{deliveryAddressLine1}"
                                required
-                               th:value="${customer.deliveryAddressLine1}">
+                               maxlength="200">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryAddressLine1')}"
+                               th:errors="*{deliveryAddressLine1}"></small>
                     </div>
 
                     <div class="en-field">
@@ -133,8 +136,10 @@
 
                         <input id="deliveryAddressLine2"
                                type="text"
-                               name="deliveryAddressLine2"
-                               th:value="${customer.deliveryAddressLine2}">
+                               th:field="*{deliveryAddressLine2}"
+                               maxlength="200">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryAddressLine2')}"
+                               th:errors="*{deliveryAddressLine2}"></small>
                     </div>
 
                     <div class="en-field">
@@ -142,9 +147,11 @@
 
                         <input id="deliveryCity"
                                type="text"
-                               name="deliveryCity"
+                               th:field="*{deliveryCity}"
                                required
-                               th:value="${customer.deliveryCity}">
+                               maxlength="100">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryCity')}"
+                               th:errors="*{deliveryCity}"></small>
                     </div>
 
                     <div class="en-field">
@@ -154,8 +161,10 @@
 
                         <input id="deliveryPostalCode"
                                type="text"
-                               name="deliveryPostalCode"
-                               th:value="${customer.deliveryPostalCode}">
+                               th:field="*{deliveryPostalCode}"
+                               maxlength="20">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryPostalCode')}"
+                               th:errors="*{deliveryPostalCode}"></small>
                     </div>
 
                     <div class="en-field">
@@ -163,9 +172,11 @@
 
                         <input id="deliveryCountry"
                                type="text"
-                               name="deliveryCountry"
+                               th:field="*{deliveryCountry}"
                                required
-                               th:value="${customer.deliveryCountry}">
+                               maxlength="100">
+                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryCountry')}"
+                               th:errors="*{deliveryCountry}"></small>
                     </div>
 
                     <button class="en-btn en-btn-primary"
