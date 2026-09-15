@@ -7,6 +7,7 @@ import lk.sliit.electronest.vendor.exception.InvalidVendorReviewReasonException;
 import lk.sliit.electronest.vendor.exception.InvalidVendorStatusTransitionException;
 import lk.sliit.electronest.vendor.exception.VendorNotFoundException;
 import lk.sliit.electronest.vendor.model.Vendor;
+import lk.sliit.electronest.vendor.model.VendorStatus;
 import lk.sliit.electronest.vendor.model.dto.VendorProfileUpdateRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.service.VendorDocumentStorageService;
@@ -40,8 +41,35 @@ public class VendorViewController {
     }
 
     @PreAuthorize("hasRole('VENDOR')")
+    @GetMapping
+    public String sellerEntry(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        try {
+            Vendor vendor = vendorService.getVendorForUser(
+                    currentUser.getUser().getId()
+            );
+
+            if (vendor.getStatus() == VendorStatus.APPROVED) {
+                return "redirect:/vendor/products";
+            }
+
+            return "redirect:/vendor/status";
+        } catch (VendorNotFoundException ex) {
+            return "redirect:/vendor/register";
+        }
+    }
+
+    @PreAuthorize("hasRole('VENDOR')")
     @GetMapping("/register")
-    public String showRegisterForm(Model model) {
+    public String showRegisterForm(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            Model model) {
+        try {
+            vendorService.getVendorForUser(currentUser.getUser().getId());
+            return "redirect:/vendor/status";
+        } catch (VendorNotFoundException ignored) {
+        }
+
         if (!model.containsAttribute("registrationRequest")) {
             model.addAttribute("registrationRequest", new VendorRegistrationRequest());
         }
@@ -100,9 +128,11 @@ public class VendorViewController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model) {
         try {
+            Vendor vendor = vendorService.getVendorForUser(currentUser.getUser().getId());
+            model.addAttribute("vendor", vendor);
             model.addAttribute(
-                    "vendor",
-                    vendorService.getVendorForUser(currentUser.getUser().getId())
+                    "guidance",
+                    vendorService.getGuidanceForUser(currentUser.getUser().getId())
             );
             return "vendor/status";
         } catch (VendorNotFoundException ex) {

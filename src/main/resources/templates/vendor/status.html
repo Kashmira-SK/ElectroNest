@@ -6,6 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body class="en-vendor-page">
+<header th:replace="~{fragments/site-header :: siteHeader('vendor-status')}"></header>
 <div class="en-shell">
     <p class="en-eyebrow">ElectroNest / Seller</p>
     <h1>Vendor application status</h1>
@@ -41,6 +42,13 @@
             <span class="en-status" th:text="${vendor.status}"></span>
         </p>
 
+        <div class="en-alert"
+             th:if="${guidance != null}">
+            <strong th:text="${guidance.title}">Application guidance</strong>
+            <p th:text="${guidance.message}"></p>
+            <p class="en-muted" th:text="${guidance.nextAction}"></p>
+        </div>
+
         <div th:if="${vendor.status.name() == 'PENDING'}">
             <p class="en-muted">
                 Your application is waiting for administrator review.
@@ -55,6 +63,16 @@
             <a th:href="@{/vendor/profile}"
                class="en-btn en-btn-primary">
                 Edit vendor profile
+            </a>
+
+            <a th:href="@{/vendor/products}"
+               class="en-btn">
+                Manage products
+            </a>
+
+            <a th:href="@{/vendor/orders}"
+               class="en-btn">
+                View vendor orders
             </a>
         </div>
 

@@ -37,9 +37,24 @@
             </a>
 
             <a th:if="${loggedIn
-                    and currentUser.role.name() == 'VENDOR'}"
-               th:href="@{/vendor/products}">
+                    and currentUser.role.name() == 'VENDOR'
+                    and active != 'seller'}"
+               th:href="@{/vendor}">
                 Seller Hub
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'VENDOR'
+                    and active != 'vendor-orders'}"
+               th:href="@{/vendor/orders}">
+                Vendor Orders
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'VENDOR'
+                    and active != 'vendor-status'}"
+               th:href="@{/vendor/status}">
+                Vendor Status
             </a>
 
             <a th:if="${loggedIn

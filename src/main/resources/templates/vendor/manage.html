@@ -47,6 +47,11 @@
         <h3 th:text="${v.businessName}">Business Name</h3>
 
         <p class="en-meta">
+            <strong>Account:</strong>
+            <span th:text="${v.user.fullName + ' (' + v.user.email + ')'}"></span>
+        </p>
+
+        <p class="en-meta">
             <strong>Registration:</strong>
             <span th:text="${v.registrationNumber}"></span>
         </p>

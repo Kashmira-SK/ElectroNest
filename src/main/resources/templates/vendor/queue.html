@@ -31,9 +31,12 @@
 
     <div class="en-card en-vendor-row" th:each="v : ${vendors}">
         <h3 th:text="${v.businessName}">Business Name</h3>
+        <p class="en-meta"><strong>Applicant</strong> <span th:text="${v.user.fullName}"></span></p>
+        <p class="en-meta"><strong>Email</strong> <span th:text="${v.user.email}"></span></p>
         <p class="en-meta"><strong>Reg. no.</strong> <span th:text="${v.registrationNumber}"></span></p>
         <p class="en-meta"><strong>Address</strong> <span th:text="${v.businessAddress}"></span></p>
         <p class="en-meta"><strong>Phone</strong> <span th:text="${v.contactPhone}"></span></p>
+        <p class="en-meta"><strong>Submitted</strong> <span th:text="${#temporals.format(v.createdAt, 'dd MMM yyyy HH:mm')}"></span></p>
 
         <p class="en-meta" th:if="${v.idDocumentPath != null}">
             <strong>Verification document:</strong>
