@@ -8,63 +8,7 @@
 </head>
 <body class="en-home">
 
-<header class="en-site-header">
-    <div class="en-navbar">
-        <a th:href="@{/}" class="en-brand en-brand-light">
-            <span class="en-brand-mark"></span>
-            ElectroNest
-        </a>
-
-        <nav class="en-nav-center">
-            <a th:href="@{/products}">Shop</a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}"
-               th:href="@{/cart}">Cart</a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'CUSTOMER'}"
-               th:href="@{/orders}">Orders</a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'VENDOR'}"
-               th:href="@{/vendor/products}">Seller Hub</a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN'}"
-               th:href="@{/admin}">Admin</a>
-        </nav>
-
-        <div class="en-nav-account">
-            <th:block th:unless="${loggedIn}">
-                <a th:href="@{/login}" class="en-nav-login">Log in</a>
-
-                <a th:href="@{/register}"
-                   class="en-btn en-btn-electric en-btn-auto">
-                    Join ElectroNest
-                </a>
-            </th:block>
-
-            <th:block th:if="${loggedIn}">
-                <div class="en-user-chip">
-                    <span class="en-user-dot"></span>
-
-                    <div>
-                        <strong th:text="${currentUser.fullName}">
-                            Account
-                        </strong>
-                        <small th:text="${currentUser.role}">
-                            CUSTOMER
-                        </small>
-                    </div>
-                </div>
-
-                <form th:action="@{/logout}" method="post">
-                    <button type="submit"
-                            class="en-nav-logout">
-                        Log out
-                    </button>
-                </form>
-            </th:block>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('home')}"></header>
 
 <main>
     <section class="en-home-hero">

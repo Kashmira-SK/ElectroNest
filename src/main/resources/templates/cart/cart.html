@@ -8,17 +8,19 @@
 </head>
 <body class="en-customer-page">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-    <nav class="en-nav-links">
-        <a th:href="@{/}">Home</a>
-        <a th:href="@{/products}">Products</a>
-        <a th:href="@{/cart}">Cart</a>
-        <a th:href="@{/orders}">My Orders</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('cart')}"></header>
 
 <main class="en-page">
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage != null}"
+         th:text="${errorMessage}">
+    </div>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage != null}"
+         th:text="${successMessage}">
+    </div>
 
     <div class="en-page-header">
         <div>
@@ -28,14 +30,22 @@
         </div>
     </div>
 
-    <div class="en-card en-empty" th:if="${#lists.isEmpty(cartItems)}">
-        <p>Your cart is currently empty.</p>
-        <div style="margin-top:18px">
-            <a th:href="@{/products}" class="en-btn en-btn-primary en-btn-auto">
-                Browse products
-            </a>
+    <section class="en-cart-empty" th:if="${#lists.isEmpty(cartItems)}">
+        <div>
+            <p class="en-eyebrow">Cart / 0 items</p>
+            <h2>Nothing in your cart yet.</h2>
+            <p>
+                Browse the catalog and add something here before heading
+                through checkout.
+            </p>
         </div>
-    </div>
+
+        <a th:href="@{/products}"
+           class="en-btn en-btn-electric en-btn-auto">
+            Shop products
+            <span aria-hidden="true">→</span>
+        </a>
+    </section>
 
     <div class="en-cart-layout" th:unless="${#lists.isEmpty(cartItems)}">
 

@@ -8,15 +8,7 @@
 </head>
 <body class="en-customer-page">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/}">Home</a>
-        <a th:href="@{/products}">Products</a>
-        <a th:href="@{/orders}">My Orders</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('orders')}"></header>
 
 <main class="en-page">
 

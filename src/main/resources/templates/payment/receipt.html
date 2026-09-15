@@ -3,80 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Receipt - ElectroNest</title>
+    <title>Receipt — ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body class="en-customer-page">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/}">Home</a>
-        <a th:href="@{/products}">Products</a>
-        <a th:href="@{/orders}">My Orders</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('cart')}"></header>
 
 <main class="en-page">
 
     <div class="en-receipt">
 
         <div class="en-receipt-header">
+
             <div>
-                <p class="en-eyebrow">ElectroNest</p>
+                <p class="en-eyebrow">ElectroNest / Payment complete</p>
                 <h1>Payment receipt</h1>
             </div>
 
             <span class="en-status en-status-active">
                 Paid
             </span>
+
         </div>
 
         <div class="en-receipt-grid">
+
             <div>
                 <span class="en-muted">Receipt number</span>
-                <strong>Pending</strong>
+                <strong th:text="${receipt.receiptNumber}">
+                    REC
+                </strong>
             </div>
 
             <div>
                 <span class="en-muted">Transaction</span>
-                <strong>Pending</strong>
+                <strong th:text="${receipt.payment.transactionId}">
+                    TXN
+                </strong>
             </div>
 
             <div>
                 <span class="en-muted">Order</span>
-                <strong>Pending</strong>
+                <strong th:text="${receipt.orderNumber}">
+                    ORD
+                </strong>
             </div>
 
             <div>
                 <span class="en-muted">Payment method</span>
-                <strong>Pending</strong>
+                <strong th:text="${receipt.paymentMethod}">
+                    CARD
+                </strong>
             </div>
+
+            <div>
+                <span class="en-muted">Customer</span>
+                <strong th:text="${receipt.customerName}">
+                    Customer
+                </strong>
+            </div>
+
+            <div>
+                <span class="en-muted">Issued</span>
+
+                <strong th:text="${#temporals.format(
+                    receipt.issuedAt,
+                    'dd MMM yyyy, HH:mm')}">
+                    Date
+                </strong>
+            </div>
+
         </div>
 
-        <div class="en-summary-row en-summary-total">
-            <span>Total paid</span>
-            <strong>Rs. 0.00</strong>
+        <div class="en-card" style="margin-top:24px">
+
+            <p class="en-eyebrow">Items</p>
+
+            <pre class="en-receipt-items"
+                 th:text="${receipt.itemizedSummary}">
+                Items
+            </pre>
+
         </div>
 
-        <p class="en-muted">
-            Receipt information will be populated automatically after the
-            payment backend generates the invoice.
-        </p>
+        <div class="en-card">
+
+            <div class="en-summary-row">
+                <span>Subtotal</span>
+
+                <strong th:text="'Rs. '
+                    + ${#numbers.formatDecimal(
+                        receipt.subtotal, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Tax</span>
+
+                <strong th:text="'Rs. '
+                    + ${#numbers.formatDecimal(
+                        receipt.taxAmount, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+            </div>
+
+            <div class="en-summary-row">
+                <span>Delivery</span>
+
+                <strong th:text="'Rs. '
+                    + ${#numbers.formatDecimal(
+                        receipt.shippingFee, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+            </div>
+
+            <div class="en-summary-row en-summary-total">
+                <span>Total paid</span>
+
+                <strong th:text="'Rs. '
+                    + ${#numbers.formatDecimal(
+                        receipt.totalAmount, 1, 2)}">
+                    Rs. 0.00
+                </strong>
+            </div>
+
+        </div>
+
+        <div class="en-card">
+
+            <p class="en-eyebrow">Delivery</p>
+
+            <p th:text="${receipt.deliveryAddress}">
+                Delivery address
+            </p>
+
+        </div>
 
         <div class="en-actions">
-            <a th:href="@{/orders}" class="en-btn en-btn-primary en-btn-auto">
+
+            <a th:href="@{/orders}"
+               class="en-btn en-btn-primary en-btn-auto">
                 View my orders
             </a>
 
-            <a th:href="@{/products}" class="en-btn en-btn-secondary">
+            <a th:href="@{/products}"
+               class="en-btn en-btn-secondary">
                 Continue shopping
             </a>
+
         </div>
 
     </div>
 
 </main>
+
 </body>
 </html>

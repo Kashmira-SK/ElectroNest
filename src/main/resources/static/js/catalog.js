@@ -1,5 +1,15 @@
 const $ = id => document.getElementById(id);
 
+const csrfToken =
+    document.querySelector('meta[name="_csrf"]')?.content || '';
+
+const csrfParameter =
+    document.querySelector('meta[name="_csrf_parameter"]')?.content || '_csrf';
+
+const loggedIn = document.body.dataset.loggedIn === 'true';
+const customerAccount = document.body.dataset.customer === 'true';
+
+
 const ui = {
     keyword: $('keyword'),
     category: $('category'),
@@ -211,7 +221,34 @@ function card(product) {
     addButton.textContent = canAdd ? 'Add to cart' : 'Out of stock';
     addButton.disabled = !canAdd;
 
-    cartForm.append(productInput, quantityInput, addButton);
+    if (customerAccount) {
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = csrfParameter;
+            csrfInput.value = csrfToken;
+            cartForm.append(csrfInput);
+        }
+
+        cartForm.append(productInput, quantityInput, addButton);
+    } else {
+        addButton.type = 'button';
+
+        if (!canAdd) {
+            addButton.textContent = 'Out of stock';
+            addButton.disabled = true;
+        } else if (loggedIn) {
+            addButton.textContent = 'Customer account required';
+            addButton.disabled = true;
+        } else {
+            addButton.textContent = 'Sign in to add';
+            addButton.addEventListener('click', () => {
+                location.href = '/login';
+            });
+        }
+
+        cartForm.append(addButton);
+    }
 
     const arrow = document.createElement('span');
     arrow.className = 'en-card-arrow';
