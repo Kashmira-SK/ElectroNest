@@ -24,6 +24,7 @@
 
             <a th:if="${loggedIn
                     and currentUser.role.name() == 'CUSTOMER'
+                    and !accountSuspended
                     and active != 'cart'}"
                th:href="@{/cart}">
                 Cart
@@ -31,6 +32,7 @@
 
             <a th:if="${loggedIn
                     and currentUser.role.name() == 'CUSTOMER'
+                    and !accountSuspended
                     and active != 'orders'}"
                th:href="@{/orders}">
                 Orders
@@ -38,6 +40,8 @@
 
             <a th:if="${loggedIn
                     and currentUser.role.name() == 'VENDOR'
+                    and !accountSuspended
+                    and sellerAccess
                     and active != 'seller'}"
                th:href="@{/vendor}">
                 Seller Hub
@@ -45,51 +49,22 @@
 
             <a th:if="${loggedIn
                     and currentUser.role.name() == 'VENDOR'
+                    and !accountSuspended
+                    and sellerAccess
                     and active != 'vendor-orders'}"
                th:href="@{/vendor/orders}">
                 Vendor Orders
             </a>
 
-            <a th:if="${loggedIn
-                    and currentUser.role.name() == 'VENDOR'
-                    and active != 'vendor-status'}"
-               th:href="@{/vendor/status}">
-                Vendor Status
-            </a>
+            <a th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR' and !sellerAccess}"
+               th:href="@{/vendor/status}">Seller status</a>
 
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-dashboard'}"
-               th:href="@{/admin/dashboard}">
-                Dashboard
-            </a>
+            <a th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'ADMIN' and !#strings.startsWith(active, 'admin-')}"
+               th:href="@{/admin/dashboard}">Admin</a>
 
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-users'}"
-               th:href="@{/admin/users}">
-                Users
-            </a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-vendor-queue'}"
-               th:href="@{/vendor/queue}">
-                Vendor Queue
-            </a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-vendors'}"
-               th:href="@{/vendor/manage}">
-                Vendors
-            </a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-reports'}"
-               th:href="@{/admin/reports}">
-                Reports
-            </a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-reviews'}"
-               th:href="@{/admin/reviews}">
-                Reviews
-            </a>
-
-            <a th:if="${loggedIn and currentUser.role.name() == 'ADMIN' and active != 'admin-audit'}"
-               th:href="@{/admin/audit-logs}">
-                Audit
+            <a th:if="${loggedIn and accountSuspended and active != 'account-suspended'}"
+               th:href="@{/account/suspended}">
+                Suspended
             </a>
 
         </nav>
@@ -114,7 +89,9 @@
 
             <th:block th:if="${loggedIn}">
 
-                <div class="en-user-chip">
+                <a th:href="${accountSuspended} ? @{/account/suspended} : @{/settings}"
+                   class="en-user-chip en-user-chip-link"
+                   th:title="${accountSuspended ? 'Suspended account status' : 'Account settings'}">
                     <span class="en-user-dot"></span>
 
                     <div>
@@ -122,11 +99,11 @@
                             Account
                         </strong>
 
-                        <small th:text="${currentUser.role}">
+                        <small th:text="${accountSuspended ? 'SUSPENDED · ' + currentUser.role : currentUser.role}">
                             CUSTOMER
                         </small>
                     </div>
-                </div>
+                </a>
 
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="en-nav-logout">
@@ -139,6 +116,18 @@
         </div>
 
     </div>
+    <nav class="en-admin-workspace-nav" aria-label="Administration"
+         th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'ADMIN' and #strings.startsWith(active, 'admin-')}">
+        <div class="en-admin-workspace-links">
+            <a th:href="@{/admin/dashboard}" th:attr="aria-current=${active == 'admin-dashboard' ? 'page' : null}">Overview</a>
+            <a th:href="@{/admin/users}" th:attr="aria-current=${active == 'admin-users' ? 'page' : null}">Users</a>
+            <a th:href="@{/vendor/queue}" th:attr="aria-current=${active == 'admin-vendor-queue' ? 'page' : null}">Vendor verification</a>
+            <a th:href="@{/vendor/manage}" th:attr="aria-current=${active == 'admin-vendors' ? 'page' : null}">Vendors</a>
+            <a th:href="@{/admin/reports}" th:attr="aria-current=${active == 'admin-reports' ? 'page' : null}">Reports</a>
+            <a th:href="@{/admin/reviews}" th:attr="aria-current=${active == 'admin-reviews' ? 'page' : null}">Reviews</a>
+            <a th:href="@{/admin/audit-logs}" th:attr="aria-current=${active == 'admin-audit' ? 'page' : null}">Audit log</a>
+        </div>
+    </nav>
 </header>
 
 </body>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Something went wrong — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<main class="en-shell">
+    <div class="en-card en-center">
+        <p class="en-eyebrow">ElectroNest</p>
+        <h1>Something went wrong.</h1>
+        <p class="en-muted">
+            Please return to the previous page and try again.
+        </p>
+        <a th:href="@{/}" class="en-btn en-btn-primary">
+            Back home
+        </a>
+    </div>
+</main>
+</body>
+</html>

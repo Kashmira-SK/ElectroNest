@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>File too large — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<main class="en-shell">
+    <div class="en-card en-center">
+        <p class="en-eyebrow">Upload problem</p>
+        <h1>That file is too large.</h1>
+        <p class="en-muted">
+            Verification documents can be up to 15 MB.
+        </p>
+        <a th:href="@{/vendor/register}"
+           class="en-btn en-btn-primary">
+            Back to seller application
+        </a>
+    </div>
+</main>
+</body>
+</html>
