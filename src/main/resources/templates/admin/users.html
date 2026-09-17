@@ -30,6 +30,7 @@
 
     <form class="en-search" th:action="@{/admin/users}" method="get">
         <input type="search"
+               aria-label="Search users by name or email"
                name="keyword"
                th:value="${keyword}"
                placeholder="Search by name or email">

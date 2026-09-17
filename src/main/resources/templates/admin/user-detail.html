@@ -39,7 +39,7 @@
         Your own administrator role and account status cannot be changed from this session.
     </div>
 
-    <section class="en-grid-3">
+    <section class="en-account-governance">
 
         <div class="en-card">
             <p class="en-eyebrow">Account</p>
@@ -73,21 +73,37 @@
                     ACTIVE
                 </span>
             </p>
+            <div class="en-account-seller">
+                <h3>Seller application</h3>
+                <p th:if="${targetVendor == null}" class="en-muted">No seller application. Seller access requires application approval.</p>
+                <th:block th:if="${targetVendor != null}">
+                    <p th:text="${targetVendor.businessName}">Business name</p>
+                    <p class="en-meta"><strong>Seller state:</strong> <span th:text="${targetVendor.status}">PENDING</span></p>
+                    <p class="en-muted">Account status and seller approval are separate. Activating an account does not approve or reactivate its seller profile.</p>
+                    <a th:href="@{/vendor/queue}">Vendor verification</a> ·
+                    <a th:href="@{/vendor/manage}">Vendor management</a>
+                </th:block>
+            </div>
         </div>
 
         <div class="en-card" th:if="${targetUser.id != currentUser.id}">
-            <p class="en-eyebrow">RBAC</p>
+            <p class="en-eyebrow">Permissions</p>
             <h3>Change role</h3>
+            <p class="en-muted">Only roles compatible with this account's seller state are available. Manage seller approval and suspension in the vendor workspace.</p>
+            <p th:if="${permittedRoles.size() == 1 and permittedRoles.contains(targetUser.role)}">
+                The current role is required by this seller state.
+            </p>
 
-            <form th:action="@{/admin/users/{id}/role(id=${targetUser.id})}"
+            <form th:if="${permittedRoles.size() > 1 or !permittedRoles.contains(targetUser.role)}"
+                  th:action="@{/admin/users/{id}/role(id=${targetUser.id})}"
                   th:object="${updateRoleForm}"
                   method="post">
 
                 <div class="en-field">
-                    <label>Role</label>
+                    <label for="newRole">Role</label>
 
                     <select th:field="*{newRole}">
-                        <option th:each="role : ${T(lk.sliit.electronest.common.model.Role).values()}"
+                        <option th:each="role : ${permittedRoles}"
                                 th:value="${role}"
                                 th:text="${role}">
                         </option>
@@ -99,10 +115,12 @@
                 </div>
 
                 <div class="en-field">
-                    <label>Reason</label>
+                    <label for="roleReason">Reason</label>
                     <input type="text"
                            th:field="*{reason}"
+                           id="roleReason" maxlength="255"
                            placeholder="Optional reason for role change">
+                    <p class="en-field-error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
                 </div>
 
                 <button type="submit" class="en-btn en-btn-primary">
@@ -114,13 +132,14 @@
         <div class="en-card" th:if="${targetUser.id != currentUser.id}">
             <p class="en-eyebrow">Governance</p>
             <h3>Account status</h3>
+            <p class="en-muted">Active allows normal access. Suspended accounts can sign in and browse in read-only mode. Deactivated accounts cannot sign in. Purchases and history remain intact in both cases.</p>
 
             <form th:action="@{/admin/users/{id}/status(id=${targetUser.id})}"
                   th:object="${updateStatusForm}"
                   method="post">
 
                 <div class="en-field">
-                    <label>Status</label>
+                    <label for="newStatus">Status</label>
 
                     <select th:field="*{newStatus}">
                         <option th:each="status : ${T(lk.sliit.electronest.common.model.AccountStatus).values()}"
@@ -135,10 +154,12 @@
                 </div>
 
                 <div class="en-field">
-                    <label>Reason</label>
+                    <label for="statusReason">Reason</label>
                     <input type="text"
                            th:field="*{reason}"
+                           id="statusReason" maxlength="255"
                            placeholder="Optional reason for status change">
+                    <p class="en-field-error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></p>
                 </div>
 
                 <button type="submit" class="en-btn en-btn-primary">
@@ -146,16 +167,6 @@
                 </button>
             </form>
 
-            <form th:action="@{/admin/users/{id}/delete(id=${targetUser.id})}"
-                  method="post"
-                  style="margin-top: 12px;">
-
-                <button type="submit"
-                        class="en-btn en-btn-reject"
-                        onclick="return confirm('Deactivate this user account?')">
-                    Deactivate account
-                </button>
-            </form>
         </div>
 
     </section>

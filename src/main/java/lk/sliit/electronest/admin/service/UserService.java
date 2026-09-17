@@ -5,6 +5,10 @@ import lk.sliit.electronest.admin.dto.UpdateStatusForm;
 import lk.sliit.electronest.common.model.AccountStatus;
 import lk.sliit.electronest.admin.entity.RoleChangeLog;
 import lk.sliit.electronest.common.model.User;
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.vendor.model.Vendor;
+import lk.sliit.electronest.vendor.model.VendorStatus;
+import lk.sliit.electronest.vendor.repository.VendorRepository;
 import lk.sliit.electronest.admin.exception.ResourceNotFoundException;
 import lk.sliit.electronest.admin.repository.RoleChangeLogRepository;
 import lk.sliit.electronest.common.repository.UserRepository;
@@ -30,6 +34,21 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleChangeLogRepository roleChangeLogRepository;
+    private final VendorRepository vendorRepository;
+
+    public Vendor getVendorForUser(Long userId) {
+        return vendorRepository.findByUser_Id(userId).orElse(null);
+    }
+
+    public List<Role> permittedRoles(Vendor vendor) {
+        if (vendor == null || vendor.getStatus() == VendorStatus.REJECTED) {
+            return List.of(Role.CUSTOMER, Role.ADMIN);
+        }
+        if (vendor.getStatus() == VendorStatus.APPROVED || vendor.getStatus() == VendorStatus.SUSPENDED) {
+            return List.of(Role.VENDOR);
+        }
+        return List.of(Role.CUSTOMER);
+    }
 
     // ---------- READ ----------
 
@@ -62,6 +81,13 @@ public class UserService {
     public void updateRole(Long targetUserId, UpdateRoleForm form, User performingAdmin) {
         preventSelfChange(targetUserId, performingAdmin);
         User user = findUserOrThrow(targetUserId);
+        if (form.getNewRole() == null || !permittedRoles(getVendorForUser(targetUserId)).contains(form.getNewRole())) {
+            throw new IllegalArgumentException(
+                    "This role conflicts with the seller application. Use Vendor verification or Vendor management to change seller access.");
+        }
+        if (user.getRole() == form.getNewRole()) {
+            return;
+        }
         String previousRole = user.getRole().name();
 
         user.setRole(form.getNewRole());
@@ -84,6 +110,12 @@ public class UserService {
     public void updateStatus(Long targetUserId, UpdateStatusForm form, User performingAdmin) {
         preventSelfChange(targetUserId, performingAdmin);
         User user = findUserOrThrow(targetUserId);
+        if (form.getNewStatus() == null) {
+            throw new IllegalArgumentException("Please select an account status");
+        }
+        if (user.getStatus() == form.getNewStatus()) {
+            return;
+        }
         String previousStatus = user.getStatus().name();
 
         user.setStatus(form.getNewStatus());
