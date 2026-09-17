@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title th:text="${product.name} + ' — ElectroNest'">
+        Product — ElectroNest
+    </title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header th:replace=
+        "~{fragments/site-header :: siteHeader('shop')}">
+</header>
+
+<main class="en-product-detail-shell">
+
+    <a th:href="@{/products}"
+       class="en-product-back">
+        ← Back to Shop
+    </a>
+
+    <div class="en-product-detail-layout">
+
+        <section class="en-product-gallery">
+
+            <div class="en-product-main-image">
+                <p id="imageUnavailable" class="en-muted" hidden>Image unavailable. Try another thumbnail.</p>
+
+                <img id="mainProductImage"
+                     th:if="${!#lists.isEmpty(gallery)}"
+                     th:src="${gallery[0]}"
+                     th:alt="${product.name}">
+
+                <div class="en-product-fallback"
+                     th:if="${#lists.isEmpty(gallery)}">
+                    <span>ELECTRONEST</span>
+
+                    <strong th:text="${#strings.substring(product.name, 0, 1)}">
+                        E
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="en-product-thumbnails"
+                 th:if="${#lists.size(gallery) > 1}">
+
+                <button type="button"
+                        th:each="image, stat : ${gallery}"
+                        th:attr="data-image=${image},aria-label=${'View image ' + (stat.index + 1)},aria-pressed=${stat.index == 0}"
+                        th:classappend="${stat.index == 0}
+                            ? ' active'">
+
+                    <img th:src="${image}"
+                         th:alt="${product.name}">
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <section class="en-product-detail-info">
+
+            <div class="en-product-detail-meta">
+
+                <span th:text="${product.brand}">
+                    Brand
+                </span>
+
+                <span th:text="${product.category}">
+                    Category
+                </span>
+
+            </div>
+
+            <h1 th:text="${product.name}">
+                Product
+            </h1>
+
+            <p class="en-product-detail-description"
+               th:text="${product.description != null
+                    and !product.description.isBlank()
+                    ? product.description
+                    : 'No description provided.'}">
+            </p>
+
+            <div class="en-product-seller"
+                 th:if="${seller != null}">
+
+                Sold by
+                <strong th:text="${seller.businessName}">
+                    Seller
+                </strong>
+
+            </div>
+
+            <div class="en-product-detail-buy">
+
+                <strong class="en-product-detail-price"
+                        th:text="'Rs. ' + ${#numbers.formatDecimal(
+                            product.price,
+                            1,
+                            'COMMA',
+                            2,
+                            'POINT'
+                        )}">
+                    Rs. 0.00
+                </strong>
+
+                <span th:classappend="${product.outOfStock
+                        or product.stockQuantity <= 0}
+                        ? ' en-detail-out-stock'
+                        : ' en-detail-in-stock'"
+                      th:text="${product.outOfStock
+                        or product.stockQuantity <= 0
+                        ? 'Out of stock'
+                        : product.stockQuantity + ' available'}">
+                </span>
+
+            </div>
+
+            <form th:if="${loggedIn
+                    and currentUser.role.name() == 'CUSTOMER'
+                    and !accountSuspended}"
+                  th:action="@{/cart/add}"
+                  method="post"
+                  class="en-product-detail-cart">
+
+                <input type="hidden"
+                       name="productId"
+                       th:value="${product.id}">
+
+                <input type="number"
+                       name="quantity"
+                       value="1"
+                       min="1"
+                       th:max="${product.stockQuantity}"
+                       th:disabled="${product.outOfStock
+                            or product.stockQuantity <= 0}">
+
+                <button type="submit"
+                        class="en-btn en-btn-primary"
+                        th:disabled="${product.outOfStock
+                            or product.stockQuantity <= 0}">
+                    Add to cart
+                </button>
+
+            </form>
+
+            <div th:if="${loggedIn and (accountSuspended
+                    or currentUser.role.name() != 'CUSTOMER')}"
+                 class="en-product-detail-cart">
+                <input type="number" value="1" disabled aria-label="Quantity unavailable">
+                <button type="button" class="en-btn en-btn-primary" disabled
+                        th:text="${accountSuspended ? 'Account suspended' : 'Customer accounts only'}">
+                    Unavailable
+                </button>
+            </div>
+
+            <p class="en-muted" th:if="${loggedIn and accountSuspended}">
+                Add to Cart is disabled while your account is suspended.
+            </p>
+
+            <p class="en-muted"
+               th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR'}">
+                Vendor accounts cannot place customer orders.
+            </p>
+
+            <p class="en-muted"
+               th:if="${loggedIn and !accountSuspended
+                    and currentUser.role.name() != 'CUSTOMER'
+                    and currentUser.role.name() != 'VENDOR'}">
+                Product purchases require a customer account.
+            </p>
+
+            <a th:unless="${loggedIn}"
+               th:href="@{/login}"
+               class="en-btn en-btn-primary en-btn-auto">
+                Log in to purchase
+            </a>
+
+        </section>
+
+    </div>
+
+    <section id="reviews" class="en-card en-product-reviews">
+
+        <div class="en-page-header">
+            <div>
+                <p class="en-eyebrow">Customer reviews</p>
+                <h2>Reviews</h2>
+            </div>
+
+            <div>
+                <strong th:text="${#numbers.formatDecimal(averageRating, 1, 1)} + ' / 5'">
+                    0.0 / 5
+                </strong>
+                <span th:text="${reviewCount == 1 ? '1 review' : reviewCount + ' reviews'}">
+                    0 reviews
+                </span>
+            </div>
+        </div>
+
+        <div class="en-alert en-alert-success"
+             th:if="${successMessage}"
+             th:text="${successMessage}"></div>
+
+        <div class="en-alert en-alert-error"
+             th:if="${errorMessage}"
+             th:text="${errorMessage}"></div>
+
+        <form th:if="${reviewEligible}"
+              class="en-product-review-form"
+              th:action="@{/products/{id}/reviews(id=${product.id})}"
+              method="post">
+
+            <label for="rating">Rating</label>
+            <select id="rating" name="rating" required>
+                <option value="5">5 — Excellent</option>
+                <option value="4">4 — Good</option>
+                <option value="3">3 — Average</option>
+                <option value="2">2 — Poor</option>
+                <option value="1">1 — Very poor</option>
+            </select>
+
+            <label for="reviewText">Review</label>
+            <textarea id="reviewText"
+                      name="reviewText"
+                      maxlength="2000"
+                      rows="5"></textarea>
+
+            <button type="submit" class="en-btn en-btn-primary">
+                Publish review
+            </button>
+
+        </form>
+
+        <p class="en-muted" th:if="${customerAccount and accountSuspended}">
+            Review creation and editing are disabled while your account is suspended.
+        </p>
+
+        <p class="en-muted"
+           th:if="${customerAccount and alreadyReviewed}">
+            You have already reviewed this product.
+            <a th:href="@{/orders#reviews}">View or manage your review in Orders</a>
+        </p>
+
+        <div class="en-empty"
+             th:if="${#lists.isEmpty(reviews)}">
+            No reviews yet.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(reviews)}">
+            <article th:each="review : ${reviews}">
+                <div>
+                    <strong th:text="${review.customerName}">Customer</strong>
+                    <span th:text="${review.rating} + ' / 5'">5 / 5</span>
+                    <span th:if="${review.verified}">Verified purchase</span>
+                </div>
+
+                <p th:if="${review.reviewText != null}"
+                   th:text="${review.reviewText}">
+                    Review text
+                </p>
+
+                <time th:datetime="${review.createdAt}"
+                      th:text="${#temporals.format(review.createdAt, 'dd MMM yyyy')}">
+                    Date
+                </time>
+            </article>
+        </div>
+
+    </section>
+
+</main>
+
+<script>
+const main =
+    document.getElementById('mainProductImage');
+const imageUnavailable = document.getElementById('imageUnavailable');
+if (main) {
+    const imageFailed = () => {
+        main.hidden = true;
+        imageUnavailable.hidden = false;
+    };
+    main.addEventListener('error', imageFailed);
+    main.addEventListener('load', () => {
+        main.hidden = false;
+        imageUnavailable.hidden = true;
+    });
+    if (main.complete && !main.naturalWidth) imageFailed();
+}
+
+document.querySelectorAll(
+    '.en-product-thumbnails button'
+).forEach(button => {
+
+    button.addEventListener('click', () => {
+
+        if (main) {
+            main.hidden = false;
+            imageUnavailable.hidden = true;
+            main.src =
+                button.dataset.image;
+        }
+
+        document.querySelectorAll(
+            '.en-product-thumbnails button'
+        ).forEach(item => {
+            item.classList.remove('active');
+            item.setAttribute('aria-pressed', 'false');
+        });
+
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
+    });
+});
+</script>
+
+</body>
+</html>

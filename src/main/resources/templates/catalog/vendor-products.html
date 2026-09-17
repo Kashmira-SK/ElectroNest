@@ -8,24 +8,17 @@
 </head>
 <body>
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+<header th:replace="~{fragments/site-header :: siteHeader('seller')}"></header>
 
-    <nav class="en-nav-links">
-        <a th:href="@{/vendor/status}">Vendor Profile</a>
-        <a th:href="@{/vendor/products}">Products</a>
-        <a th:href="@{/vendor/orders}">Orders</a>
-    </nav>
-</header>
-
-<main class="en-page">
+<main class="en-page en-seller-catalog">
 
     <div class="en-page-header">
         <div>
             <p class="en-eyebrow">ElectroNest / Seller</p>
             <h1>My products</h1>
             <p class="en-muted">
-                Manage listings, pricing and inventory.
+                Manage listings, pricing and inventory for
+                <strong th:text="${vendor.businessName}">your store</strong>.
             </p>
         </div>
 
@@ -39,16 +32,33 @@
          th:if="${successMessage}"
          th:text="${successMessage}"></div>
 
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(products)}">
         You haven't listed any products yet.
     </div>
+
+    <form id="bulkPriceForm" class="en-seller-bulk" th:unless="${#lists.isEmpty(products)}"
+          th:action="@{/vendor/products/bulk-price}" method="post"
+          onsubmit="return confirm('Set every selected product to this price?')">
+        <div><label for="bulkPrice">Set selected products to price (LKR)</label>
+            <input id="bulkPrice" name="newPrice" type="number" min="0.01" step="0.01" required></div>
+        <button type="submit" class="en-btn en-btn-secondary">Update selected prices</button>
+        <p class="en-muted">Select products below. This sets one price, not a percentage change.</p>
+    </form>
 
     <div class="en-product-grid"
          th:unless="${#lists.isEmpty(products)}">
 
         <article class="en-product-card"
                  th:each="product : ${products}">
+            <label class="en-seller-select">
+                <input type="checkbox" name="productIds" form="bulkPriceForm" th:value="${product.id}">
+                Select for price update
+            </label>
 
             <div class="en-product-image">
                 <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
@@ -66,21 +76,44 @@
                     Category
                 </p>
 
-                <h3 th:text="${product.name}">Product</h3>
+                <h3><a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Product</a></h3>
 
                 <p class="en-muted"
                    th:text="${product.brand}">
                     Brand
                 </p>
 
-                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(product.price, 1, 2)}">
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
 
                 <p class="en-stock-line">
                     Stock:
                     <strong th:text="${product.stockQuantity}">0</strong>
+                    <span class="en-status en-status-rejected"
+                          th:if="${product.stockQuantity == 0}">
+                        Out of stock
+                    </span>
+                    <span class="en-status en-status-pending"
+                          th:if="${product.stockQuantity > 0 and product.stockQuantity < lowStockThreshold}">
+                        Low stock
+                    </span>
                 </p>
+
+                <form class="en-inline-stock"
+                      th:action="@{/vendor/products/{id}/stock(id=${product.id})}"
+                      method="post">
+                    <label th:for="${'stock-' + product.id}">Update stock</label>
+                    <input th:id="${'stock-' + product.id}"
+                           name="stockQuantity"
+                           type="number"
+                           min="0"
+                           th:value="${product.stockQuantity}"
+                           required>
+                    <button type="submit" class="en-btn en-btn-secondary">
+                        Save stock
+                    </button>
+                </form>
 
                 <div class="en-actions">
                     <a th:href="@{/vendor/products/{id}/edit(id=${product.id})}"

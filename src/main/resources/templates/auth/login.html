@@ -2,30 +2,94 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Login - ElectroNest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in — ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
-<body>
-<div class="en-shell" style="max-width: 420px;">
-    <p class="en-eyebrow">ElectroNest</p>
-    <h1>Log in</h1>
+<body class="en-auth-page">
 
-    <div class="en-card">
-        <div class="en-alert en-alert-error" th:if="${param.error}">Invalid email or password.</div>
-        <div class="en-alert en-alert-success" th:if="${param.logout}">You've been logged out.</div>
+<header th:replace="~{fragments/site-header :: siteHeader('login')}"></header>
+
+<main class="en-login-shell">
+
+    <section class="en-login-copy">
+        <p class="en-eyebrow">ElectroNest / Account access</p>
+
+        <h1>
+            Back to your
+            <span>marketplace.</span>
+        </h1>
+
+        <p>
+            Continue shopping, track your orders, or manage your seller
+            workspace from one account.
+        </p>
+
+        <div class="en-login-points">
+            <span>01 / Customer orders</span>
+            <span>02 / Verified sellers</span>
+            <span>03 / Secure checkout</span>
+        </div>
+    </section>
+
+    <section class="en-login-panel">
+
+        <p class="en-eyebrow">Sign in</p>
+        <h2>Welcome back.</h2>
+
+        <div class="en-alert" th:if="${param.accountChanged}">
+            Your account access has changed. Please sign in again. Deactivated accounts cannot sign in.
+        </div>
+
+        <div class="en-alert en-alert-error"
+             th:if="${param.error}">
+            Email or password is incorrect.
+        </div>
+
+        <div class="en-alert en-alert-success"
+             th:if="${param.logout}">
+            You have been logged out.
+        </div>
 
         <form th:action="@{/login}" method="post">
+
             <div class="en-field">
-                <label>Email</label>
-                <input type="email" name="email" required>
+                <label for="email">Email address</label>
+                <input id="email"
+                       type="email"
+                       name="email"
+                       autocomplete="email"
+                       placeholder="you@example.com"
+                       required
+                       autofocus>
             </div>
+
             <div class="en-field">
-                <label>Password</label>
-                <input type="password" name="password" required>
+                <label for="password">Password</label>
+                <input id="password"
+                       type="password"
+                       name="password"
+                       autocomplete="current-password"
+                       placeholder="Your password"
+                       required>
             </div>
-            <button type="submit" class="en-btn en-btn-primary">Log in</button>
+
+            <button type="submit"
+                    class="en-btn en-btn-electric en-login-submit">
+                Log in
+                <span aria-hidden="true">→</span>
+            </button>
+
         </form>
-    </div>
-</div>
+
+        <p class="en-login-register">
+            New to ElectroNest?
+            <a th:href="@{/register}">Create an account</a>
+        </p>
+
+    </section>
+
+</main>
+
 </body>
 </html>

@@ -1,5 +1,9 @@
 package lk.sliit.electronest.vendor.service;
 
+import lk.sliit.electronest.common.model.Role;
+import lk.sliit.electronest.common.model.AccountStatus;
+import lk.sliit.electronest.catalog.repository.ProductRepository;
+import lk.sliit.electronest.order.repository.OrderRepository;
 import lk.sliit.electronest.common.model.User;
 import lk.sliit.electronest.common.repository.UserRepository;
 import lk.sliit.electronest.vendor.exception.DuplicateVendorApplicationException;
@@ -27,12 +31,18 @@ public class VendorService {
 
     private final VendorRepository vendorRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     public VendorService(
             VendorRepository vendorRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ProductRepository productRepository,
+            OrderRepository orderRepository) {
         this.vendorRepository = vendorRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
     }
 
     @Transactional
@@ -98,9 +108,17 @@ public class VendorService {
     public Vendor approveVendor(Long id) {
         Vendor vendor = getVendorOrThrow(id);
         requireStatus(vendor, VendorStatus.PENDING, "approve");
+        requireActiveApplicant(vendor);
+        if (vendor.getIdDocumentPath() == null || vendor.getIdDocumentPath().isBlank()) {
+            throw new InvalidVendorStatusTransitionException("Request a verification document before approving this application.");
+        }
 
         vendor.setStatus(VendorStatus.APPROVED);
         vendor.setRejectionReason(null);
+
+        User user = vendor.getUser();
+        user.setRole(Role.VENDOR);
+        userRepository.save(user);
 
         Vendor saved = vendorRepository.save(vendor);
 
@@ -178,8 +196,14 @@ public class VendorService {
     public Vendor reactivateVendor(Long id) {
         Vendor vendor = getVendorOrThrow(id);
         requireStatus(vendor, VendorStatus.SUSPENDED, "reactivate");
+        if (vendor.getUser().getStatus() != AccountStatus.ACTIVE
+                || vendor.getUser().getRole() == Role.ADMIN) {
+            throw new InvalidVendorStatusTransitionException("Resolve this user's account status or role in Users before reactivating the seller.");
+        }
 
         vendor.setStatus(VendorStatus.APPROVED);
+        vendor.getUser().setRole(Role.VENDOR);
+        userRepository.save(vendor.getUser());
 
         Vendor saved = vendorRepository.save(vendor);
 
@@ -195,6 +219,14 @@ public class VendorService {
     @Transactional
     public void revokeVendor(Long id) {
         Vendor vendor = getVendorOrThrow(id);
+        if (!productRepository.findByVendorId(id).isEmpty() || !orderRepository.findByVendorId(vendor.getUser().getId()).isEmpty()) {
+            throw new InvalidVendorStatusTransitionException(
+                    "This seller has product or order records. Suspend the seller instead to preserve product and purchase history.");
+        }
+        if (vendor.getUser().getRole() == Role.VENDOR) {
+            vendor.getUser().setRole(Role.CUSTOMER);
+            userRepository.save(vendor.getUser());
+        }
 
         sendStatusEmail(
                 vendor,
@@ -265,18 +297,35 @@ public class VendorService {
             Long userId,
             VendorProfileUpdateRequest request) {
 
+        return updateVendorDetails(userId, request, null);
+    }
+
+    @Transactional
+    public Vendor updateVendorDetails(
+            Long userId,
+            VendorProfileUpdateRequest request,
+            String replacementDocumentPath) {
+
         Vendor vendor = getVendorForUser(userId);
 
         if (vendor.getStatus() != VendorStatus.APPROVED
                 && vendor.getStatus() != VendorStatus.INFO_REQUESTED) {
             throw new InvalidVendorStatusTransitionException(
-                    "Vendor details can only be edited after approval or when more information is requested"
+                    "Vendor details can only be edited after approval "
+                            + "or when more information is requested"
             );
         }
 
         vendor.setBusinessName(request.getBusinessName().trim());
-        vendor.setBusinessAddress(request.getBusinessAddress().trim());
+        vendor.setBusinessAddress(
+                request.getBusinessAddress().trim()
+        );
         vendor.setContactPhone(request.getContactPhone().trim());
+
+        if (replacementDocumentPath != null
+                && !replacementDocumentPath.isBlank()) {
+            vendor.setIdDocumentPath(replacementDocumentPath);
+        }
 
         if (vendor.getStatus() == VendorStatus.INFO_REQUESTED) {
             vendor.setStatus(VendorStatus.PENDING);
@@ -285,11 +334,20 @@ public class VendorService {
             sendStatusEmail(
                     vendor,
                     "Vendor information resubmitted",
-                    "Your updated vendor information has been resubmitted for administrator review."
+                    "Your updated vendor information has been "
+                            + "resubmitted for administrator review."
             );
         }
 
         return vendorRepository.save(vendor);
+    }
+
+    private void requireActiveApplicant(Vendor vendor) {
+        if (vendor.getUser().getStatus() != AccountStatus.ACTIVE
+                || vendor.getUser().getRole() != Role.CUSTOMER) {
+            throw new InvalidVendorStatusTransitionException(
+                    "Only an active CUSTOMER account can be approved. Resolve the account in Users first.");
+        }
     }
 
     private void requireStatus(

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header th:fragment="siteHeader(active)" class="en-site-header">
+    <div class="en-navbar">
+
+        <a th:href="@{/}" class="en-brand en-brand-light">
+            <span class="en-brand-mark"></span>
+            ElectroNest
+        </a>
+
+        <nav class="en-nav-center">
+
+            <a th:if="${active != 'home'}"
+               th:href="@{/}">
+                Home
+            </a>
+
+            <a th:if="${active != 'products'}"
+               th:href="@{/products}">
+                Shop
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'CUSTOMER'
+                    and !accountSuspended
+                    and active != 'cart'}"
+               th:href="@{/cart}">
+                Cart
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'CUSTOMER'
+                    and !accountSuspended
+                    and active != 'orders'}"
+               th:href="@{/orders}">
+                Orders
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'VENDOR'
+                    and !accountSuspended
+                    and sellerAccess
+                    and active != 'seller'}"
+               th:href="@{/vendor}">
+                Seller Hub
+            </a>
+
+            <a th:if="${loggedIn
+                    and currentUser.role.name() == 'VENDOR'
+                    and !accountSuspended
+                    and sellerAccess
+                    and active != 'vendor-orders'}"
+               th:href="@{/vendor/orders}">
+                Vendor Orders
+            </a>
+
+            <a th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR' and !sellerAccess}"
+               th:href="@{/vendor/status}">Seller status</a>
+
+            <a th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'ADMIN' and !#strings.startsWith(active, 'admin-')}"
+               th:href="@{/admin/dashboard}">Admin</a>
+
+            <a th:if="${loggedIn and accountSuspended and active != 'account-suspended'}"
+               th:href="@{/account/suspended}">
+                Suspended
+            </a>
+
+        </nav>
+
+        <div class="en-nav-account">
+
+            <th:block th:unless="${loggedIn}">
+
+                <a th:if="${active != 'login'}"
+                   th:href="@{/login}"
+                   class="en-nav-login">
+                    Log in
+                </a>
+
+                <a th:if="${active != 'register'}"
+                   th:href="@{/register}"
+                   class="en-nav-join">
+                    Create account
+                </a>
+
+            </th:block>
+
+            <th:block th:if="${loggedIn}">
+
+                <a th:href="${accountSuspended} ? @{/account/suspended} : @{/settings}"
+                   class="en-user-chip en-user-chip-link"
+                   th:title="${accountSuspended ? 'Suspended account status' : 'Account settings'}">
+                    <span class="en-user-dot"></span>
+
+                    <div>
+                        <strong th:text="${currentUser.fullName}">
+                            Account
+                        </strong>
+
+                        <small th:text="${accountSuspended ? 'SUSPENDED · ' + currentUser.role : currentUser.role}">
+                            CUSTOMER
+                        </small>
+                    </div>
+                </a>
+
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="en-nav-logout">
+                        Log out
+                    </button>
+                </form>
+
+            </th:block>
+
+        </div>
+
+    </div>
+    <nav class="en-admin-workspace-nav" aria-label="Administration"
+         th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'ADMIN' and #strings.startsWith(active, 'admin-')}">
+        <div class="en-admin-workspace-links">
+            <a th:href="@{/admin/dashboard}" th:attr="aria-current=${active == 'admin-dashboard' ? 'page' : null}">Overview</a>
+            <a th:href="@{/admin/users}" th:attr="aria-current=${active == 'admin-users' ? 'page' : null}">Users</a>
+            <a th:href="@{/vendor/queue}" th:attr="aria-current=${active == 'admin-vendor-queue' ? 'page' : null}">Vendor verification</a>
+            <a th:href="@{/vendor/manage}" th:attr="aria-current=${active == 'admin-vendors' ? 'page' : null}">Vendors</a>
+            <a th:href="@{/admin/reports}" th:attr="aria-current=${active == 'admin-reports' ? 'page' : null}">Reports</a>
+            <a th:href="@{/admin/reviews}" th:attr="aria-current=${active == 'admin-reviews' ? 'page' : null}">Reviews</a>
+            <a th:href="@{/admin/audit-logs}" th:attr="aria-current=${active == 'admin-audit' ? 'page' : null}">Audit log</a>
+        </div>
+    </nav>
+</header>
+
+</body>
+</html>

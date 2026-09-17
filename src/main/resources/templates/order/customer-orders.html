@@ -3,22 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>My Orders - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body class="en-customer-page">
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+<header th:replace="~{fragments/site-header :: siteHeader('orders')}"></header>
 
-    <nav class="en-nav-links">
-        <a th:href="@{/}">Home</a>
-        <a th:href="@{/products}">Products</a>
-        <a th:href="@{/orders}">My Orders</a>
-    </nav>
-</header>
-
-<main class="en-page">
+<main class="en-page en-orders-workspace">
 
     <div class="en-page-header">
         <div>
@@ -30,6 +24,14 @@
         </div>
     </div>
 
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}"></div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}"></div>
+
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(orders)}">
         You haven't placed any orders yet.
@@ -39,7 +41,8 @@
          th:unless="${#lists.isEmpty(orders)}">
 
         <article class="en-card en-order-card"
-                 th:each="order : ${orders}">
+                 th:each="view : ${orders}"
+                 th:with="order=${view.order}">
 
             <div class="en-order-heading">
                 <div>
@@ -48,7 +51,7 @@
                         <span th:text="'#' + ${order.id}">#1</span>
                     </p>
 
-                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(order.totalAmount(), 1, 2)}">
+                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(view.displayTotal, 1, 'COMMA', 2, 'POINT')}">
                         Rs. 0.00
                     </h3>
                 </div>
@@ -59,10 +62,123 @@
                 </span>
             </div>
 
+            <div class="en-order-details">
+                <section>
+                    <h4>Delivery</h4>
+                    <p th:text="${order.deliveryName}">Customer</p>
+                    <p th:text="${order.deliveryPhone}">Phone</p>
+                    <p>
+                        <span th:text="${order.addressLine1}">Address</span>
+                        <span th:if="${order.addressLine2 != null}" th:text="${', ' + order.addressLine2}"></span>
+                        <span th:text="${', ' + order.city}"></span>
+                        <span th:if="${order.postalCode != null}" th:text="${' ' + order.postalCode}"></span>
+                        <span th:text="${', ' + order.country}"></span>
+                    </p>
+                </section>
+
+                <section>
+                    <h4>Items</h4>
+                    <div class="en-order-item" th:each="item : ${view.items}">
+                        <div>
+                            <strong th:text="${item.productName}">Product</strong>
+                            <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}"></span>
+                        </div>
+                        <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">Rs. 0.00</strong>
+                    </div>
+                </section>
+            </div>
+
+            <section class="en-order-reviews"
+                     th:if="${order.status.name() == 'DELIVERED'}">
+
+                <div class="en-order-reviews-heading">
+                    <div>
+                        <p class="en-eyebrow">Product reviews</p>
+                        <h4>How was your order?</h4>
+                    </div>
+                    <span>Verified purchase</span>
+                </div>
+
+                <div class="en-order-review-list">
+                    <article class="en-order-review"
+                             th:each="item, reviewStat : ${view.items}"
+                             th:attr="data-product-id=${item.productId}">
+
+                        <div class="en-order-review-heading">
+                            <div>
+                                <strong th:text="${item.productName}">Product</strong>
+                                <span th:text="${'Purchased quantity: ' + item.quantity}">
+                                    Purchased quantity: 1
+                                </span>
+                            </div>
+
+                            <button type="button"
+                                    class="en-btn en-btn-secondary en-btn-sm en-review-toggle"
+                                    aria-expanded="false"
+                                    hidden>
+                                Leave review
+                            </button>
+                        </div>
+
+                        <form class="en-order-review-form" hidden>
+                            <fieldset class="en-order-rating-field">
+                                <legend>Your rating</legend>
+
+                                <div class="en-order-star-options">
+                                    <label class="en-order-star-option"
+                                           th:each="ratingValue : ${#numbers.sequence(1, 5)}">
+                                        <input type="radio"
+                                               name="rating"
+                                               th:id="|review-${order.id}-${reviewStat.index}-${ratingValue}|"
+                                               th:value="${ratingValue}"
+                                               required>
+                                        <span>
+                                            <b th:text="${ratingValue}">1</b>
+                                            ★
+                                        </span>
+                                    </label>
+                                </div>
+                            </fieldset>
+
+                            <label class="en-order-review-copy">
+                                <span>Your review</span>
+                                <textarea name="reviewText"
+                                          rows="5"
+                                          maxlength="2000"
+                                          placeholder="What did you like or dislike about this product?"></textarea>
+                            </label>
+
+                            <div class="en-order-review-actions">
+                                <button type="button" class="en-btn en-btn-secondary en-review-cancel">Cancel</button>
+                                <button type="submit"
+                                        class="en-btn en-btn-primary">
+                                    Submit review
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="en-order-existing-review" hidden>
+                            <p class="en-order-review-status"></p>
+                            <strong class="en-order-review-rating"></strong>
+                            <p class="en-order-review-text"></p>
+                            <div class="en-order-review-actions">
+                                <button type="button" class="en-btn en-btn-secondary en-review-edit">Edit review</button>
+                                <button type="button" class="en-btn en-btn-secondary en-review-delete">Delete review</button>
+                            </div>
+                        </div>
+
+                        <div class="en-alert en-alert-error en-order-review-error"
+                             role="alert" hidden></div>
+                        <p class="en-review-loading" role="status">Loading your review…</p>
+                        <button type="button" class="en-btn en-btn-secondary en-review-retry" hidden>Retry loading reviews</button>
+                    </article>
+                </div>
+            </section>
+
             <div class="en-order-meta">
                 <div>
                     <strong>Payment</strong>
-                    <span th:text="${order.paymentStatus}">
+                    <span th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : order.paymentStatus}">
                         PENDING_PAYMENT
                     </span>
                 </div>
@@ -82,7 +198,14 @@
                 </div>
             </div>
 
-            <div class="en-order-progress">
+            <div class="en-actions">
+                <a th:if="${order.status.name() == 'PENDING' and !view.readyForFulfilment}"
+                   th:href="@{/payment(orderId=${order.id})}" class="en-btn en-btn-primary">Continue to payment</a>
+                <a th:if="${view.readyForFulfilment}"
+                   th:href="@{/payment(orderId=${order.id})}" class="en-btn en-btn-secondary">View receipt / payment</a>
+            </div>
+
+            <div class="en-order-progress" th:unless="${order.status.name() == 'CANCELLED'}">
                 <span th:classappend="${order.status.name() == 'PENDING'
                                       or order.status.name() == 'PROCESSING'
                                       or order.status.name() == 'DELIVERED'}
@@ -108,10 +231,179 @@
                 This order was cancelled.
             </div>
 
+            <div class="en-actions"
+                 th:if="${!order.status.isTerminal() and !order.cancellationRequested}">
+                <form th:action="@{/orders/{id}/cancel(id=${order.id})}"
+                      method="post"
+                      onsubmit="return confirm('Cancel this order or request cancellation?')">
+                    <button type="submit" class="en-btn en-btn-reject en-btn-sm"
+                            th:text="${order.status.name() == 'PENDING' ? 'Cancel order' : 'Request cancellation'}">
+                        Cancel order
+                    </button>
+                </form>
+            </div>
+
+            <div class="en-alert en-alert-error"
+                 th:if="${order.cancellationRequested}"
+                 style="margin-top: 18px;">
+                Cancellation has been requested and is awaiting seller action.
+            </div>
+
         </article>
 
     </div>
 
 </main>
+
+<script th:src="@{/js/order-tabs.js}" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const reviewAreas = Array.from(document.querySelectorAll('.en-order-review'));
+    if (!reviewAreas.length) return;
+    const reviews = new Map();
+    const busyProducts = new Set();
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || '';
+
+    function productAreas(id) {
+        return reviewAreas.filter(area => area.dataset.productId === id);
+    }
+
+    function render(area) {
+        const review = reviews.get(area.dataset.productId);
+        area.querySelector('.en-review-toggle').hidden = !!review;
+        area.querySelector('.en-review-toggle').setAttribute('aria-expanded', 'false');
+        area.querySelector('.en-order-review-form').hidden = true;
+        area.querySelector('.en-order-existing-review').hidden = !review;
+        area.querySelector('.en-order-review-error').hidden = true;
+        area.querySelector('.en-review-loading').hidden = true;
+        area.querySelector('.en-review-retry').hidden = true;
+        if (!review) return;
+        const rating = Math.max(1, Math.min(5, Number(review.rating)));
+        const stars = area.querySelector('.en-order-review-rating');
+        stars.textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        stars.setAttribute('aria-label', rating + ' out of 5 stars');
+        area.querySelector('.en-order-review-text').textContent = review.reviewText || 'No written review.';
+        area.querySelector('.en-order-review-status').textContent = review.status === 'HIDDEN'
+            ? 'Your review · Hidden by moderation'
+            : 'Your review' + (review.verified ? ' · Verified purchase' : '');
+    }
+
+    function showError(area, message) {
+        const error = area.querySelector('.en-order-review-error');
+        error.textContent = message;
+        error.hidden = false;
+    }
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, { ...options, headers: {
+            'Accept': 'application/json',
+            ...(options.body ? {'Content-Type': 'application/json'} : {}),
+            ...(options.method && csrfHeader ? {[csrfHeader]: csrfToken} : {})
+        }});
+        if (response.redirected) throw new Error('Your session has expired. Sign in again, then reload this page.');
+        const data = response.status === 204 ? null : await response.json().catch(() => null);
+        if (!response.ok) {
+            throw new Error(response.status === 403
+                ? 'Your session or access has changed. Reload this page and try again.'
+                : data?.message || data?.detail || 'Unable to save this change. Please try again.');
+        }
+        if (response.status !== 204 && data === null) throw new Error('Could not load reviews. Reload this page and try again.');
+        return data;
+    }
+
+    async function loadReviews() {
+        reviewAreas.forEach(area => {
+            area.querySelector('.en-review-retry').hidden = true;
+            area.querySelector('.en-review-loading').hidden = false;
+            area.querySelector('.en-order-review-error').hidden = true;
+        });
+        try {
+            const data = await request('/api/reviews/my-reviews');
+            if (!Array.isArray(data)) throw new Error('Could not load your reviews.');
+            reviews.clear();
+            data.forEach(review => reviews.set(String(review.productId), review));
+            reviewAreas.forEach(render);
+        } catch (error) {
+            reviewAreas.forEach(area => {
+                area.querySelector('.en-review-loading').hidden = true;
+                area.querySelector('.en-review-retry').hidden = false;
+                area.querySelector('.en-review-toggle').hidden = true;
+                showError(area, error.message);
+            });
+        }
+    }
+
+    function openForm(area) {
+        const form = area.querySelector('.en-order-review-form');
+        const review = reviews.get(area.dataset.productId);
+        form.reset();
+        if (review) form.querySelector('input[name="rating"][value="' + review.rating + '"]').checked = true;
+        form.elements.reviewText.value = review?.reviewText || '';
+        form.querySelector('button[type="submit"]').textContent = review ? 'Save changes' : 'Submit review';
+        area.querySelector('.en-review-toggle').hidden = true;
+        area.querySelector('.en-review-toggle').setAttribute('aria-expanded', 'true');
+        area.querySelector('.en-order-existing-review').hidden = true;
+        area.querySelector('.en-order-review-error').hidden = true;
+        form.hidden = false;
+        form.querySelector('input[name="rating"]').focus();
+    }
+
+    async function mutate(area, deleting = false) {
+        const id = area.dataset.productId;
+        if (busyProducts.has(id)) return;
+        const review = reviews.get(id);
+        if (deleting && (!review || !confirm('Delete your review? You can review this purchase again afterward.'))) return;
+        const form = area.querySelector('.en-order-review-form');
+        const fields = new FormData(form);
+        busyProducts.add(id);
+        productAreas(id).forEach(item => item.querySelectorAll('button, input, textarea')
+            .forEach(control => control.disabled = true));
+        area.querySelector('.en-order-review-error').hidden = true;
+        try {
+            const result = await request(review ? '/api/reviews/' + review.id : '/api/reviews/product/' + id, {
+                method: deleting ? 'DELETE' : review ? 'PUT' : 'POST',
+                ...(deleting ? {} : {body: JSON.stringify({
+                    rating: Number(fields.get('rating')),
+                    reviewText: fields.get('reviewText'),
+                    photoPath: review?.photoPath || null
+                })})
+            });
+            if (deleting) reviews.delete(id);
+            else reviews.set(id, result);
+            productAreas(id).forEach(render);
+        } catch (error) {
+            // Reconcile duplicate/deleted reviews from another tab without resubmitting.
+            try {
+                const latest = await request('/api/reviews/my-reviews');
+                const existing = latest.find(item => String(item.productId) === id);
+                if (existing) reviews.set(id, existing);
+                else reviews.delete(id);
+                if ((!review && existing) || (review && !existing)) productAreas(id).forEach(render);
+            } catch (_) { /* Keep the form and its entered text available for retry. */ }
+            showError(area, error.message);
+        } finally {
+            busyProducts.delete(id);
+            productAreas(id).forEach(item => item.querySelectorAll('button, input, textarea')
+                .forEach(control => control.disabled = false));
+        }
+    }
+
+    reviewAreas.forEach(area => {
+        area.querySelector('.en-review-toggle').addEventListener('click', () => openForm(area));
+        area.querySelector('.en-review-edit').addEventListener('click', () => openForm(area));
+        area.querySelector('.en-review-cancel').addEventListener('click', () => render(area));
+        area.querySelector('.en-review-delete').addEventListener('click', () => mutate(area, true));
+        area.querySelector('.en-review-retry').addEventListener('click', loadReviews);
+        area.querySelector('.en-order-review-form').addEventListener('submit', event => {
+            event.preventDefault();
+            mutate(area);
+        });
+    });
+    loadReviews();
+});
+</script>
+
 </body>
 </html>

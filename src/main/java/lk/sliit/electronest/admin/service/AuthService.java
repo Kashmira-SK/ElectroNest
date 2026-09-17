@@ -26,7 +26,8 @@ public class AuthService {
 
     @Transactional
     public User register(RegisterForm form) {
-        if (userRepository.existsByEmail(form.getEmail())) {
+        String email = form.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new DuplicateResourceException("An account with this email already exists");
         }
 
@@ -34,19 +35,14 @@ public class AuthService {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
-        // Public registration is only ever allowed to create CUSTOMER or VENDOR
-        // accounts. ADMIN accounts must be promoted by an existing admin
-        // (see UserService.updateRole).
-        if (form.getRole() == Role.ADMIN) {
-            throw new IllegalArgumentException("You cannot self-register as an Administrator");
-        }
+        // Seller access requires approval; public registration always creates a customer.
 
         User user = User.builder()
-                .fullName(form.getFullName())
-                .email(form.getEmail())
+                .fullName(form.getFullName().trim())
+                .email(email)
                 .password(passwordEncoder.encode(form.getPassword()))
-                .contactNumber(form.getContactNumber())
-                .role(form.getRole())
+                .contactNumber(form.getContactNumber() == null ? null : form.getContactNumber().trim())
+                .role(Role.CUSTOMER)
                 .status(AccountStatus.ACTIVE)
                 .build();
 

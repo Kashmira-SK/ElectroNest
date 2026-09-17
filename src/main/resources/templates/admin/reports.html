@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Platform Reports - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+<header th:replace="~{fragments/site-header :: siteHeader('admin-reports')}"></header>
+<main class="en-admin-shell en-admin-overview en-reports-page">
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Marketplace / Reports</p>
+            <h1>Platform reports</h1>
+            <p class="en-muted">All-time activity and current account states, from saved records.</p>
+        </div>
+        <a th:href="@{/admin/reports}" class="en-btn en-btn-secondary">Refresh figures</a>
+    </div>
+
+    <section class="en-stat-grid" aria-label="All-time marketplace activity">
+        <div class="en-stat"><p class="en-eyebrow">Orders placed</p><p class="en-stat-value" th:text="${summary.totalOrders}">0</p><p class="en-muted">Includes every order status</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Payment records</p><p class="en-stat-value" th:text="${summary.totalPayments}">0</p><p class="en-muted">Not a count of paid orders</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Successful payments</p><p class="en-stat-value" th:text="${summary.successfulPayments}">0</p><p class="en-muted">Currently marked successful</p></div>
+        <div class="en-stat"><p class="en-eyebrow">Successful payment value · LKR</p><p class="en-stat-value" th:text="${#numbers.formatDecimal(summary.totalRevenue, 1, 'COMMA', 2, 'POINT')}">0.00</p><p class="en-muted">Excludes pending, failed, cancelled and refunded payments</p></div>
+    </section>
+
+    <div class="en-report-sections">
+        <section class="en-card">
+            <h2>Payment outcomes</h2>
+            <p class="en-muted">Current status of all recorded payments. These figures are not profit or seller payouts.</p>
+            <table class="en-report-table">
+                <caption class="en-muted">All-time payment counts</caption>
+                <tbody>
+                    <tr><th scope="row">Successful</th><td th:text="${summary.successfulPayments}">0</td></tr>
+                    <tr><th scope="row">Pending</th><td th:text="${summary.pendingPayments}">0</td></tr>
+                    <tr><th scope="row">Failed</th><td th:text="${summary.failedPayments}">0</td></tr>
+                    <tr><th scope="row">Cancelled</th><td th:text="${summary.cancelledPayments}">0</td></tr>
+                    <tr><th scope="row">Refunded</th><td th:text="${summary.refundedPayments}">0</td></tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="en-card">
+            <h2>Account health</h2>
+            <p class="en-muted">Current account access states, independent of seller application approval.</p>
+            <table class="en-report-table">
+                <caption class="en-muted">Account counts by status</caption>
+                <tbody>
+                    <tr><th scope="row">Total accounts</th><td th:text="${summary.totalUsers}">0</td></tr>
+                    <tr><th scope="row">Active</th><td th:text="${summary.activeAccounts}">0</td></tr>
+                    <tr><th scope="row">Suspended</th><td th:text="${summary.suspendedAccounts}">0</td></tr>
+                    <tr><th scope="row">Deactivated</th><td th:text="${summary.deactivatedAccounts}">0</td></tr>
+                </tbody>
+            </table>
+            <a th:href="@{/admin/users}">Manage accounts →</a>
+        </section>
+        <section class="en-card">
+            <h2>Marketplace roles</h2>
+            <p class="en-muted">User roles are not application counts. Active vendor accounts may still have a suspended seller profile.</p>
+            <table class="en-report-table">
+                <caption class="en-muted">Current roles</caption>
+                <tbody>
+                    <tr><th scope="row">Customers</th><td th:text="${summary.totalCustomers}">0</td></tr>
+                    <tr><th scope="row">Vendor accounts</th><td th:text="${summary.totalVendors}">0</td></tr>
+                    <tr><th scope="row">Vendor accounts with active account status</th><td th:text="${summary.activeVendors}">0</td></tr>
+                    <tr><th scope="row">Administrators</th><td th:text="${summary.totalAdmins}">0</td></tr>
+                </tbody>
+            </table>
+            <a th:href="@{/vendor/manage}">Inspect seller approval states →</a>
+        </section>
+    </div>
+</main>
+</body>
+</html>

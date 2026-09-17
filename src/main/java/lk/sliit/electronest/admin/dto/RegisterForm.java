@@ -16,10 +16,12 @@ import lombok.Data;
 public class RegisterForm {
 
     @NotBlank(message = "Full name is required")
+    @Size(max = 100, message = "Full name must be 100 characters or fewer")
     private String fullName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Enter a valid email address")
+    @Size(max = 150, message = "Email must be 150 characters or fewer")
     private String email;
 
     @NotBlank(message = "Password is required")
@@ -29,8 +31,8 @@ public class RegisterForm {
     @NotBlank(message = "Please confirm your password")
     private String confirmPassword;
 
+    @Size(max = 20, message = "Contact number must be 20 characters or fewer")
     private String contactNumber;
 
-    @NotNull(message = "Please select a role")
-    private Role role;
+    private Role role = Role.CUSTOMER;
 }

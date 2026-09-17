@@ -6,22 +6,25 @@
     <title>Create Account - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
-<body>
-<div class="en-shell" style="max-width: 520px;">
+<body class="en-auth-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('register')}"></header>
+
+<main class="en-shell" style="max-width: 520px;">
     <p class="en-eyebrow">ElectroNest</p>
     <h1>Create your account</h1>
-    <p class="en-muted">Shop electronics or register as a seller.</p>
+    <p class="en-muted">Create an account to shop ElectroNest.</p>
 
     <div class="en-card">
         <div class="en-alert en-alert-error"
              th:if="${errorMessage}"
              th:text="${errorMessage}"></div>
 
-        <form th:action="@{/register}" th:object="${registerForm}" method="post">
+        <form id="registrationForm" th:action="@{/register}" th:object="${registerForm}" method="post">
 
             <div class="en-field">
                 <label>Full name</label>
-                <input type="text" th:field="*{fullName}" required>
+                <input type="text" th:field="*{fullName}" maxlength="100" autocomplete="name" required>
                 <p class="en-field-error"
                    th:if="${#fields.hasErrors('fullName')}"
                    th:errors="*{fullName}"></p>
@@ -29,7 +32,7 @@
 
             <div class="en-field">
                 <label>Email</label>
-                <input type="email" th:field="*{email}" required>
+                <input type="email" th:field="*{email}" maxlength="150" autocomplete="email" required>
                 <p class="en-field-error"
                    th:if="${#fields.hasErrors('email')}"
                    th:errors="*{email}"></p>
@@ -37,24 +40,60 @@
 
             <div class="en-field">
                 <label>Contact number</label>
-                <input type="tel" th:field="*{contactNumber}">
+
+                <input type="hidden"
+                       id="contactNumber"
+                       th:field="*{contactNumber}">
+
+                <div class="en-phone-input">
+                    <input id="countryCode"
+                           class="en-country-code"
+                           type="text"
+                           inputmode="tel"
+                           list="countryCodes"
+                           value="+94"
+                           maxlength="5"
+                           aria-label="Country code">
+
+                    <span class="en-phone-divider"></span>
+
+                    <input id="phoneLocal"
+                           class="en-phone-local"
+                           type="tel"
+                           inputmode="numeric"
+                           autocomplete="tel-national"
+                           placeholder="70 469 2764"
+                           required>
+                </div>
+
+                <datalist id="countryCodes">
+                    <option value="+94">Sri Lanka</option>
+                    <option value="+91">India</option>
+                    <option value="+1">United States / Canada</option>
+                    <option value="+44">United Kingdom</option>
+                    <option value="+61">Australia</option>
+                    <option value="+971">UAE</option>
+                    <option value="+65">Singapore</option>
+                    <option value="+60">Malaysia</option>
+                </datalist>
+
+                <p class="en-field-hint">
+                    Select or type a country code.
+                </p>
+
+                <p class="en-field-error"
+                   th:if="${#fields.hasErrors('contactNumber')}"
+                   th:errors="*{contactNumber}">
+                </p>
             </div>
 
-            <div class="en-field">
-                <label>Account type</label>
-                <select th:field="*{role}" required>
-                    <option value="">Choose an account type</option>
-                    <option value="CUSTOMER">Customer</option>
-                    <option value="VENDOR">Seller / Vendor</option>
-                </select>
-                <p class="en-field-error"
-                   th:if="${#fields.hasErrors('role')}"
-                   th:errors="*{role}"></p>
-            </div>
+            <input type="hidden"
+               name="role"
+               value="CUSTOMER">
 
             <div class="en-field">
                 <label>Password</label>
-                <input type="password" th:field="*{password}" required>
+                <input type="password" th:field="*{password}" minlength="6" autocomplete="new-password" required>
                 <p class="en-field-error"
                    th:if="${#fields.hasErrors('password')}"
                    th:errors="*{password}"></p>
@@ -62,7 +101,7 @@
 
             <div class="en-field">
                 <label>Confirm password</label>
-                <input type="password" th:field="*{confirmPassword}" required>
+                <input type="password" th:field="*{confirmPassword}" minlength="6" autocomplete="new-password" required>
                 <p class="en-field-error"
                    th:if="${#fields.hasErrors('confirmPassword')}"
                    th:errors="*{confirmPassword}"></p>
@@ -78,6 +117,128 @@
             <a th:href="@{/login}">Log in</a>
         </p>
     </div>
-</div>
+</main>
+
+<script>
+const registerForm = document.getElementById('registrationForm');
+const countryCodeInput = document.getElementById('countryCode');
+const phoneLocalInput = document.getElementById('phoneLocal');
+const contactNumberInput = document.getElementById('contactNumber');
+
+function cleanCountryCode() {
+    let value = countryCodeInput.value.replace(/[^\d+]/g, '');
+
+    if (!value.startsWith('+')) {
+        value = '+' + value.replace(/\+/g, '');
+    } else {
+        value = '+' + value.slice(1).replace(/\+/g, '');
+    }
+
+    countryCodeInput.value = value.slice(0, 5);
+}
+
+function formatSriLankanPhone(digits) {
+    if (digits.startsWith('0')) {
+        digits = digits.slice(1);
+    }
+
+    digits = digits.slice(0, 9);
+
+    const first = digits.slice(0, 2);
+    const second = digits.slice(2, 5);
+    const third = digits.slice(5, 9);
+
+    return [first, second, third]
+        .filter(Boolean)
+        .join(' ');
+}
+
+function formatGenericPhone(digits) {
+    digits = digits.slice(0, 12);
+
+    if (digits.length <= 3) {
+        return digits;
+    }
+
+    if (digits.length <= 6) {
+        return digits.slice(0, 3) + ' ' + digits.slice(3);
+    }
+
+    if (digits.length <= 10) {
+        return (
+            digits.slice(0, 3) + ' ' +
+            digits.slice(3, 6) + ' ' +
+            digits.slice(6)
+        );
+    }
+
+    return (
+        digits.slice(0, 3) + ' ' +
+        digits.slice(3, 7) + ' ' +
+        digits.slice(7)
+    );
+}
+
+function formatPhone() {
+    cleanCountryCode();
+
+    const digits = phoneLocalInput.value.replace(/\D/g, '');
+
+    phoneLocalInput.value =
+        countryCodeInput.value === '+94'
+            ? formatSriLankanPhone(digits)
+            : formatGenericPhone(digits);
+}
+
+function syncContactNumber() {
+    cleanCountryCode();
+
+    let digits = phoneLocalInput.value.replace(/\D/g, '');
+
+    if (countryCodeInput.value === '+94' && digits.startsWith('0')) {
+        digits = digits.slice(1);
+    }
+
+    contactNumberInput.value =
+        countryCodeInput.value + digits;
+}
+
+countryCodeInput.addEventListener('input', () => {
+    cleanCountryCode();
+    formatPhone();
+});
+
+countryCodeInput.addEventListener('change', formatPhone);
+phoneLocalInput.addEventListener('input', formatPhone);
+
+registerForm.addEventListener('submit', syncContactNumber);
+const passwordInput = document.getElementById('password');
+const confirmationInput = document.getElementById('confirmPassword');
+function checkPasswords() {
+    confirmationInput.setCustomValidity(passwordInput.value === confirmationInput.value ? '' : 'Passwords do not match.');
+}
+passwordInput.addEventListener('input', checkPasswords);
+confirmationInput.addEventListener('input', checkPasswords);
+
+if (contactNumberInput.value) {
+    const existing = contactNumberInput.value.trim();
+
+    if (existing.startsWith('+94')) {
+        countryCodeInput.value = '+94';
+        phoneLocalInput.value = existing.slice(3);
+        formatPhone();
+    } else {
+        const code = ['+971', '+91', '+61', '+65', '+60', '+44', '+1'].find(value => existing.startsWith(value));
+        if (code) {
+            countryCodeInput.value = code;
+            phoneLocalInput.value = existing.slice(code.length);
+        } else {
+            countryCodeInput.value = '';
+            phoneLocalInput.value = existing.replace(/^\+/, '');
+        }
+    }
+}
+</script>
+
 </body>
 </html>

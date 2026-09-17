@@ -6,6 +6,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -39,7 +41,17 @@ public class Product {
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;
 
+    @Column(length = 1000)
     private String imageUrl;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "product_images",
+            joinColumns = @JoinColumn(name = "product_id")
+    )
+    @OrderColumn(name = "image_order")
+    @Column(name = "image_url", length = 1000)
+    private List<String> imageUrls = new ArrayList<>();
 
     private Boolean outOfStock = false;
 
@@ -61,4 +73,15 @@ public class Product {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls == null
+                ? new ArrayList<>()
+                : new ArrayList<>(imageUrls);
+    }
+
 }

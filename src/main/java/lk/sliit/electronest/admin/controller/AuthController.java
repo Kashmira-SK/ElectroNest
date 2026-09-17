@@ -1,5 +1,6 @@
 package lk.sliit.electronest.admin.controller;
 
+import lk.sliit.electronest.common.model.Role;
 import lk.sliit.electronest.admin.dto.RegisterForm;
 import lk.sliit.electronest.admin.service.AuthService;
 import jakarta.validation.Valid;
@@ -42,12 +43,17 @@ public class AuthController {
                             Model model) {
 
         if (bindingResult.hasErrors()) {
+            form.setPassword(null);
+            form.setConfirmPassword(null);
             return "auth/register";
         }
 
         try {
+            form.setRole(Role.CUSTOMER);
             authService.register(form);
         } catch (RuntimeException ex) {
+            form.setPassword(null);
+            form.setConfirmPassword(null);
             model.addAttribute("errorMessage", ex.getMessage());
             return "auth/register";
         }

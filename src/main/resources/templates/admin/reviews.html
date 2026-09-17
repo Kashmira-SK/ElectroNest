@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review Moderation - ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-admin-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('admin-reviews')}"></header>
+
+<main class="en-admin-shell en-moderation-page">
+    <div class="en-page-header">
+        <div>
+            <p class="en-eyebrow">Feedback / Moderation</p>
+            <h1>Product reviews</h1>
+            <p class="en-muted">Hidden reviews stay in the customer’s history but are excluded from public reviews and ratings. Restore them to make them public again.</p>
+        </div>
+    </div>
+
+    <div class="en-alert en-alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <p class="en-moderation-counts">
+        <span><strong th:text="${totalReviews}">0</strong> total</span>
+        <span><strong th:text="${visibleReviews}">0</strong> visible</span>
+        <span><strong th:text="${hiddenReviews}">0</strong> hidden</span>
+    </p>
+    <form class="en-moderation-filter" th:action="@{/admin/reviews}" method="get">
+        <div>
+            <label for="review-search">Product, customer or review text</label>
+            <input id="review-search" type="search" name="keyword" th:value="${keyword}" placeholder="Search reviews">
+        </div>
+        <div>
+            <label for="review-visibility">Visibility</label>
+            <select id="review-visibility" name="visibility">
+                <option value="ALL" th:selected="${visibility == 'ALL'}">All reviews</option>
+                <option value="ACTIVE" th:selected="${visibility == 'ACTIVE'}">Visible</option>
+                <option value="HIDDEN" th:selected="${visibility == 'HIDDEN'}">Hidden</option>
+            </select>
+        </div>
+        <button type="submit" class="en-btn en-btn-primary en-btn-auto">Apply filters</button>
+        <a th:href="@{/admin/reviews}" class="en-btn en-btn-secondary">Clear</a>
+    </form>
+    <p class="en-muted"><span th:text="${#lists.size(reviews)}">0</span> matching reviews · newest first</p>
+    <div class="en-card en-empty" th:if="${#lists.isEmpty(reviews)}">No reviews match these filters.</div>
+
+    <div class="en-review-list" th:unless="${#lists.isEmpty(reviews)}">
+        <article class="en-card en-review-card" th:each="view : ${reviews}">
+            <div class="en-review-heading">
+                <div>
+                    <a th:href="@{/products/{id}(id=${view.review.productId})}" th:text="${view.productName}">Product</a>
+                    <span class="en-status" th:text="${view.review.status == 'ACTIVE' ? 'Visible' : 'Hidden'}">ACTIVE</span>
+                    <span class="en-status en-status-approved" th:if="${view.review.verified}">Verified</span>
+                </div>
+                <strong th:text="${view.review.rating + ' / 5'}">5 / 5</strong>
+            </div>
+            <p class="en-muted">
+                <a th:href="@{/admin/users/{id}(id=${view.review.customerId})}" th:text="${view.customerName}">Customer</a>
+                ·
+                <span th:text="${#temporals.format(view.review.createdAt, 'dd MMM yyyy, HH:mm')}">Date</span>
+            </p>
+            <p class="en-moderation-text" th:if="${view.review.reviewText != null}" th:text="${view.review.reviewText}"></p>
+
+            <form th:action="@{/admin/reviews/{id}/status(id=${view.review.id})}" method="post">
+                <input type="hidden" name="visibility" th:value="${visibility}">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="status"
+                       th:value="${view.review.status == 'ACTIVE' ? 'HIDDEN' : 'ACTIVE'}">
+                <button type="submit" class="en-btn en-btn-secondary en-btn-auto"
+                        th:text="${view.review.status == 'ACTIVE' ? 'Hide review' : 'Restore review'}">
+                    Hide review
+                </button>
+            </form>
+        </article>
+    </div>
+</main>
+</body>
+</html>

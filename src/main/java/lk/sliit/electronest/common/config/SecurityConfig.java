@@ -1,6 +1,9 @@
 package lk.sliit.electronest.common.config;
 
 import lk.sliit.electronest.common.security.CustomAuthenticationSuccessHandler;
+import lk.sliit.electronest.common.security.AccountStateFilter;
+import lk.sliit.electronest.common.repository.UserRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -16,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomAuthenticationSuccessHandler successHandler;
+    private final UserRepository userRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -26,6 +31,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .addFilterBefore(new AccountStateFilter(userRepository), CsrfFilter.class)
             .authorizeHttpRequests(auth -> auth
                 // Public pages - anyone can view/register/login
                 .requestMatchers("/", "/login", "/register", "/products", "/products/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
@@ -49,9 +55,15 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
             )
-            .exceptionHandling(ex -> ex
-                .accessDeniedPage("/access-denied")
-            );
+            .exceptionHandling(ex -> ex.accessDeniedHandler((request, response, denied) -> {
+                if (request.getServletPath().startsWith("/api/")) {
+                    response.setStatus(403);
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.getWriter().write("{\"error\":\"Access denied\"}");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/access-denied");
+                }
+            }));
 
         return http.build();
     }

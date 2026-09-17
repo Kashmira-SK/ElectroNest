@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body class="en-settings-page">
+
+<header th:replace="~{fragments/site-header :: siteHeader('settings')}"></header>
+
+<main class="en-settings-shell">
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}">
+    </div>
+
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="en-settings-heading">
+        <div>
+            <p class="en-eyebrow">ElectroNest / Account</p>
+            <h1>Settings</h1>
+            <p class="en-muted">
+                Manage your profile, delivery details, payment cards and seller access.
+            </p>
+        </div>
+    </section>
+
+    <div class="en-settings-layout">
+
+        <aside class="en-settings-sidebar">
+            <button type="button"
+                    class="en-settings-tab active"
+                    data-settings-tab="profile">
+                Profile
+            </button>
+
+            <button type="button"
+                    class="en-settings-tab"
+                    data-settings-tab="delivery">
+                Delivery address
+            </button>
+
+            <button type="button"
+                    class="en-settings-tab"
+                    data-settings-tab="payment">
+                Payment methods
+            </button>
+
+            <button type="button"
+                    class="en-settings-tab"
+                    data-settings-tab="seller">
+                Seller account
+            </button>
+        </aside>
+
+        <div class="en-settings-content">
+
+            <section id="profile"
+                     class="en-settings-panel en-settings-panel-profile"
+                     data-settings-panel="profile">
+                <div class="en-settings-panel-header">
+                    <div>
+                        <p class="en-eyebrow">Personal details</p>
+                        <h2>Profile</h2>
+                    </div>
+
+                    <button type="button"
+                            class="en-settings-edit"
+                            data-toggle-target="profileForm">
+                        Edit
+                    </button>
+                </div>
+
+                <div class="en-settings-summary">
+                    <div>
+                        <span>Name</span>
+                        <strong th:text="${user.fullName}"></strong>
+                    </div>
+
+                    <div>
+                        <span>Email</span>
+                        <strong th:text="${user.email}"></strong>
+                    </div>
+
+                    <div>
+                        <span>Phone</span>
+                        <strong th:text="${user.contactNumber != null
+                            ? user.contactNumber
+                            : 'Not added'}">
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Account</span>
+                        <strong th:text="${user.role}"></strong>
+                    </div>
+                </div>
+
+                <form id="profileForm"
+                      class="en-settings-form"
+                      th:action="@{/settings/profile}"
+                      method="post"
+                      th:hidden="${profileDraft == null}">
+
+                    <div class="en-settings-form-grid">
+
+                        <div class="en-field en-span-2">
+                            <label for="fullName">Full name</label>
+                            <input id="fullName"
+                                   type="text"
+                                   name="fullName"
+                                   maxlength="100"
+                                   required
+                                   th:value="${profileDraft != null ? profileDraft['fullName'] : (user.fullName)}">
+                        </div>
+
+                        <div class="en-field en-span-2">
+                            <label for="email">Email address</label>
+                            <input id="email"
+                                   type="email"
+                                   name="email"
+                                   maxlength="150"
+                                   required
+                                   th:value="${profileDraft != null ? profileDraft['email'] : (user.email)}">
+                            <small class="en-field-hint">
+                                This is also the email you use to sign in.
+                            </small>
+                        </div>
+
+                        <div class="en-field">
+                            <label for="contactNumber">Phone number</label>
+                            <input id="contactNumber" type="tel" name="contactNumber" maxlength="20" autocomplete="tel" required
+                                   th:value="${profileDraft != null ? profileDraft['contactNumber'] : (user.contactNumber)}" placeholder="0771234567 or +94771234567">
+                        </div>
+
+                    </div>
+
+                    <div class="en-settings-form-actions">
+                        <button class="en-btn en-btn-primary en-btn-auto"
+                                type="submit">
+                            Save changes
+                        </button>
+
+                        <button type="button"
+                                class="en-btn en-btn-secondary"
+                                data-toggle-target="profileForm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="delivery"
+                     class="en-settings-panel en-settings-panel-delivery"
+                     data-settings-panel="delivery"
+                     hidden>
+                <div class="en-settings-panel-header">
+                    <div>
+                        <p class="en-eyebrow">Checkout</p>
+                        <h2>Delivery address</h2>
+                    </div>
+
+                    <button type="button"
+                            class="en-settings-edit"
+                            data-toggle-target="addressForm"
+                            th:text="${hasSavedDelivery ? 'Edit' : 'Add address'}">
+                        Add address
+                    </button>
+                </div>
+
+                <div class="en-saved-setting"
+                     th:if="${hasSavedDelivery}">
+
+                    <div class="en-setting-icon">⌂</div>
+
+                    <div>
+                        <strong th:text="${user.deliveryName}">
+                            Delivery name
+                        </strong>
+
+                        <p th:text="${user.deliveryPhone}"></p>
+
+                        <p>
+                            <span th:text="${user.deliveryAddressLine1}"></span>
+
+                            <span th:if="${user.deliveryAddressLine2 != null}">
+                                <br>
+                                <span th:text="${user.deliveryAddressLine2}"></span>
+                            </span>
+
+                            <br>
+                            <span th:text="${user.deliveryCity}"></span>
+
+                            <span th:if="${user.deliveryPostalCode != null}"
+                                  th:text="' ' + ${user.deliveryPostalCode}">
+                            </span>
+
+                            <br>
+                            <span th:text="${user.deliveryCountry}"></span>
+                        </p>
+                    </div>
+
+                    <form th:action="@{/settings/address/delete}"
+                          method="post">
+                        <button type="submit"
+                                class="en-settings-remove"
+                                onclick="return confirm('Remove this saved address?')">
+                            Remove
+                        </button>
+                    </form>
+                </div>
+
+                <div class="en-settings-empty"
+                     th:unless="${hasSavedDelivery}">
+                    <div class="en-setting-icon">⌂</div>
+                    <div>
+                        <strong>No delivery address saved</strong>
+                        <p>
+                            Add one here and checkout can reuse it automatically.
+                        </p>
+                    </div>
+                </div>
+
+                <form id="addressForm"
+                      class="en-settings-form"
+                      th:action="@{/settings/address}"
+                      method="post"
+                      th:hidden="${addressDraft == null}">
+
+                    <div class="en-settings-form-grid">
+
+                        <div class="en-field">
+                            <label>Recipient name</label>
+                            <input type="text"
+                                   name="deliveryName"
+                                   required
+                                   maxlength="100"
+                                   th:value="${addressDraft != null ? addressDraft['deliveryName'] : (user.deliveryName != null
+                                       ? user.deliveryName
+                                       : user.fullName)}">
+                        </div>
+
+                        <div class="en-field">
+                            <label for="deliveryPhone">Phone number</label>
+                            <input id="deliveryPhone" type="tel" name="deliveryPhone" maxlength="20" autocomplete="tel" required
+                                   th:value="${addressDraft != null ? addressDraft['deliveryPhone'] : (user.deliveryPhone)}" placeholder="0771234567 or +94771234567">
+                        </div>
+
+                        <div class="en-field en-span-2">
+                            <label>Address line 1</label>
+                            <input type="text"
+                                   name="deliveryAddressLine1"
+                                   maxlength="200"
+                                   required
+                                   th:value="${addressDraft != null ? addressDraft['deliveryAddressLine1'] : (user.deliveryAddressLine1)}">
+                        </div>
+
+                        <div class="en-field en-span-2">
+                            <label>Address line 2</label>
+                            <input type="text"
+                                   name="deliveryAddressLine2"
+                                   maxlength="200"
+                                   th:value="${addressDraft != null ? addressDraft['deliveryAddressLine2'] : (user.deliveryAddressLine2)}">
+                        </div>
+
+                        <div class="en-field">
+                            <label>City</label>
+                            <input type="text"
+                                   name="deliveryCity"
+                                   maxlength="100"
+                                   required
+                                   th:value="${addressDraft != null ? addressDraft['deliveryCity'] : (user.deliveryCity)}">
+                        </div>
+
+                        <div class="en-field">
+                            <label>Postal code</label>
+                            <input type="text"
+                                   name="deliveryPostalCode"
+                                   maxlength="20"
+                                   th:value="${addressDraft != null ? addressDraft['deliveryPostalCode'] : (user.deliveryPostalCode)}">
+                        </div>
+
+                        <div class="en-field en-span-2">
+                            <label>Country</label>
+                            <input type="text"
+                                   name="deliveryCountry"
+                                   maxlength="100"
+                                   required
+                                   th:value="${addressDraft != null ? addressDraft['deliveryCountry'] : (user.deliveryCountry != null
+                                       ? user.deliveryCountry
+                                       : 'Sri Lanka')}">
+                        </div>
+
+                    </div>
+
+                    <div class="en-settings-form-actions">
+                        <button class="en-btn en-btn-primary en-btn-auto"
+                                type="submit">
+                            Save address
+                        </button>
+
+                        <button type="button"
+                                class="en-btn en-btn-secondary"
+                                data-toggle-target="addressForm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="payment"
+                     class="en-settings-panel en-settings-panel-payment"
+                     data-settings-panel="payment"
+                     hidden>
+                <div class="en-settings-panel-header">
+                    <div>
+                        <p class="en-eyebrow">Checkout</p>
+                        <h2>Payment methods</h2>
+                    </div>
+
+                    <button type="button"
+                            id="cardActionButton"
+                            class="en-settings-edit">
+                        Add card
+                    </button>
+                </div>
+
+                <p class="en-muted">Cards saved here are available at checkout on this account.</p>
+                <p class="en-settings-empty" th:if="${#lists.isEmpty(savedCards)}">No saved cards yet.</p>
+                <div class="en-payment-card" th:each="card : ${savedCards}">
+                    <div class="en-payment-card-info">
+                        <strong th:text="|${#strings.replace(card.method.name(), '_', ' ')} •••• ${card.last4}|"></strong>
+                        <p th:text="|${card.holder} · Expires ${card.expiry}|"></p>
+                    </div>
+                    <form th:action="@{/settings/cards/{id}/remove(id=${card.id})}" method="post">
+                        <button type="submit" class="en-settings-remove">Remove</button>
+                    </form>
+                </div>
+                <form id="cardSettingsForm" class="en-settings-form" th:action="@{/settings/cards}" method="post" hidden>
+                    <div class="en-settings-form-grid">
+                        <div class="en-field">
+                            <label for="savedCardMethod">Card type</label>
+                            <select id="savedCardMethod" name="method" required>
+                                <option value="CREDIT_CARD">Credit Card</option>
+                                <option value="DEBIT_CARD">Debit Card</option>
+                            </select>
+                        </div>
+                        <div class="en-field">
+                            <label for="savedCardHolder">Name on card</label>
+                            <input id="savedCardHolder" name="holder" autocomplete="cc-name" maxlength="100" required>
+                        </div>
+                        <div class="en-field">
+                            <label for="savedCardNumber">Card number</label>
+                            <input id="savedCardNumber" name="number" inputmode="numeric" autocomplete="cc-number" maxlength="23" required>
+                        </div>
+                        <div class="en-field">
+                            <label for="savedCardExpiry">Expiry (MM/YY)</label>
+                            <input id="savedCardExpiry" name="expiry" placeholder="MM/YY" maxlength="5" pattern="[0-9]{2}/[0-9]{2}" autocomplete="cc-exp" required>
+                        </div>
+                    </div>
+                    <p class="en-field-hint">Full card numbers and CVV are never stored. Saving the same card updates its details.</p>
+                    <div class="en-settings-form-actions">
+                        <button type="submit" class="en-btn en-btn-primary en-btn-auto">Save card</button>
+                        <button type="button" id="cancelCardSettings" class="en-btn en-btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="seller"
+                     class="en-settings-panel en-settings-panel-seller"
+                     data-settings-panel="seller"
+                     hidden>
+                <div class="en-settings-panel-header">
+                    <div>
+                        <p class="en-eyebrow">Marketplace</p>
+                        <h2>Seller account</h2>
+                    </div>
+                </div>
+
+                <p th:if="${user.role.name() == 'ADMIN'}" class="en-muted">Manage seller applications in <a th:href="@{/vendor/queue}">Vendor verification</a>.</p>
+                <p th:if="${vendor == null and user.role.name() == 'VENDOR'}" class="en-muted">Your seller profile is unavailable. Contact an administrator to resolve your account access.</p>
+                <div th:if="${vendor == null
+                            and user.role.name() == 'CUSTOMER'}"
+                     class="en-settings-empty">
+
+                    <div class="en-setting-icon">↗</div>
+
+                    <div class="en-settings-grow">
+                        <strong>Start selling on ElectroNest</strong>
+                        <p>
+                            Submit your business details and verification
+                            documents. Your customer account remains active
+                            while the application is reviewed.
+                        </p>
+
+                        <a th:href="@{/vendor/register}"
+                           class="en-btn en-btn-primary en-btn-auto">
+                            Become a seller
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${vendor != null}"
+                     class="en-saved-setting">
+
+                    <div class="en-setting-icon">✓</div>
+
+                    <div class="en-settings-grow">
+                        <strong th:text="${vendor.businessName}">
+                            Business
+                        </strong>
+
+                        <p>
+                            Application status:
+                            <span class="en-status"
+                                  th:text="${vendor.status}">
+                            </span>
+                        </p>
+
+                        <p th:if="${vendor.rejectionReason != null}" th:text="${vendor.rejectionReason}"></p>
+                        <a th:if="${vendor.status.name() == 'INFO_REQUESTED'}"
+                           th:href="@{/vendor/profile}" class="en-btn en-btn-primary en-btn-auto">Update and resubmit</a>
+                        <a th:href="@{/vendor/status}"
+                           class="en-btn en-btn-secondary">
+                            View seller application
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${sellerAccess}" class="en-settings-actions-row">
+
+                    <a th:href="@{/vendor/products}"
+                       class="en-btn en-btn-primary en-btn-auto">
+                        Open Seller Hub
+                    </a>
+
+                    <a th:href="@{/vendor/profile}"
+                       class="en-btn en-btn-secondary">
+                        Edit store profile
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+
+
+</main>
+
+<script>
+
+const settingsTabs =
+    document.querySelectorAll('[data-settings-tab]');
+
+const settingsPanels =
+    document.querySelectorAll('[data-settings-panel]');
+
+function openSettingsTab(name) {
+    if (!Array.from(settingsPanels).some(panel => panel.dataset.settingsPanel === name)) name = 'profile';
+    settingsTabs.forEach(tab => {
+        tab.setAttribute('aria-pressed', String(tab.dataset.settingsTab === name));
+        tab.classList.toggle(
+            'active',
+            tab.dataset.settingsTab === name
+        );
+    });
+
+    settingsPanels.forEach(panel => {
+        panel.hidden =
+            panel.dataset.settingsPanel !== name;
+    });
+
+    history.replaceState(
+        null,
+        '',
+        window.location.pathname + '#' + name
+    );
+}
+
+settingsTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        openSettingsTab(tab.dataset.settingsTab);
+    });
+});
+
+const requestedSettingsTab =
+    window.location.hash.replace('#', '');
+
+openSettingsTab(requestedSettingsTab || 'profile');
+window.addEventListener('hashchange', () => openSettingsTab(location.hash.slice(1)));
+
+document.querySelectorAll('[data-toggle-target]').forEach(button => {
+    button.addEventListener('click', () => {
+        const target = document.getElementById(button.dataset.toggleTarget);
+
+        if (!target) {
+            return;
+        }
+
+        if (!target.hidden) target.reset();
+        target.hidden = !target.hidden;
+        if (!target.hidden) target.querySelector('input:not([type="hidden"])')?.focus();
+    });
+});
+
+
+
+const cardForm = document.getElementById('cardSettingsForm');
+document.getElementById('cardActionButton').addEventListener('click', () => {
+    cardForm.hidden = false;
+    document.getElementById('savedCardHolder').focus();
+});
+document.getElementById('cancelCardSettings').addEventListener('click', () => {
+    cardForm.hidden = true;
+    cardForm.reset();
+});
+document.getElementById('savedCardNumber').addEventListener('input', event => {
+    event.target.value = event.target.value.replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim();
+});
+document.getElementById('savedCardExpiry').addEventListener('input', event => {
+    const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+    event.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+});
+</script>
+
+</body>
+</html>

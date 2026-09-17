@@ -45,3 +45,4 @@ application-local.yml
 *.log
 
 /uploads/
+data/

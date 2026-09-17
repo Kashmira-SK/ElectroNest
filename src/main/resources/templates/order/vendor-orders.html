@@ -8,23 +8,18 @@
 </head>
 <body>
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
+<header th:replace="~{fragments/site-header :: siteHeader('vendor-orders')}"></header>
 
-    <nav class="en-nav-links">
-        <a th:href="@{/vendor/status}">Vendor Profile</a>
-        <a th:href="@{/vendor/orders}">Orders</a>
-    </nav>
-</header>
-
-<main class="en-page">
+<main class="en-page en-orders-workspace">
 
     <div class="en-page-header">
         <div>
             <p class="en-eyebrow">ElectroNest / Seller</p>
             <h1>Order fulfilment</h1>
             <p class="en-muted">
-                Review orders containing your products and update their fulfilment status.
+                Review orders containing products from
+                <strong th:text="${vendor.businessName}">your store</strong>
+                and update their fulfilment status.
             </p>
         </div>
     </div>
@@ -39,14 +34,15 @@
 
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(orders)}">
-        No orders are waiting for fulfilment.
+        No orders contain your products yet.
     </div>
 
     <div class="en-order-list"
          th:unless="${#lists.isEmpty(orders)}">
 
         <article class="en-card en-order-card"
-                 th:each="order : ${orders}">
+                 th:each="view : ${orders}"
+                 th:with="order=${view.order}">
 
             <div class="en-order-heading">
                 <div>
@@ -55,9 +51,10 @@
                         Order #1
                     </p>
 
-                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(order.totalAmount(), 1, 2)}">
+                    <h3 th:text="'Rs. ' + ${#numbers.formatDecimal(view.displayTotal, 1, 'COMMA', 2, 'POINT')}">
                         Rs. 0.00
                     </h3>
+                    <small class="en-muted">Your items subtotal</small>
                 </div>
 
                 <span class="en-status"
@@ -69,7 +66,7 @@
             <div class="en-order-meta">
                 <div>
                     <strong>Payment</strong>
-                    <span th:text="${order.paymentStatus}">
+                    <span th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : order.paymentStatus}">
                         PENDING_PAYMENT
                     </span>
                 </div>
@@ -89,11 +86,52 @@
                 </div>
             </div>
 
+            <div class="en-order-details">
+                <section>
+                    <h4>Customer and delivery</h4>
+                    <p>
+                        <strong th:text="${order.customer.fullName}">Customer</strong>
+                        <span th:text="${' · ' + order.customer.email}"></span>
+                    </p>
+                    <p th:text="${order.deliveryName + ' · ' + order.deliveryPhone}"></p>
+                    <p>
+                        <span th:text="${order.addressLine1}">Address</span>
+                        <span th:if="${order.addressLine2 != null}" th:text="${', ' + order.addressLine2}"></span>
+                        <span th:text="${', ' + order.city}"></span>
+                        <span th:if="${order.postalCode != null}" th:text="${' ' + order.postalCode}"></span>
+                        <span th:text="${', ' + order.country}"></span>
+                    </p>
+                </section>
+
+                <section>
+                    <h4>Your items</h4>
+                    <div class="en-order-item" th:each="item : ${view.items}">
+                        <div>
+                            <strong th:text="${item.productName}">Product</strong>
+                            <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}"></span>
+                        </div>
+                        <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">Rs. 0.00</strong>
+                    </div>
+                </section>
+            </div>
+
+            <div class="en-alert en-alert-error"
+                 th:if="${order.cancellationRequested}"
+                 style="margin-top: 18px;">
+                The customer has requested cancellation. Cancel the order or continue fulfilment after resolving the request.
+            </div>
+
+            <div class="en-alert"
+                 th:if="${!view.readyForFulfilment and !order.status.isTerminal()}"
+                 style="margin-top: 18px;">
+                Awaiting successful payment before fulfilment can begin.
+            </div>
+
             <div class="en-actions"
-                 th:if="${order.status.name() == 'PENDING'}">
+                 th:if="${order.status.name() == 'PENDING' and view.readyForFulfilment}">
 
                 <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
-                      method="post">
+                      method="post" th:attr="data-cancellation=${order.cancellationRequested}">
                     <input type="hidden" name="status" value="PROCESSING">
 
                     <button type="submit"
@@ -102,23 +140,16 @@
                     </button>
                 </form>
 
-                <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
-                      method="post">
-                    <input type="hidden" name="status" value="CANCELLED">
 
-                    <button type="submit"
-                            class="en-btn en-btn-reject en-btn-sm">
-                        Cancel
-                    </button>
-                </form>
 
             </div>
 
             <div class="en-actions"
-                 th:if="${order.status.name() == 'PROCESSING'}">
+                 th:if="${order.status.name() == 'PROCESSING' and view.readyForFulfilment}">
+                <p th:if="${order.paymentStatus.name() == 'PENDING_PAYMENT'}">Collect the cash before marking this COD order delivered.</p>
 
                 <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
-                      method="post">
+                      method="post" th:attr="data-cancellation=${order.cancellationRequested}">
                     <input type="hidden" name="status" value="DELIVERED">
 
                     <button type="submit"
@@ -127,17 +158,18 @@
                     </button>
                 </form>
 
-                <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
-                      method="post">
-                    <input type="hidden" name="status" value="CANCELLED">
 
-                    <button type="submit"
-                            class="en-btn en-btn-reject en-btn-sm">
-                        Cancel
-                    </button>
-                </form>
 
             </div>
+
+            <form class="en-actions" th:if="${!order.status.isTerminal()}"
+                  th:action="@{/vendor/orders/{id}/status(id=${order.id})}" method="post"
+                  onsubmit="return confirm('Cancel this entire order? Any paid amount will be marked refunded and reserved stock released.')">
+                <input type="hidden" name="status" value="CANCELLED">
+                <button type="submit" class="en-btn en-btn-reject"
+                        th:text="${order.cancellationRequested ? 'Accept cancellation request' : 'Cancel order'}">Cancel order</button>
+            </form>
+            <p class="en-muted">Status changes apply to the entire order, including any items from other sellers.</p>
 
             <p class="en-muted"
                th:if="${order.status.name() == 'DELIVERED'}">
@@ -154,5 +186,17 @@
     </div>
 
 </main>
+<script th:src="@{/js/order-tabs.js}" defer></script>
+<script>
+document.querySelectorAll('form[data-cancellation]').forEach(form => {
+    form.addEventListener('submit', event => {
+        const delivery = form.querySelector('input[name="status"]').value === 'DELIVERED';
+        const message = form.dataset.cancellation === 'true'
+            ? 'Continue fulfilment and decline the customer’s cancellation request?'
+            : delivery ? 'Confirm delivery is complete and any cash due has been collected?' : null;
+        if (message && !confirm(message)) event.preventDefault();
+    });
+});
+</script>
 </body>
 </html>

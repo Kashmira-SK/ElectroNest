@@ -2,25 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Vendor Verification Queue - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body class="en-admin-page en-vendor-page">
 
-<header class="en-navbar">
-    <a href="/admin/dashboard" class="en-brand">ElectroNest Admin</a>
-
-    <nav class="en-admin-nav">
-        <a href="/admin/dashboard">Dashboard</a>
-        <a href="/admin/users">Users</a>
-        <a href="/vendor/queue">Vendor Queue</a>
-        <a href="/vendor/manage">Vendors</a>
-        <a href="/admin/audit-logs">Audit Log</a>
-    </nav>
-</header>
-<div class="en-shell" style="max-width: 780px;">
+<header th:replace="~{fragments/site-header :: siteHeader('admin-vendor-queue')}"></header>
+<main class="en-admin-shell en-vendor-admin">
     <p class="en-eyebrow">ElectroNest / Admin</p>
-    <h1>Vendor verification queue</h1>
+    <h1>Vendor verification</h1>
+    <p class="en-muted">Review the business and its document before making a decision. Requested information returns here after the customer resubmits.</p>
+    <p><strong th:text="${#lists.size(vendors)}">0</strong> awaiting review · <a th:href="@{/vendor/manage(status='INFO_REQUESTED')}">Waiting for customer updates</a></p>
 
     <div class="en-alert en-alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
     <div class="en-alert en-alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
@@ -31,36 +24,55 @@
 
     <div class="en-card en-vendor-row" th:each="v : ${vendors}">
         <h3 th:text="${v.businessName}">Business Name</h3>
+        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Inspect applicant account</a> · <span th:text="${v.user.status}">ACTIVE</span></p>
+        <p class="en-meta"><strong>Applicant</strong> <span th:text="${v.user.fullName}"></span></p>
+        <p class="en-meta"><strong>Email</strong> <span th:text="${v.user.email}"></span></p>
         <p class="en-meta"><strong>Reg. no.</strong> <span th:text="${v.registrationNumber}"></span></p>
         <p class="en-meta"><strong>Address</strong> <span th:text="${v.businessAddress}"></span></p>
         <p class="en-meta"><strong>Phone</strong> <span th:text="${v.contactPhone}"></span></p>
+        <p class="en-meta"><strong>Submitted</strong> <span th:text="${#temporals.format(v.createdAt, 'dd MMM yyyy HH:mm')}"></span></p>
 
         <p class="en-meta" th:if="${v.idDocumentPath != null}">
             <strong>Verification document:</strong>
             <a th:href="@{/vendor/queue/{id}/document(id=${v.id})}"
-               target="_blank">View document</a>
+               target="_blank" rel="noopener">View document</a>
         </p>
 
         <p class="en-meta" th:if="${v.idDocumentPath == null}">
             <strong>Verification document:</strong> Not uploaded
         </p>
 
-        <div class="en-actions">
-            <form th:action="@{/vendor/queue/{id}/approve(id=${v.id})}" method="post">
-                <button type="submit" class="en-btn en-btn-approve en-btn-sm">Approve</button>
-            </form>
-
-            <form th:action="@{/vendor/queue/{id}/request-info(id=${v.id})}" method="post" class="en-actions" style="margin-top: 0;">
-                <input type="text" name="message" placeholder="Information required" maxlength="500" required>
-                <button type="submit" class="en-btn en-btn-primary en-btn-sm">Request info</button>
-            </form>
-
-            <form th:action="@{/vendor/queue/{id}/reject(id=${v.id})}" method="post" class="en-actions" style="margin-top: 0;">
-                <input type="text" name="reason" placeholder="Rejection reason" maxlength="500" required>
-                <button type="submit" class="en-btn en-btn-reject en-btn-sm">Reject</button>
-            </form>
-        </div>
+        <section class="en-vendor-decisions" aria-label="Application decision">
+            <div>
+                <h4>Approve seller</h4>
+                <p class="en-muted">Grants seller access to this customer. Their account must be active and a document uploaded.</p>
+                <form th:action="@{/vendor/queue/{id}/approve(id=${v.id})}" method="post">
+                    <button type="submit" class="en-btn en-btn-approve en-btn-auto"
+                            th:disabled="${v.user.role.name() != 'CUSTOMER' or v.user.status.name() != 'ACTIVE' or v.idDocumentPath == null or #strings.isEmpty(v.idDocumentPath)}"
+                            onclick="return confirm('Approve this application and grant seller access?')">Approve seller</button>
+                </form>
+            </div>
+            <details>
+                <summary>Request more information</summary>
+                <form th:action="@{/vendor/queue/{id}/request-info(id=${v.id})}" method="post">
+                    <label th:for="${'info-' + v.id}">What should the applicant correct?</label>
+                    <textarea th:id="${'info-' + v.id}" name="message" rows="4" maxlength="500" required placeholder="Explain the missing information or replacement document needed."></textarea>
+                    <p class="en-muted">The customer sees this message in their application and can edit and resubmit.</p>
+                    <button type="submit" class="en-btn en-btn-primary en-btn-auto">Send request</button>
+                </form>
+            </details>
+            <details>
+                <summary>Reject application</summary>
+                <form th:action="@{/vendor/queue/{id}/reject(id=${v.id})}" method="post">
+                    <label th:for="${'reason-' + v.id}">Reason for rejection</label>
+                    <textarea th:id="${'reason-' + v.id}" name="reason" rows="4" maxlength="500" required placeholder="Explain why this application cannot be approved."></textarea>
+                    <p class="en-muted">The customer will see this reason. No seller access is granted.</p>
+                    <button type="submit" class="en-btn en-btn-reject en-btn-auto"
+                            onclick="return confirm('Reject this application?')">Reject application</button>
+                </form>
+            </details>
+        </section>
     </div>
-</div>
+</main>
 </body>
 </html>

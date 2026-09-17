@@ -2,95 +2,241 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${product.id == null ? 'Add Product - ElectroNest' : 'Edit Product - ElectroNest'}">
-        Product - ElectroNest
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title th:text="${product.id == null
+        ? 'Add product — ElectroNest'
+        : 'Edit product — ElectroNest'}">
+        Product — ElectroNest
     </title>
-    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+
+    <link rel="stylesheet"
+          th:href="@{/css/electronest.css}">
 </head>
 <body>
 
-<header class="en-navbar">
-    <a th:href="@{/}" class="en-brand">ElectroNest</a>
-
-    <nav class="en-nav-links">
-        <a th:href="@{/vendor/products}">My Products</a>
-        <a th:href="@{/vendor/orders}">Orders</a>
-    </nav>
+<header th:replace=
+        "~{fragments/site-header :: siteHeader('seller')}">
 </header>
 
-<main class="en-page">
+<main class="en-product-editor-shell">
 
-    <div class="en-form-shell">
-        <p class="en-eyebrow">ElectroNest / Seller</p>
+    <div class="en-product-editor-heading">
 
-        <h1 th:text="${product.id == null ? 'Add a product' : 'Edit product'}">
-            Add a product
-        </h1>
+        <div>
+            <p class="en-eyebrow">
+                ElectroNest / Seller
+            </p>
 
-        <p class="en-muted">
-            Enter the listing and inventory details below.
-        </p>
+            <h1 th:text="${product.id == null
+                ? 'Add a product'
+                : 'Edit product'}">
+                Add a product
+            </h1>
 
-        <form th:object="${product}"
-              th:action="${product.id == null}
-                ? @{/vendor/products}
-                : @{/vendor/products/{id}(id=${product.id})}"
-              method="post">
+            <p class="en-muted">
+                Add the listing, inventory details and
+                product images customers will see in Shop.
+            </p>
+        </div>
 
-            <div class="en-field">
-                <label>Product name</label>
-                <input th:field="*{name}" required maxlength="150">
-            </div>
+        <a th:href="@{/vendor/products}"
+           class="en-btn en-btn-secondary">
+            Back to products
+        </a>
+    </div>
 
-            <div class="en-form-grid">
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
+    </div>
+
+    <section class="en-card en-product-editor-card">
+
+        <form id="productForm"
+              th:action="@{/vendor/products/save-media}"
+              th:object="${product}"
+              method="post"
+              enctype="multipart/form-data">
+
+            <input th:if="${product.id != null}"
+                   type="hidden"
+                   name="id"
+                   th:value="${product.id}">
+
+            <div class="en-product-editor-grid">
+
+                <div class="en-field en-span-2">
+                    <label>Product name</label>
+
+                    <input type="text"
+                           th:field="*{name}"
+                           maxlength="150"
+                           required
+                           placeholder="MacBook Air M4">
+                </div>
+
                 <div class="en-field">
+
                     <label>Brand</label>
-                    <input th:field="*{brand}" required>
+
+                    <input type="text"
+                           th:field="*{brand}"
+                           list="brandOptions"
+                           autocomplete="off"
+                           required
+                           placeholder="Choose or type a brand">
+
+                    <small class="en-field-hint">
+                        Pick a suggestion or type your own brand.
+                    </small>
+
                 </div>
 
                 <div class="en-field">
+
                     <label>Category</label>
-                    <input th:field="*{category}" required>
+
+                    <input type="text"
+                           th:field="*{category}"
+                           list="categoryOptions"
+                           autocomplete="off"
+                           required
+                           placeholder="Choose or type a category">
+
+                    <small class="en-field-hint">
+                        Pick a suggestion or type your own category.
+                    </small>
+
                 </div>
-            </div>
 
-            <div class="en-field">
-                <label>Description</label>
-                <textarea th:field="*{description}"
-                          rows="5"
-                          maxlength="1000"></textarea>
-            </div>
+                <div class="en-field en-span-2">
 
-            <div class="en-form-grid">
+                    <label>Description</label>
+
+                    <textarea th:field="*{description}"
+                              maxlength="1000"
+                              rows="6"
+                              placeholder="Describe the product, condition and important specifications.">
+                    </textarea>
+
+                </div>
+
                 <div class="en-field">
+
                     <label>Price (Rs.)</label>
-                    <input th:field="*{price}"
-                           type="number"
+
+                    <input type="number"
+                           th:field="*{price}"
                            min="0.01"
                            step="0.01"
                            required>
+
                 </div>
 
                 <div class="en-field">
+
                     <label>Stock quantity</label>
-                    <input th:field="*{stockQuantity}"
-                           type="number"
+
+                    <input type="number"
+                           th:field="*{stockQuantity}"
                            min="0"
+                           step="1"
                            required>
+
                 </div>
+
+                <div class="en-field en-span-2">
+
+                    <label>Product images</label>
+
+                    <label class="en-product-upload"
+                           for="productImages">
+
+                        <strong>
+                            Upload product images
+                        </strong>
+
+                        <span id="imageUploadLabel">
+                            JPG, PNG or WEBP · up to 8 images
+                        </span>
+
+                        <small>
+                            The first image becomes the Shop thumbnail.
+                            Uploading new files replaces the current gallery.
+                        </small>
+                    </label>
+
+                    <input id="productImages"
+                           class="en-upload-native"
+                           type="file"
+                           name="images"
+                           accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                           multiple>
+
+                    <div id="imagePreview"
+                         class="en-product-upload-preview">
+                    </div>
+                    <div class="en-product-upload-preview" th:if="${currentImages != null and !#lists.isEmpty(currentImages)}">
+                        <div class="en-product-preview-item" th:each="url, image : ${currentImages}">
+                            <img th:src="${url}" th:alt="${'Current image ' + (image.index + 1)}">
+                            <span th:text="${image.first ? 'Current thumbnail' : 'Current image ' + (image.index + 1)}"></span>
+                        </div>
+                    </div>
+
+                    <div class="en-current-product-image"
+                         th:if="${product.imageUrl != null
+                                  and !product.imageUrl.isBlank()}">
+
+                        <img th:src="${product.imageUrl}"
+                             th:alt="${product.name}">
+
+                        <div>
+                            <strong>
+                                Current thumbnail
+                            </strong>
+
+                            <p>
+                                Leave image upload empty to keep
+                                the current product gallery.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="en-field en-span-2">
+
+                    <label>
+                        External image URL
+                        <span class="en-muted">
+                            optional
+                        </span>
+                    </label>
+
+                    <input type="url"
+                           name="externalImageUrl"
+                           th:value="${externalImageUrl}"
+                           maxlength="1000"
+                           placeholder="https://...">
+
+                    <small class="en-field-hint">
+                        Optional HTTP/HTTPS image. Without uploads, this becomes the thumbnail and keeps other gallery images. Limit: 8 total.
+                    </small>
+
+                </div>
+
             </div>
 
-            <div class="en-field">
-                <label>Image URL</label>
-                <input th:field="*{imageUrl}"
-                       type="url"
-                       placeholder="https://...">
-            </div>
+            <div class="en-product-editor-actions">
 
-            <div class="en-actions">
                 <button type="submit"
-                        class="en-btn en-btn-primary">
+                        class="en-btn en-btn-primary en-btn-auto"
+                        th:text="${product.id == null
+                            ? 'Save product'
+                            : 'Save changes'}">
                     Save product
                 </button>
 
@@ -98,11 +244,123 @@
                    class="en-btn en-btn-secondary">
                     Cancel
                 </a>
+
             </div>
 
         </form>
-    </div>
+
+    </section>
+
+    <datalist id="brandOptions">
+        <option value="Apple">
+        <option value="Samsung">
+        <option value="Sony">
+        <option value="ASUS">
+        <option value="Acer">
+        <option value="Lenovo">
+        <option value="HP">
+        <option value="Dell">
+        <option value="MSI">
+        <option value="Gigabyte">
+        <option value="Logitech">
+        <option value="Razer">
+        <option value="Keychron">
+        <option value="Corsair">
+        <option value="Kingston">
+        <option value="Crucial">
+        <option value="Seagate">
+        <option value="Western Digital">
+        <option value="JBL">
+        <option value="Anker">
+    </datalist>
+
+    <datalist id="categoryOptions">
+        <option value="Laptop">
+        <option value="Desktop">
+        <option value="Smartphone">
+        <option value="Tablet">
+        <option value="Monitor">
+        <option value="Keyboard">
+        <option value="Mouse">
+        <option value="Headphones">
+        <option value="Earbuds">
+        <option value="Storage">
+        <option value="Components">
+        <option value="Networking">
+        <option value="Accessories">
+        <option value="Gaming">
+        <option value="Smart Home">
+    </datalist>
 
 </main>
+
+<script>
+const images =
+    document.getElementById('productImages');
+
+const preview =
+    document.getElementById('imagePreview');
+
+const label =
+    document.getElementById('imageUploadLabel');
+let previewUrls = [];
+
+images.addEventListener('change', () => {
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    previewUrls = [];
+
+    preview.replaceChildren();
+
+    const files =
+        Array.from(images.files);
+
+    if (files.length > 8) {
+        alert('You can upload up to 8 images.');
+
+        images.value = '';
+
+        label.textContent =
+            'JPG, PNG or WEBP · up to 8 images';
+
+        return;
+    }
+
+    label.textContent =
+        files.length
+            ? `${files.length} image${files.length === 1 ? '' : 's'} selected`
+            : 'JPG, PNG or WEBP · up to 8 images';
+
+    files.forEach((file, index) => {
+
+        const item =
+            document.createElement('div');
+
+        item.className =
+            'en-product-preview-item';
+
+        const img =
+            document.createElement('img');
+
+        img.src =
+            URL.createObjectURL(file);
+        previewUrls.push(img.src);
+
+        img.alt =
+            file.name;
+
+        const caption =
+            document.createElement('span');
+
+        caption.textContent =
+            index === 0
+                ? 'Thumbnail'
+                : `${index + 1}`;
+
+        item.append(img, caption);
+        preview.append(item);
+    });
+});
+</script>
+
 </body>
 </html>

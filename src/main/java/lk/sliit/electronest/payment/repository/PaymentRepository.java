@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    @org.springframework.data.jpa.repository.Query("select p.orderId from Payment p where p.id = :id")
+    Optional<Long> findOrderId(@org.springframework.data.repository.query.Param("id") Long id);
 
     Optional<Payment> findByTransactionId(String transactionId);
 

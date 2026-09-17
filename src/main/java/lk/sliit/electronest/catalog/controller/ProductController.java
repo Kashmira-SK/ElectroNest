@@ -32,6 +32,10 @@ public class ProductController {
             @AuthenticationPrincipal CustomUserDetails currentUser) {
 
         Vendor vendor = currentVendor(currentUser);
+        if (product.getId() != null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "New products must not specify an ID");
+        }
         product.setVendorId(vendor.getId());
 
         return productService.createProduct(product);
@@ -131,7 +135,10 @@ public class ProductController {
 
     private Vendor currentVendor(CustomUserDetails currentUser) {
         return vendorRepository.findByUser_Id(currentUser.getUser().getId())
+                .filter(vendor -> vendor.getStatus() == lk.sliit.electronest.vendor.model.VendorStatus.APPROVED
+                        && vendor.getUser().getRole() == lk.sliit.electronest.common.model.Role.VENDOR
+                        && vendor.getUser().getStatus() == lk.sliit.electronest.common.model.AccountStatus.ACTIVE)
                 .orElseThrow(() ->
-                        new IllegalStateException("Vendor profile not found"));
+                        new org.springframework.security.access.AccessDeniedException("An active approved seller account is required"));
     }
 }
