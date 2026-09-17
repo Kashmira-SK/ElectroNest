@@ -11,6 +11,11 @@ import java.util.List;
 
 @RestControllerAdvice(assignableTypes = ProductController.class)
 public class ProductExceptionHandler {
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(403, "Access denied", List.of("Seller access is required")));
+    }
 
     // Handles @Valid validation failures (e.g. empty name, negative price)
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Product unavailable — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('products')}"></header>
+<main class="en-page">
+    <section class="en-card en-empty">
+        <h1>This product is no longer available.</h1>
+        <p>The listing may have been removed. Your existing order history is unchanged.</p>
+        <a th:href="@{/products}" class="en-btn en-btn-primary en-btn-auto">Back to Shop</a>
+    </section>
+</main>
+</body>
+</html>

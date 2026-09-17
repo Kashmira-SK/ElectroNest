@@ -157,6 +157,10 @@
 
         <div class="en-actions">
 
+            <a th:if="${receipt.payment.paymentStatus.name() == 'SUCCESSFUL'}"
+               th:href="@{/api/v1/receipts/{id}/download(id=${receipt.id})}"
+               class="en-btn en-btn-primary en-btn-auto">Download receipt</a>
+
             <a th:href="@{/orders}"
                class="en-btn en-btn-primary en-btn-auto">
                 View my orders

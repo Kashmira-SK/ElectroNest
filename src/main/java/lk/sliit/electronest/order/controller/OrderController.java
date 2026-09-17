@@ -76,6 +76,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderResponse> getOrder(
             @PathVariable Long orderId,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
