@@ -94,6 +94,30 @@ class ReviewServiceTest {
         verify(reviewRepository, never()).save(any(Review.class));
     }
 
+    @Test
+    void moderationPersistsVisibilityWithoutChangingReviewContent() {
+        Review review = new Review();
+        review.setRating(4);
+        review.setReviewText("Original feedback");
+        review.setVerified(true);
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(reviewRepository.save(review)).thenReturn(review);
+        reviewService.moderateReview(1L, "HIDDEN");
+        org.junit.jupiter.api.Assertions.assertEquals("HIDDEN", review.getStatus());
+        reviewService.moderateReview(1L, "ACTIVE");
+        org.junit.jupiter.api.Assertions.assertEquals("ACTIVE", review.getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals("Original feedback", review.getReviewText());
+        org.junit.jupiter.api.Assertions.assertEquals(4, review.getRating());
+        assertTrue(review.isVerified());
+        verify(reviewRepository, org.mockito.Mockito.times(2)).save(review);
+    }
+
+    @Test
+    void unsupportedModerationStateCannotBeSaved() {
+        assertThrows(IllegalArgumentException.class, () -> reviewService.moderateReview(1L, "DELETED"));
+        verify(reviewRepository, never()).save(any());
+    }
+
     private Order deliveredOrder(Long productId) {
         Order order = new Order();
         order.setStatus(OrderStatus.DELIVERED);

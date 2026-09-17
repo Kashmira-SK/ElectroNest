@@ -133,6 +133,48 @@ class ProductServiceTest {
     }
 
     @Test
+    void bulkPriceRejectsMixedOwnershipBeforeChangingAnyProduct() {
+        Product other = new Product();
+        other.setId(2L);
+        other.setVendorId(2L);
+        other.setPrice(new BigDecimal("500"));
+        when(productRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(sampleProduct, other));
+        assertThrows(SecurityException.class,
+                () -> productService.bulkUpdatePriceForVendor(List.of(1L, 2L), new BigDecimal("20"), 1L));
+        assertEquals(new BigDecimal("1000"), sampleProduct.getPrice());
+        assertEquals(new BigDecimal("500"), other.getPrice());
+        verify(productRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void purchasedProductCannotBeDeleted() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.hasOrderHistory(1L)).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> productService.deleteOwnedProduct(1L, 1L));
+        verify(productRepository, never()).delete(any());
+    }
+
+    @Test
+    void reviewedProductCannotBeDeleted() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.hasReviewHistory(1L)).thenReturn(true);
+        assertThrows(IllegalArgumentException.class, () -> productService.deleteOwnedProduct(1L, 1L));
+        verify(productRepository, never()).delete(any());
+    }
+
+    @Test
+    void purchaseAndRestorationUseLockedInventory() {
+        when(productRepository.findForUpdate(1L)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.save(sampleProduct)).thenReturn(sampleProduct);
+        productService.decreaseStockForOrder(1L, 10);
+        assertEquals(0, sampleProduct.getStockQuantity());
+        assertTrue(sampleProduct.getOutOfStock());
+        productService.restoreStockForOrder(1L, 10);
+        assertEquals(10, sampleProduct.getStockQuantity());
+        verify(productRepository, times(2)).findForUpdate(1L);
+    }
+
+    @Test
     void getLowStockProducts_shouldReturnFilteredList() {
         when(productRepository.findByStockQuantityLessThan(5))
                 .thenReturn(List.of(sampleProduct));

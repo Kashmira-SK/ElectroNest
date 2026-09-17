@@ -8,6 +8,8 @@ const csrfParameter =
 
 const loggedIn = document.body.dataset.loggedIn === 'true';
 const customerAccount = document.body.dataset.customer === 'true';
+const vendorAccount = document.body.dataset.vendor === 'true';
+const accountSuspended = document.body.dataset.suspended === 'true';
 
 
 const ui = {
@@ -51,7 +53,8 @@ function readUrl() {
     ui.maxPrice.value = p.get('maxPrice') || '';
     ui.stock.checked = p.get('inStockOnly') === 'true';
 
-    state.page = Number(p.get('page') || 0);
+    const page = Number(p.get('page') || 0);
+    state.page = Number.isSafeInteger(page) && page >= 0 && page <= 2147483647 ? page : 0;
 
     if (filterCount() > 0) {
         toggleFilters(true);
@@ -116,9 +119,21 @@ function money(value) {
     return new Intl.NumberFormat('en-LK', {
         style: 'currency',
         currency: 'LKR',
-        maximumFractionDigits: 0
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     }).format(Number(value || 0));
 }
+
+const productImages = {
+    'Keychron K2 Pro': '/images/products/keychron-keyboard.jpg',
+    '980 PRO 1TB NVMe SSD': '/images/products/nvme-storage.jpg',
+    'G502 X': '/images/products/gaming-mouse.jpg',
+    'Portable SSD T7 1TB': '/images/products/portable-ssd.jpg',
+    'WH-1000XM5 Wireless Headphones': '/images/products/wireless-headphones.jpg',
+    'TUF Gaming VG27AQ3A': '/images/products/gaming-monitor.jpg',
+    'MX Master 3S': '/images/products/wireless-mouse.jpg',
+    'AirPods Pro': '/images/products/airpods.jpg'
+};
 
 function fallback(product) {
     const visual = document.createElement('div');
@@ -134,16 +149,118 @@ function fallback(product) {
     return visual;
 }
 
+function purchaseState(available) {
+    if (!available) {
+        return { mode: 'disabled', label: 'Out of stock' };
+    }
+
+    if (!loggedIn) {
+        return { mode: 'login', label: 'Log in to purchase' };
+    }
+
+    if (accountSuspended) {
+        return { mode: 'disabled', label: 'Account suspended' };
+    }
+
+    if (customerAccount) {
+        return { mode: 'cart', label: 'Add to cart' };
+    }
+
+    return {
+        mode: 'disabled',
+        label: vendorAccount ? 'Customer accounts only' : 'Customer only'
+    };
+}
+
+function purchaseControl(product, available) {
+    const state = purchaseState(available);
+
+    if (state.mode === 'login') {
+        const login = document.createElement('a');
+        login.href = '/login';
+        login.className = 'en-add-cart-btn';
+        login.textContent = state.label;
+        return login;
+    }
+
+    if (state.mode === 'disabled') {
+        const disabled = document.createElement('button');
+        disabled.type = 'button';
+        disabled.className = 'en-add-cart-btn';
+        disabled.textContent = state.label;
+        disabled.disabled = true;
+        return disabled;
+    }
+
+    const cartForm = document.createElement('form');
+    cartForm.method = 'post';
+    cartForm.action = '/cart/add';
+    cartForm.className = 'en-add-cart-form';
+
+    const productInput = document.createElement('input');
+    productInput.type = 'hidden';
+    productInput.name = 'productId';
+    productInput.value = product.id;
+
+    const quantityInput = document.createElement('input');
+    quantityInput.type = 'hidden';
+    quantityInput.name = 'quantity';
+    quantityInput.value = '1';
+
+    const addButton = document.createElement('button');
+    addButton.type = 'submit';
+    addButton.className = 'en-add-cart-btn';
+    addButton.textContent = state.label;
+
+    if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = csrfParameter;
+        csrfInput.value = csrfToken;
+        cartForm.append(csrfInput);
+    }
+
+    cartForm.append(productInput, quantityInput, addButton);
+    return cartForm;
+}
+
 function card(product) {
+    const detailsUrl = `/products/${product.id}`;
     const article = document.createElement('article');
     article.className = 'en-market-card';
+    article.tabIndex = 0;
+    article.setAttribute(
+        'aria-label',
+        `View ${product.name || 'product'} details`
+    );
+
+    article.addEventListener('click', event => {
+        if (event.target.closest('a, button, form, input')) return;
+        location.href = detailsUrl;
+    });
+
+    article.addEventListener('keydown', event => {
+        if (event.target !== article) return;
+
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            location.href = detailsUrl;
+        }
+    });
 
     const media = document.createElement('div');
     media.className = 'en-market-media';
 
-    if (product.imageUrl) {
+    const productLink = document.createElement('a');
+    productLink.href = detailsUrl;
+    productLink.className = 'en-market-media-link';
+
+    const imageUrl =
+        product.imageUrl || product.imageUrls?.[0] || productImages[product.name];
+
+    if (imageUrl) {
         const img = document.createElement('img');
-        img.src = product.imageUrl;
+        img.src = imageUrl;
         img.alt = product.name || 'Product';
         img.loading = 'lazy';
 
@@ -151,15 +268,19 @@ function card(product) {
             img.replaceWith(fallback(product));
         });
 
-        media.append(img);
+        productLink.append(img);
     } else {
-        media.append(fallback(product));
+        productLink.append(fallback(product));
     }
 
+    media.append(productLink);
+
     const unavailable =
-        product.outOfStock || Number(product.stockQuantity || 0) <= 0;
+        product.outOfStock ||
+        Number(product.stockQuantity || 0) <= 0;
 
     const stock = document.createElement('span');
+
     stock.className = unavailable
         ? 'en-card-stock en-card-stock-out'
         : 'en-card-stock';
@@ -180,20 +301,24 @@ function card(product) {
     brand.textContent = product.brand || 'Other';
 
     const category = document.createElement('span');
-    category.textContent = product.category || 'Electronics';
+    category.textContent =
+        product.category || 'Electronics';
 
     meta.append(brand, category);
 
     const title = document.createElement('h2');
-    title.textContent = product.name || 'Unnamed product';
 
     const titleLink = document.createElement('a');
-    titleLink.href = `/products/${product.id}`;
-    titleLink.append(title);
+    titleLink.href = detailsUrl;
+    titleLink.textContent =
+        product.name || 'Unnamed product';
+
+    title.append(titleLink);
 
     const description = document.createElement('p');
     description.textContent =
-        product.description || 'Electronics marketplace listing.';
+        product.description ||
+        'Electronics marketplace listing.';
 
     const footer = document.createElement('div');
     footer.className = 'en-market-card-footer';
@@ -201,76 +326,49 @@ function card(product) {
     const price = document.createElement('strong');
     price.textContent = money(product.price);
 
-    const cartForm = document.createElement('form');
-    cartForm.method = 'post';
-    cartForm.action = '/cart/add';
-    cartForm.className = 'en-add-cart-form';
+    const availableStock =
+        Number(product.stockQuantity ?? 0);
 
-    const productInput = document.createElement('input');
-    productInput.type = 'hidden';
-    productInput.name = 'productId';
-    productInput.value = product.id;
+    const canAdd =
+        availableStock > 0 &&
+        product.outOfStock !== true;
 
-    const quantityInput = document.createElement('input');
-    quantityInput.type = 'hidden';
-    quantityInput.name = 'quantity';
-    quantityInput.value = '1';
+    footer.append(
+        price,
+        purchaseControl(product, canAdd)
+    );
 
-    const addButton = document.createElement('button');
-    addButton.type = 'submit';
-    addButton.className = 'en-add-cart-btn';
+    body.append(
+        meta,
+        title,
+        description,
+        footer
+    );
 
-    const availableStock = Number(product.stockQuantity ?? 0);
-    const canAdd = availableStock > 0 && product.outOfStock !== true;
-
-    addButton.textContent = canAdd ? 'Add to cart' : 'Out of stock';
-    addButton.disabled = !canAdd;
-
-    if (customerAccount) {
-        if (csrfToken) {
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = csrfParameter;
-            csrfInput.value = csrfToken;
-            cartForm.append(csrfInput);
-        }
-
-        cartForm.append(productInput, quantityInput, addButton);
-    } else {
-        addButton.type = 'button';
-
-        if (!canAdd) {
-            addButton.textContent = 'Out of stock';
-            addButton.disabled = true;
-        } else if (loggedIn) {
-            addButton.textContent = 'Customer account required';
-            addButton.disabled = true;
-        } else {
-            addButton.textContent = 'Sign in to add';
-            addButton.addEventListener('click', () => {
-                location.href = '/login';
-            });
-        }
-
-        cartForm.append(addButton);
-    }
-
-    const arrow = document.createElement('a');
-    arrow.className = 'en-card-arrow';
-    arrow.href = `/products/${product.id}`;
-    arrow.textContent = 'View details ↗';
-
-    footer.append(price, cartForm, arrow);
-    body.append(meta, titleLink, description, footer);
     article.append(media, body);
 
     return article;
 }
 
+let requestVersion = 0;
+let activeRequest;
+
 async function load() {
-    if (!validateFilters()) return;
+    const version = ++requestVersion;
+    activeRequest?.abort();
+    if (!validateFilters()) {
+        ui.loading.hidden = true;
+        ui.previous.disabled = true;
+        ui.next.disabled = true;
+        ui.pageIndicator.textContent = 'Adjust filters';
+        return;
+    }
+    activeRequest = new AbortController();
 
     ui.loading.hidden = false;
+    ui.previous.disabled = true;
+    ui.next.disabled = true;
+    ui.pageIndicator.textContent = 'Loading…';
     ui.error.hidden = true;
     ui.empty.hidden = true;
     ui.grid.replaceChildren();
@@ -279,14 +377,19 @@ async function load() {
     syncUrl();
 
     try {
-        const response = await fetch(`/api/search/products?${params()}`);
+        const response = await fetch(`/api/search/products?${params()}`, { signal: activeRequest.signal });
 
         if (!response.ok) throw new Error();
 
         const data = await response.json();
+        if (version !== requestVersion) return;
         const products = data.content || [];
 
         state.totalPages = data.totalPages || 0;
+        if (state.page > 0 && state.page >= state.totalPages) {
+            state.page = Math.max(0, state.totalPages - 1);
+            return load();
+        }
 
         const total = data.totalElements ?? products.length;
 
@@ -311,13 +414,15 @@ async function load() {
             !ui.keyword.value.trim() &&
             filterCount() === 0;
 
-    } catch {
-        ui.empty.hidden = false;
-        ui.empty.querySelector('h2').textContent = 'Shop unavailable.';
-        ui.empty.querySelector('p').textContent = 'Please try again.';
+    } catch (error) {
+        if (version !== requestVersion || error.name === 'AbortError') return;
+        ui.error.hidden = false;
+        ui.error.textContent = 'Could not load products. Check your connection and press Search to retry.';
+        state.totalPages = 0;
+        ui.pageIndicator.textContent = 'Unavailable';
         ui.count.textContent = '—';
     } finally {
-        ui.loading.hidden = true;
+        if (version === requestVersion) ui.loading.hidden = true;
     }
 }
 
@@ -326,7 +431,9 @@ function validateFilters() {
     const maximum = ui.maxPrice.value === '' ? null : Number(ui.maxPrice.value);
     let message = '';
 
-    if ((minimum !== null && minimum < 0) || (maximum !== null && maximum < 0)) {
+    if (ui.minPrice.validity.badInput || ui.maxPrice.validity.badInput) {
+        message = 'Enter valid prices.';
+    } else if ((minimum !== null && minimum < 0) || (maximum !== null && maximum < 0)) {
         message = 'Prices cannot be negative.';
     } else if (minimum !== null && maximum !== null && minimum > maximum) {
         message = 'Minimum price cannot exceed maximum price.';

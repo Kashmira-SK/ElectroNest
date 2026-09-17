@@ -64,7 +64,7 @@ public class ProductSearchController {
             );
         }
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id").descending());
 
         return productSearchService.search(
                 keyword,

@@ -83,12 +83,14 @@ public class ProductService {
             throw new IllegalArgumentException("Product not found");
         }
 
+        requireDeletable(id);
         productRepository.deleteById(id);
     }
 
     public void deleteOwnedProduct(Long id, Long vendorId) {
         Product product = getProductById(id);
         assertOwnedByVendor(product, vendorId);
+        requireDeletable(id);
         productRepository.delete(product);
     }
 
@@ -154,6 +156,7 @@ public class ProductService {
         return productRepository.saveAll(products);
     }
 
+    @Transactional
     public List<Product> bulkUpdatePriceForVendor(List<Long> productIds,
                                                   BigDecimal newPrice,
                                                   Long vendorId) {
@@ -167,6 +170,8 @@ public class ProductService {
 
         for (Product product : products) {
             assertOwnedByVendor(product, vendorId);
+        }
+        for (Product product : products) {
             product.setPrice(newPrice);
         }
 
@@ -179,7 +184,8 @@ public class ProductService {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
-        Product product = getProductById(productId);
+        Product product = productRepository.findForUpdate(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
         int stock = product.getStockQuantity() == null
                 ? 0
@@ -201,6 +207,12 @@ public class ProductService {
         product.setOutOfStock(remaining == 0);
 
         return productRepository.save(product);
+    }
+
+    private void requireDeletable(Long id) {
+        if (productRepository.hasOrderHistory(id) || productRepository.hasReviewHistory(id)) {
+            throw new IllegalArgumentException("This product has purchase or review history. Set stock to zero instead of deleting it.");
+        }
     }
 
     private void validateProduct(Product product) {
@@ -238,4 +250,50 @@ public class ProductService {
         }
         return value.trim();
     }
+
+    public Product validateStockForOrder(Long productId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
+        }
+
+        Product product = getProductById(productId);
+
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if (Boolean.TRUE.equals(product.getOutOfStock())
+                || stock < quantity) {
+            throw new IllegalStateException(
+                    "Only " + stock + " units of "
+                            + product.getName() + " are available"
+            );
+        }
+
+        return product;
+    }
+
+    @Transactional
+    public Product restoreStockForOrder(Long productId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
+        }
+
+        Product product = productRepository.findForUpdate(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        int stock = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        product.setStockQuantity(stock + quantity);
+        product.setOutOfStock(false);
+
+        return productRepository.save(product);
+    }
+
 }

@@ -62,7 +62,9 @@ public class SellerProductViewController {
             return "redirect:/vendor/status";
         }
 
-        model.addAttribute("product", new ProductForm());
+        if (!model.containsAttribute("product")) {
+            model.addAttribute("product", new ProductForm());
+        }
         return "catalog/vendor-product-form";
     }
 
@@ -112,7 +114,10 @@ public class SellerProductViewController {
 
         try {
             Product product = ownedProduct(id, vendor);
-            model.addAttribute("product", toForm(product));
+            if (!model.containsAttribute("product")) {
+                model.addAttribute("product", toForm(product));
+            }
+            model.addAttribute("currentImages", product.getImageUrls());
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/vendor/products";
@@ -150,6 +155,25 @@ public class SellerProductViewController {
         redirectAttributes.addFlashAttribute(
                 "successMessage", "Product updated successfully.");
 
+        return "redirect:/vendor/products";
+    }
+
+    @PostMapping("/bulk-price")
+    public String bulkPrice(@RequestParam(required = false) java.util.List<Long> productIds,
+                            @RequestParam java.math.BigDecimal newPrice,
+                            @AuthenticationPrincipal CustomUserDetails currentUser,
+                            RedirectAttributes redirectAttributes) {
+        Vendor vendor = approvedVendor(currentUser, redirectAttributes);
+        if (vendor == null) return "redirect:/vendor/status";
+        try {
+            if (productIds == null || productIds.isEmpty()) {
+                throw new IllegalArgumentException("Select at least one product.");
+            }
+            productService.bulkUpdatePriceForVendor(productIds, newPrice, vendor.getId());
+            redirectAttributes.addFlashAttribute("successMessage", "Selected product prices updated.");
+        } catch (IllegalArgumentException | SecurityException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/vendor/products";
     }
 

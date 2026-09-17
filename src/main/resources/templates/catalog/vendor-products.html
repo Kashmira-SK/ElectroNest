@@ -10,7 +10,7 @@
 
 <header th:replace="~{fragments/site-header :: siteHeader('seller')}"></header>
 
-<main class="en-page">
+<main class="en-page en-seller-catalog">
 
     <div class="en-page-header">
         <div>
@@ -41,11 +41,24 @@
         You haven't listed any products yet.
     </div>
 
+    <form id="bulkPriceForm" class="en-seller-bulk" th:unless="${#lists.isEmpty(products)}"
+          th:action="@{/vendor/products/bulk-price}" method="post"
+          onsubmit="return confirm('Set every selected product to this price?')">
+        <div><label for="bulkPrice">Set selected products to price (LKR)</label>
+            <input id="bulkPrice" name="newPrice" type="number" min="0.01" step="0.01" required></div>
+        <button type="submit" class="en-btn en-btn-secondary">Update selected prices</button>
+        <p class="en-muted">Select products below. This sets one price, not a percentage change.</p>
+    </form>
+
     <div class="en-product-grid"
          th:unless="${#lists.isEmpty(products)}">
 
         <article class="en-product-card"
                  th:each="product : ${products}">
+            <label class="en-seller-select">
+                <input type="checkbox" name="productIds" form="bulkPriceForm" th:value="${product.id}">
+                Select for price update
+            </label>
 
             <div class="en-product-image">
                 <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
@@ -63,14 +76,14 @@
                     Category
                 </p>
 
-                <h3 th:text="${product.name}">Product</h3>
+                <h3><a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.name}">Product</a></h3>
 
                 <p class="en-muted"
                    th:text="${product.brand}">
                     Brand
                 </p>
 
-                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(product.price, 1, 2)}">
+                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(product.price, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
 

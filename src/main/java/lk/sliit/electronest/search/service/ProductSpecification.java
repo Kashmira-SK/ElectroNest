@@ -43,6 +43,7 @@ public class ProductSpecification {
 
             if (Boolean.TRUE.equals(inStockOnly)) {
                 predicates.add(cb.equal(root.get("outOfStock"), false));
+                predicates.add(cb.greaterThan(root.get("stockQuantity"), 0));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

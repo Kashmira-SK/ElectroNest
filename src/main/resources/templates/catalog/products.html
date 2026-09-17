@@ -10,7 +10,9 @@
     <script th:src="@{/js/catalog.js}" defer></script>
 </head>
 <body th:attr="data-logged-in=${loggedIn},
-                    data-customer=${loggedIn and currentUser.role.name() == 'CUSTOMER'}">
+                    data-customer=${loggedIn and currentUser.role.name() == 'CUSTOMER'},
+                    data-vendor=${loggedIn and currentUser.role.name() == 'VENDOR'},
+                    data-suspended=${accountSuspended}">
 
 <header th:replace="~{fragments/site-header :: siteHeader('products')}"></header>
 
@@ -24,6 +26,16 @@
 
         <h1>Find the tech you're after.</h1>
         <p>Search products from verified electronics sellers.</p>
+
+        <div class="en-alert en-alert-error"
+             th:if="${loggedIn and accountSuspended}">
+            Your account is suspended. You can browse products, but purchasing and other account-changing actions are disabled.
+        </div>
+
+        <div class="en-alert"
+             th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR'}">
+            Vendor accounts cannot place customer orders. Purchase controls are disabled.
+        </div>
     </section>
 
     <section class="en-search-area">
@@ -32,6 +44,7 @@
             <span class="en-search-icon"></span>
 
             <input id="keyword"
+                   aria-label="Search products"
                    type="search"
                    autocomplete="off"
                    autofocus
@@ -46,7 +59,7 @@
             <button id="filterToggle"
                     class="en-filter-toggle en-filter-button"
                     type="button"
-                    aria-expanded="false">
+                    aria-expanded="false" aria-controls="advancedFilters">
                 Filters
                 <span id="filterCount" hidden>0</span>
             </button>
@@ -78,12 +91,12 @@
 
             <div>
                 <label for="minPrice">Min price</label>
-                <input id="minPrice" type="number" min="0" placeholder="Any">
+                <input id="minPrice" type="number" min="0" step="0.01" placeholder="Any">
             </div>
 
             <div>
                 <label for="maxPrice">Max price</label>
-                <input id="maxPrice" type="number" min="0" placeholder="Any">
+                <input id="maxPrice" type="number" min="0" step="0.01" placeholder="Any">
             </div>
 
             <label class="en-simple-check">
@@ -102,9 +115,9 @@
 
     <section class="en-product-results">
 
-        <div id="searchError" class="en-alert en-alert-error" hidden></div>
+        <div id="searchError" class="en-alert en-alert-error" role="alert" hidden></div>
 
-        <div class="en-product-results-head">
+        <div class="en-product-results-head" aria-live="polite">
             <div>
                 <strong id="resultCount">—</strong>
                 <span id="resultLabel">products</span>
