@@ -29,6 +29,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/vendor")
 public class VendorViewController {
+    @ExceptionHandler(VendorNotFoundException.class)
+    public String missingSellerProfile(RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", "No seller application exists for this account.");
+        return "redirect:/vendor/status";
+    }
 
     private final VendorService vendorService;
     private final VendorDocumentStorageService documentStorageService;
@@ -59,7 +64,7 @@ public class VendorViewController {
         }
     }
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @GetMapping("/register")
     public String showRegisterForm(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -76,7 +81,7 @@ public class VendorViewController {
         return "vendor/register";
     }
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @PostMapping("/register")
     public String submitRegistration(
             @Valid @ModelAttribute("registrationRequest") VendorRegistrationRequest request,
@@ -122,7 +127,7 @@ public class VendorViewController {
         }
     }
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @GetMapping("/status")
     public String showStatus(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -140,7 +145,7 @@ public class VendorViewController {
         }
     }
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @GetMapping("/profile")
     public String showProfile(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -169,34 +174,65 @@ public class VendorViewController {
         return "vendor/profile";
     }
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @PostMapping("/profile")
     public String updateProfile(
-            @Valid @ModelAttribute("profileRequest") VendorProfileUpdateRequest request,
+            @Valid
+            @ModelAttribute("profileRequest")
+            VendorProfileUpdateRequest request,
             BindingResult bindingResult,
-            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @AuthenticationPrincipal
+            CustomUserDetails currentUser,
+            @RequestParam(
+                    value = "document",
+                    required = false
+            )
+            MultipartFile document,
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        Vendor vendor = vendorService.getVendorForUser(currentUser.getUser().getId());
+        Vendor vendor = vendorService.getVendorForUser(
+                currentUser.getUser().getId()
+        );
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("vendor", vendor);
             return "vendor/profile";
         }
 
-        try {
-            Vendor updated = vendorService.updateVendorDetails(
-                    currentUser.getUser().getId(),
-                    request
-            );
+        String replacementDocument = null;
+        String previousDocument = vendor.getIdDocumentPath();
 
-            if (updated.getStatus()
-                    == lk.sliit.electronest.vendor.model.VendorStatus.PENDING) {
+        try {
+            if (document != null && !document.isEmpty()) {
+                replacementDocument =
+                        documentStorageService.store(document);
+            }
+
+            Vendor updated =
+                    vendorService.updateVendorDetails(
+                            currentUser.getUser().getId(),
+                            request,
+                            replacementDocument
+                    );
+
+            if (replacementDocument != null
+                    && previousDocument != null
+                    && !previousDocument.equals(
+                            replacementDocument
+                    )) {
+                documentStorageService.deleteQuietly(
+                        previousDocument
+                );
+            }
+
+            if (updated.getStatus() == VendorStatus.PENDING) {
                 redirectAttributes.addFlashAttribute(
                         "successMessage",
-                        "Your updated information has been submitted for review."
+                        "Your updated information has been "
+                                + "submitted for review."
                 );
+
                 return "redirect:/vendor/status";
             }
 
@@ -204,10 +240,25 @@ public class VendorViewController {
                     "successMessage",
                     "Vendor profile updated successfully."
             );
+
             return "redirect:/vendor/profile";
-        } catch (VendorNotFoundException | InvalidVendorStatusTransitionException ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/vendor/status";
+
+        } catch (VendorNotFoundException
+                 | InvalidVendorStatusTransitionException
+                 | IllegalArgumentException
+                 | IllegalStateException ex) {
+
+            documentStorageService.deleteQuietly(
+                    replacementDocument
+            );
+
+            model.addAttribute("vendor", vendor);
+            model.addAttribute(
+                    "errorMessage",
+                    ex.getMessage()
+            );
+
+            return "vendor/profile";
         }
     }
 
@@ -221,7 +272,12 @@ public class VendorViewController {
         }
 
         String storedName = vendor.getIdDocumentPath();
-        Resource resource = documentStorageService.load(storedName);
+        Resource resource;
+        try {
+            resource = documentStorageService.load(storedName);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
 
         MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
         String lowerName = storedName.toLowerCase();
@@ -246,8 +302,14 @@ public class VendorViewController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/manage")
-    public String showVendorManagement(Model model) {
-        model.addAttribute("vendors", vendorService.getAllVendors());
+    public String showVendorManagement(@RequestParam(defaultValue = "ALL") String status, Model model) {
+        var vendors = vendorService.getAllVendors();
+        var selectedStatus = java.util.Arrays.stream(VendorStatus.values())
+                .map(Enum::name).filter(status::equals).findFirst().orElse("ALL");
+        model.addAttribute("vendors", vendors.stream()
+                .filter(vendor -> selectedStatus.equals("ALL") || vendor.getStatus().name().equals(selectedStatus))
+                .toList());
+        model.addAttribute("selectedStatus", selectedStatus);
         return "vendor/manage";
     }
 
@@ -334,7 +396,7 @@ public class VendorViewController {
                     "successMessage",
                     "Vendor removed successfully."
             );
-        } catch (VendorNotFoundException ex) {
+        } catch (VendorNotFoundException | InvalidVendorStatusTransitionException ex) {
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
                     ex.getMessage()

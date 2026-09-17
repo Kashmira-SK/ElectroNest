@@ -2,15 +2,27 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manage Vendors - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body class="en-admin-page en-vendor-page">
 
 <header th:replace="~{fragments/site-header :: siteHeader('admin-vendors')}"></header>
-<div class="en-shell" style="max-width: 900px;">
+<main class="en-admin-shell en-vendor-admin">
     <p class="en-eyebrow">ElectroNest / Admin</p>
     <h1>Vendor management</h1>
+    <p class="en-muted">Seller approval and user account status are separate. A seller needs an approved profile and an active account.</p>
+    <form class="en-vendor-filter" th:action="@{/vendor/manage}" method="get">
+        <label for="vendor-status">Seller / application state</label>
+        <select id="vendor-status" name="status">
+            <option value="ALL" th:selected="${selectedStatus == 'ALL'}">All states</option>
+            <option th:each="state : ${T(lk.sliit.electronest.vendor.model.VendorStatus).values()}"
+                    th:value="${state.name()}" th:text="${#strings.replace(state.name(), '_', ' ')}"
+                    th:selected="${selectedStatus == state.name()}"></option>
+        </select>
+        <button type="submit" class="en-btn en-btn-primary en-btn-auto">Filter</button>
+    </form>
 
     <p>
         <a th:href="@{/vendor/queue}" class="en-btn">
@@ -28,13 +40,14 @@
 
     <div class="en-card en-empty"
          th:if="${#lists.isEmpty(vendors)}">
-        No vendors found.
+        No vendors match this state.
     </div>
 
     <div class="en-card en-vendor-row"
          th:each="v : ${vendors}">
 
         <h3 th:text="${v.businessName}">Business Name</h3>
+        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Manage account</a> · Account: <span th:text="${v.user.status}">ACTIVE</span> · Role: <span th:text="${v.user.role}">VENDOR</span></p>
 
         <p class="en-meta">
             <strong>Account:</strong>
@@ -60,11 +73,17 @@
         <p class="en-meta"
            th:if="${v.idDocumentPath != null}">
             <a th:href="@{/vendor/queue/{id}/document(id=${v.id})}"
-               target="_blank">
+               target="_blank" rel="noopener">
                 View verification document
             </a>
         </p>
 
+        <div class="en-vendor-feedback" th:if="${v.rejectionReason != null}">
+            <strong>Message to applicant</strong>
+            <p th:text="${v.rejectionReason}"></p>
+        </div>
+        <p th:if="${v.status.name() == 'PENDING'}"><a th:href="@{/vendor/queue}">Review this pending application in Vendor verification</a></p>
+        <p class="en-muted" th:if="${v.status.name() == 'INFO_REQUESTED'}">Waiting for the customer to update and resubmit their application.</p>
         <div class="en-actions">
 
             <form th:if="${v.status.name() == 'APPROVED'}"
@@ -72,7 +91,7 @@
                   method="post">
                 <button class="en-btn en-btn-reject en-btn-sm"
                         type="submit">
-                    Suspend
+                    Suspend seller
                 </button>
             </form>
 
@@ -81,7 +100,7 @@
                   method="post">
                 <button class="en-btn en-btn-approve en-btn-sm"
                         type="submit">
-                    Reactivate
+                    Reactivate seller
                 </button>
             </form>
 
@@ -89,13 +108,14 @@
                   method="post">
                 <button class="en-btn en-btn-reject en-btn-sm"
                         type="submit"
-                        onclick="return confirm('Remove this vendor permanently?')">
-                    Remove
+                        onclick="return confirm('Remove this seller profile? The user account stays intact and seller access is revoked. Sellers with product or order records must be suspended instead.')">
+                    Remove profile
                 </button>
             </form>
 
         </div>
+        <p class="en-muted">Removal is only available when no product or order records belong to this seller. Suspend established sellers to preserve purchase history.</p>
     </div>
-</div>
+</main>
 </body>
 </html>

@@ -2,99 +2,459 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Vendor Profile - ElectroNest</title>
-    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Seller application — ElectroNest</title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/electronest.css}">
 </head>
-<body class="en-vendor-page">
-<header th:replace="~{fragments/site-header :: siteHeader('vendor-status')}"></header>
-<div class="en-shell">
-    <p class="en-eyebrow">ElectroNest / Seller</p>
 
-    <h1 th:if="${vendor.status.name() == 'APPROVED'}">
-        Edit vendor profile
-    </h1>
+<body>
 
-    <h1 th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
-        Update application information
-    </h1>
+<main class="en-business-shell">
 
-    <div class="en-alert en-alert-success"
-         th:if="${successMessage}"
-         th:text="${successMessage}"></div>
+    <div class="en-business-heading">
 
-    <div class="en-alert en-alert-error"
-         th:if="${errorMessage}"
-         th:text="${errorMessage}"></div>
+        <p class="en-eyebrow">
+            ElectroNest / Seller
+        </p>
+
+        <h1 th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
+            Update application information
+        </h1>
+
+        <h1 th:if="${vendor.status.name() == 'APPROVED'}">
+            Edit seller profile
+        </h1>
+
+        <p class="en-muted"
+           th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
+            Update the requested information and resubmit
+            your application for review.
+        </p>
+
+        <p class="en-muted"
+           th:if="${vendor.status.name() == 'APPROVED'}">
+            Manage your public business details.
+        </p>
+
+    </div>
 
     <div class="en-alert en-alert-error"
          th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
-        <strong>Administrator message:</strong>
-        <span th:text="${vendor.rejectionReason}"></span>
+
+        <strong>Administrator requested more information</strong>
+
+        <p th:text="${vendor.rejectionReason}"></p>
+
     </div>
 
-    <div class="en-card">
-        <p class="en-meta">
-            <strong>Registration number:</strong>
-            <span th:text="${vendor.registrationNumber}"></span>
-        </p>
-
-        <form th:action="@{/vendor/profile}"
-              th:object="${profileRequest}"
-              method="post">
-
-            <div class="en-field">
-                <label>Business Name</label>
-                <input type="text"
-                       th:field="*{businessName}"
-                       required>
-
-                <p class="en-field-error"
-                   th:if="${#fields.hasErrors('businessName')}"
-                   th:errors="*{businessName}"></p>
-            </div>
-
-            <div class="en-field">
-                <label>Business Address</label>
-                <input type="text"
-                       th:field="*{businessAddress}"
-                       required>
-
-                <p class="en-field-error"
-                   th:if="${#fields.hasErrors('businessAddress')}"
-                   th:errors="*{businessAddress}"></p>
-            </div>
-
-            <div class="en-field">
-                <label>Contact Phone</label>
-                <input type="tel"
-                       th:field="*{contactPhone}"
-                       required>
-
-                <p class="en-field-error"
-                   th:if="${#fields.hasErrors('contactPhone')}"
-                   th:errors="*{contactPhone}"></p>
-            </div>
-
-            <button type="submit"
-                    class="en-btn en-btn-primary"
-                    th:text="${vendor.status.name() == 'INFO_REQUESTED'
-                        ? 'Submit updated information'
-                        : 'Save profile'}">
-                Save profile
-            </button>
-
-            <a th:href="@{/vendor/status}"
-               class="en-btn">
-                Back to status
-            </a>
-
-            <a th:if="${vendor.status.name() == 'APPROVED'}"
-               th:href="@{/vendor/products}"
-               class="en-btn">
-                Open seller hub
-            </a>
-        </form>
+    <div class="en-alert en-alert-error"
+         th:if="${errorMessage}"
+         th:text="${errorMessage}">
     </div>
-</div>
+
+    <div class="en-alert en-alert-success"
+         th:if="${successMessage}"
+         th:text="${successMessage}">
+    </div>
+
+    <div class="en-business-layout">
+
+        <section class="en-card en-business-form-card">
+
+            <div class="en-business-registration">
+                <span>Registration number</span>
+
+                <strong th:text="${vendor.registrationNumber}">
+                    PV-2026-10482
+                </strong>
+            </div>
+
+            <form id="vendorProfileForm"
+                  th:action="@{/vendor/profile}"
+                  th:object="${profileRequest}"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                <div class="en-business-form-grid">
+
+                    <div class="en-field en-span-2">
+
+                        <label>Business name</label>
+
+                        <input type="text"
+                               th:field="*{businessName}"
+                               maxlength="150"
+                               required>
+
+                        <p class="en-field-error"
+                           th:if="${#fields.hasErrors('businessName')}"
+                           th:errors="*{businessName}">
+                        </p>
+
+                    </div>
+
+                    <div class="en-field en-span-2">
+
+                        <label>Business address</label>
+
+                        <input type="text"
+                               th:field="*{businessAddress}"
+                               maxlength="255"
+                               required>
+
+                        <p class="en-field-error"
+                           th:if="${#fields.hasErrors('businessAddress')}"
+                           th:errors="*{businessAddress}">
+                        </p>
+
+                    </div>
+
+                    <div class="en-field en-span-2"
+                         data-phone-widget>
+
+                        <label>Business phone</label>
+
+                        <input type="hidden"
+                               th:field="*{contactPhone}"
+                               data-phone-value>
+
+                        <div class="en-phone-input">
+
+                            <input type="text"
+                                   class="en-country-code"
+                                   data-country-code
+                                   list="vendorCountryCodes"
+                                   value="+94"
+                                   inputmode="tel"
+                                   maxlength="5"
+                                   aria-label="Country code">
+
+                            <span class="en-phone-divider"></span>
+
+                            <input type="tel"
+                                   class="en-phone-local"
+                                   data-phone-local
+                                   inputmode="numeric"
+                                   placeholder="77 555 3333"
+                                   required>
+
+                        </div>
+
+                        <small class="en-field-hint">
+                            Select or type the country code.
+                        </small>
+
+                        <p class="en-field-error"
+                           th:if="${#fields.hasErrors('contactPhone')}"
+                           th:errors="*{contactPhone}">
+                        </p>
+
+                    </div>
+
+                    <div class="en-field en-span-2"
+                         th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
+
+                        <label>
+                            Verification document
+                        </label>
+
+                        <div class="en-current-document"
+                             th:if="${vendor.idDocumentPath != null}">
+
+                            <div>
+                                <strong>
+                                    Current document is on file
+                                </strong>
+
+                                <p>
+                                    Upload a replacement only if
+                                    the administrator requested a
+                                    clearer or updated document.
+                                </p>
+                            </div>
+
+                            <span class="en-status">
+                                SAVED
+                            </span>
+
+                        </div>
+
+                        <label class="en-upload-box"
+                               for="document">
+
+                            <strong>
+                                Choose replacement document
+                            </strong>
+
+                            <span id="documentName">
+                                PDF, JPG, PNG or ZIP · up to 15 MB
+                            </span>
+
+                        </label>
+
+                        <input id="document"
+                               class="en-upload-native"
+                               type="file"
+                               name="document"
+                               accept=".pdf,.jpg,.jpeg,.png,.zip,application/pdf,image/jpeg,image/png,application/zip,application/x-zip-compressed">
+
+                        <small class="en-field-hint">
+                            Optional. Leave this empty if your
+                            existing verification document does
+                            not need to change.
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <div class="en-business-submit">
+
+                    <button type="submit"
+                            class="en-btn en-btn-primary en-btn-auto"
+                            th:text="${vendor.status.name() == 'INFO_REQUESTED'
+                                ? 'Submit updated information'
+                                : 'Save profile'}">
+
+                        Submit updated information
+
+                    </button>
+
+                    <a th:href="@{/vendor/status}"
+                       class="en-btn en-btn-secondary">
+                        Back to status
+                    </a>
+
+                </div>
+
+            </form>
+
+        </section>
+
+        <aside class="en-business-guide"
+               th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
+
+            <p class="en-eyebrow">
+                Resubmission
+            </p>
+
+            <h2>What happens next?</h2>
+
+            <div class="en-guide-row">
+
+                <span>01</span>
+
+                <div>
+                    <strong>Update the requested details</strong>
+
+                    <p>
+                        Change whichever information the
+                        administrator asked you to correct.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="en-guide-row">
+
+                <span>02</span>
+
+                <div>
+                    <strong>Replace documents if needed</strong>
+
+                    <p>
+                        You can submit PDF, JPG, PNG or ZIP
+                        files up to 15 MB.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="en-guide-row">
+
+                <span>03</span>
+
+                <div>
+                    <strong>Return to review</strong>
+
+                    <p>
+                        After resubmission the application
+                        returns to Pending for another admin
+                        review.
+                    </p>
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+    <datalist id="vendorCountryCodes">
+        <option value="+94">Sri Lanka</option>
+        <option value="+91">India</option>
+        <option value="+1">United States / Canada</option>
+        <option value="+44">United Kingdom</option>
+        <option value="+61">Australia</option>
+        <option value="+971">United Arab Emirates</option>
+        <option value="+65">Singapore</option>
+        <option value="+60">Malaysia</option>
+    </datalist>
+
+</main>
+
+<script>
+const form = document.getElementById('vendorProfileForm');
+
+const widget = document.querySelector('[data-phone-widget]');
+const code = widget.querySelector('[data-country-code]');
+const local = widget.querySelector('[data-phone-local]');
+const hidden = widget.querySelector('[data-phone-value]');
+
+const knownCodes = [
+    '+971',
+    '+94',
+    '+91',
+    '+61',
+    '+65',
+    '+60',
+    '+44',
+    '+1'
+];
+
+function cleanCode() {
+    let value = code.value.replace(/[^\d+]/g, '');
+
+    if (!value.startsWith('+')) {
+        value = '+' + value.replace(/\+/g, '');
+    } else {
+        value =
+            '+' + value.slice(1).replace(/\+/g, '');
+    }
+
+    code.value = value.slice(0, 5);
+}
+
+function formatPhone() {
+    cleanCode();
+
+    let digits = local.value.replace(/\D/g, '');
+
+    if (code.value === '+94') {
+
+        if (digits.startsWith('0')) {
+            digits = digits.slice(1);
+        }
+
+        digits = digits.slice(0, 9);
+
+        local.value = [
+            digits.slice(0, 2),
+            digits.slice(2, 5),
+            digits.slice(5, 9)
+        ]
+        .filter(Boolean)
+        .join(' ');
+
+        return;
+    }
+
+    digits = digits.slice(0, 12);
+
+    local.value =
+        digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+}
+
+function syncPhone() {
+    cleanCode();
+
+    let digits =
+        local.value.replace(/\D/g, '');
+
+    if (code.value === '+94' && digits.startsWith('0')) {
+        digits = digits.slice(1);
+    }
+
+    hidden.value = code.value + digits;
+}
+
+const existing =
+    (hidden.value || '').replace(/\s/g, '');
+
+if (existing.startsWith('+')) {
+
+    const matched =
+        knownCodes.find(value =>
+            existing.startsWith(value)
+        );
+
+    if (matched) {
+        code.value = matched;
+        local.value =
+            existing.slice(matched.length);
+    }
+}
+
+formatPhone();
+
+code.addEventListener('input', formatPhone);
+code.addEventListener('change', formatPhone);
+local.addEventListener('input', formatPhone);
+
+const documentInput =
+    document.getElementById('document');
+
+const documentName =
+    document.getElementById('documentName');
+
+if (documentInput) {
+
+    documentInput.addEventListener('change', () => {
+
+        const file = documentInput.files[0];
+
+        if (!file) {
+            documentName.textContent =
+                'PDF, JPG, PNG or ZIP · up to 15 MB';
+
+            return;
+        }
+
+        documentName.textContent =
+            file.name +
+            ' · ' +
+            (file.size / 1024 / 1024).toFixed(2) +
+            ' MB';
+    });
+}
+
+form.addEventListener('submit', event => {
+
+    syncPhone();
+
+    if (!documentInput) {
+        return;
+    }
+
+    const file = documentInput.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+        event.preventDefault();
+
+        alert(
+            'Verification documents must be 15 MB or smaller.'
+        );
+    }
+});
+</script>
+
 </body>
 </html>

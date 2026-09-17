@@ -27,7 +27,7 @@ public class VendorController {
     }
 
     // Vendor self-registration
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @PostMapping("/register")
     public ResponseEntity<VendorResponse> register(
             @Valid @RequestBody VendorRegistrationRequest request,
@@ -48,7 +48,7 @@ public class VendorController {
     }
 
     // Vendor: view only the application owned by the authenticated account
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @GetMapping("/me")
     public ResponseEntity<VendorResponse> getCurrentVendor(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
@@ -57,7 +57,7 @@ public class VendorController {
     }
 
 
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
     @GetMapping("/me/guidance")
     public ResponseEntity<VendorGuidanceResponse> getCurrentVendorGuidance(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
