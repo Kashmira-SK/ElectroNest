@@ -108,37 +108,11 @@
 
                         <label>Business phone</label>
 
-                        <input type="hidden"
-                               th:field="*{contactPhone}"
-                               data-phone-value>
-
-                        <div class="en-phone-input">
-
-                            <input id="vendorCountryCode"
-                                   type="text"
-                                   class="en-country-code"
-                                   data-country-code
-                                   list="vendorCountryCodes"
-                                   value="+94"
-                                   inputmode="tel"
-                                   maxlength="5"
-                                   aria-label="Country code">
-
-                            <span class="en-phone-divider"></span>
-
-                            <input id="vendorPhoneLocal"
-                                   type="tel"
-                                   class="en-phone-local"
-                                   data-phone-local
-                                   inputmode="numeric"
-                                   placeholder="77 456 8912"
-                                   required>
-
-                        </div>
-
-                        <small class="en-field-hint">
-                            Select or type the international country code.
-                        </small>
+                        <input type="tel" th:field="*{contactPhone}" autocomplete="tel" inputmode="tel"
+                               th:pattern="${T(lk.sliit.electronest.common.validation.SriLankanPhone).REGEX}"
+                               placeholder="0771234567 or +94771234567"
+                               title="Enter 0771234567 or +94771234567 (no spaces or hyphens)" required>
+                        <small class="en-field-hint">Use 10 digits starting with 0, or +94 and 9 digits. No spaces or hyphens.</small>
 
                         <p class="en-field-error"
                            th:if="${#fields.hasErrors('contactPhone')}"
@@ -227,110 +201,13 @@
 
     </div>
 
-    <datalist id="vendorCountryCodes">
-        <option value="+94">Sri Lanka</option>
-        <option value="+91">India</option>
-        <option value="+1">United States / Canada</option>
-        <option value="+44">United Kingdom</option>
-        <option value="+61">Australia</option>
-        <option value="+971">United Arab Emirates</option>
-        <option value="+65">Singapore</option>
-        <option value="+60">Malaysia</option>
-    </datalist>
-
 </main>
 
 <script>
 const vendorForm = document.getElementById('vendorApplicationForm');
-const phoneWidget = document.querySelector('[data-phone-widget]');
-const countryCode = phoneWidget.querySelector('[data-country-code]');
-const localPhone = phoneWidget.querySelector('[data-phone-local]');
-const phoneValue = phoneWidget.querySelector('[data-phone-value]');
 const documentInput = document.getElementById('document');
 const documentName = document.getElementById('documentName');
 const documentError = document.getElementById('documentError');
-
-const knownCodes = [
-    '+971',
-    '+94',
-    '+91',
-    '+61',
-    '+65',
-    '+60',
-    '+44',
-    '+1'
-];
-
-function cleanCountryCode() {
-    let value = countryCode.value.replace(/[^\d+]/g, '');
-
-    if (!value.startsWith('+')) {
-        value = '+' + value.replace(/\+/g, '');
-    } else {
-        value = '+' + value.slice(1).replace(/\+/g, '');
-    }
-
-    countryCode.value = value.slice(0, 5);
-}
-
-function formatPhone() {
-    cleanCountryCode();
-
-    let digits = localPhone.value.replace(/\D/g, '');
-
-    if (countryCode.value === '+94') {
-        if (digits.startsWith('0')) {
-            digits = digits.slice(1);
-        }
-
-        digits = digits.slice(0, 9);
-
-        localPhone.value = [
-            digits.slice(0, 2),
-            digits.slice(2, 5),
-            digits.slice(5, 9)
-        ].filter(Boolean).join(' ');
-
-        return;
-    }
-
-    digits = digits.slice(0, 12);
-
-    localPhone.value =
-        digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
-}
-
-function syncPhone() {
-    cleanCountryCode();
-
-    let digits = localPhone.value.replace(/\D/g, '');
-
-    if (countryCode.value === '+94' && digits.startsWith('0')) {
-        digits = digits.slice(1);
-    }
-
-    phoneValue.value = countryCode.value + digits;
-}
-
-const existingPhone = (phoneValue.value || '').replace(/\s/g, '');
-
-if (existingPhone.startsWith('+')) {
-    const matchedCode = knownCodes.find(code =>
-        existingPhone.startsWith(code)
-    );
-
-    if (matchedCode) {
-        countryCode.value = matchedCode;
-        localPhone.value =
-            existingPhone.slice(matchedCode.length);
-    }
-}
-
-formatPhone();
-
-countryCode.addEventListener('input', formatPhone);
-countryCode.addEventListener('change', formatPhone);
-localPhone.addEventListener('input', formatPhone);
 
 documentInput.addEventListener('change', () => {
     documentError.hidden = true;
@@ -350,7 +227,6 @@ documentInput.addEventListener('change', () => {
 });
 
 vendorForm.addEventListener('submit', event => {
-    syncPhone();
 
     const file = documentInput.files[0];
 

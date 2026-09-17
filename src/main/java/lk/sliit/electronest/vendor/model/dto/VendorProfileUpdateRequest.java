@@ -16,7 +16,7 @@ public class VendorProfileUpdateRequest {
 
     @NotBlank(message = "Contact phone is required")
     @Pattern(
-            regexp = "^[0-9+()\\-\\s]{7,20}$",
+            regexp = lk.sliit.electronest.common.validation.SriLankanPhone.REGEX,
             message = "Enter a valid contact phone number"
     )
     private String contactPhone;

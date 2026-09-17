@@ -31,7 +31,10 @@ public class RegisterForm {
     @NotBlank(message = "Please confirm your password")
     private String confirmPassword;
 
-    @Size(max = 20, message = "Contact number must be 20 characters or fewer")
+    @NotBlank(message = "Contact number is required")
+    @jakarta.validation.constraints.Pattern(
+            regexp = lk.sliit.electronest.common.validation.SriLankanPhone.REGEX,
+            message = "Enter a valid contact phone number")
     private String contactNumber;
 
     private Role role = Role.CUSTOMER;
