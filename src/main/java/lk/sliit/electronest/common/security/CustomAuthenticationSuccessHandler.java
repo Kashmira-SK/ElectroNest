@@ -22,6 +22,13 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                          Authentication authentication) throws IOException, ServletException {
 
+        if (authentication.getPrincipal() instanceof CustomUserDetails details
+                && details.getUser().getStatus()
+                == lk.sliit.electronest.common.model.AccountStatus.SUSPENDED) {
+            getRedirectStrategy().sendRedirect(request, response, "/account/suspended");
+            return;
+        }
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(a -> a.equals("ROLE_ADMIN"));

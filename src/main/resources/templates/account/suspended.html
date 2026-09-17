@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account suspended — ElectroNest</title>
+    <link rel="stylesheet" th:href="@{/css/electronest.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/site-header :: siteHeader('account-suspended')}"></header>
+
+<main class="en-shell">
+    <p class="en-eyebrow">Account status</p>
+    <h1>Your account is temporarily suspended.</h1>
+
+    <div class="en-alert en-alert-error" th:if="${param.blocked}">
+        That action is unavailable while your account is suspended.
+    </div>
+
+    <section class="en-card">
+        <span class="en-status en-status-suspended">Suspended</span>
+
+        <p class="en-muted">
+            You can still log in and browse public, read-only pages such as the Shop and product details.
+            Transactional and account-changing actions are disabled until an administrator reactivates your account.
+        </p>
+
+        <p class="en-muted">
+            Cart and checkout changes, orders and payments, reviews, seller management, product changes,
+            profile updates, and saved-card changes are currently unavailable.
+        </p>
+
+        <dl class="en-status-details">
+            <div>
+                <dt>Account</dt>
+                <dd th:text="${user.fullName}">Account name</dd>
+            </div>
+            <div>
+                <dt>Email</dt>
+                <dd th:text="${user.email}">email@example.com</dd>
+            </div>
+            <div>
+                <dt>Role</dt>
+                <dd th:text="${user.role}">CUSTOMER</dd>
+            </div>
+        </dl>
+
+        <p class="en-muted">
+            Contact an ElectroNest administrator for resolution, or wait for the account to be reactivated.
+        </p>
+
+        <a th:href="@{/products}" class="en-btn en-btn-primary en-btn-auto">
+            Browse Shop
+        </a>
+    </section>
+</main>
+
+</body>
+</html>

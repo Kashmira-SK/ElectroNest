@@ -37,6 +37,10 @@
         <p class="en-eyebrow">Sign in</p>
         <h2>Welcome back.</h2>
 
+        <div class="en-alert" th:if="${param.accountChanged}">
+            Your account access has changed. Please sign in again. Deactivated accounts cannot sign in.
+        </div>
+
         <div class="en-alert en-alert-error"
              th:if="${param.error}">
             Email or password is incorrect.
