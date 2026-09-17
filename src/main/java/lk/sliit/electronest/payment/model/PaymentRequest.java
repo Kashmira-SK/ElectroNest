@@ -16,6 +16,15 @@ public class PaymentRequest {
 
     private String cardNumber;
     private String cardHolderName;
+    private String expiryDate;
+    private String cvv;
+    private Long savedCardId;
+    private boolean saveCard;
+
+    public Long getSavedCardId() { return savedCardId; }
+    public void setSavedCardId(Long savedCardId) { this.savedCardId = savedCardId; }
+    public boolean isSaveCard() { return saveCard; }
+    public void setSaveCard(boolean saveCard) { this.saveCard = saveCard; }
 
     private String deliveryAddress;
     private String itemizedSummary;
@@ -98,6 +107,22 @@ public class PaymentRequest {
 
     public void setCardHolderName(String cardHolderName) {
         this.cardHolderName = cardHolderName;
+    }
+
+    public String getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(String expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public String getCvv() {
+        return cvv;
+    }
+
+    public void setCvv(String cvv) {
+        this.cvv = cvv;
     }
 
     public String getDeliveryAddress() {

@@ -23,14 +23,17 @@ public class PaymentViewController {
     private final OrderService orderService;
     private final PaymentWorkflowService paymentService;
     private final CartService cartService;
+    private final lk.sliit.electronest.payment.service.SavedCardService savedCardService;
 
     public PaymentViewController(
             OrderService orderService,
             PaymentWorkflowService paymentService,
-            CartService cartService) {
+            CartService cartService,
+            lk.sliit.electronest.payment.service.SavedCardService savedCardService) {
         this.orderService = orderService;
         this.paymentService = paymentService;
         this.cartService = cartService;
+        this.savedCardService = savedCardService;
     }
 
     @GetMapping("/payment")
@@ -54,9 +57,18 @@ public class PaymentViewController {
         if (completedPayment != null) {
             return "redirect:/receipt?paymentId=" + completedPayment.getId();
         }
+        if (order.getStatus().isTerminal()) return "redirect:/orders";
 
         model.addAttribute("order", order);
-        model.addAttribute("paymentMethods", PaymentMethod.values());
+        model.addAttribute("savedCards", savedCardService.list(currentUser.getUser()));
+        model.addAttribute(
+                "paymentMethods",
+                java.util.List.of(
+                        PaymentMethod.CREDIT_CARD,
+                        PaymentMethod.DEBIT_CARD,
+                        PaymentMethod.CASH_ON_DELIVERY
+                )
+        );
 
         return "payment/payment";
     }
@@ -64,9 +76,13 @@ public class PaymentViewController {
     @PostMapping("/payment")
     public String processPayment(
             @RequestParam Long orderId,
-            @RequestParam PaymentMethod paymentMethod,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) Long savedCardId,
+            @RequestParam(defaultValue = "false") boolean saveCard,
             @RequestParam(required = false) String cardHolderName,
             @RequestParam(required = false) String cardNumber,
+            @RequestParam(required = false) String expiryDate,
+            @RequestParam(required = false) String cvv,
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
 
@@ -75,6 +91,10 @@ public class PaymentViewController {
         request.setPaymentMethod(paymentMethod);
         request.setCardHolderName(cardHolderName);
         request.setCardNumber(cardNumber);
+        request.setExpiryDate(expiryDate);
+        request.setCvv(cvv);
+        request.setSavedCardId(savedCardId);
+        request.setSaveCard(saveCard);
 
         try {
             Payment payment = paymentService.processPayment(
@@ -82,7 +102,6 @@ public class PaymentViewController {
                     currentUser.getUser()
             );
 
-            cartService.clearCart(currentUser.getUser().getId());
 
             return "redirect:/receipt?paymentId=" + payment.getId();
 

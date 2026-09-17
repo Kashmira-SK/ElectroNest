@@ -49,6 +49,11 @@ class PaymentWorkflowServiceTest {
     @InjectMocks
     private PaymentWorkflowService paymentService;
 
+    @Mock
+    private SavedCardService savedCardService;
+    @Mock
+    private lk.sliit.electronest.cart.repository.CartItemRepository cartItemRepository;
+
     private User customer;
     private Order order;
 
@@ -86,7 +91,7 @@ class PaymentWorkflowServiceTest {
         Product product = new Product();
         product.setName("Studio Headphones");
 
-        when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
         when(paymentRepository.findByOrderId(20L)).thenReturn(List.of());
         when(paymentRepository.save(any(Payment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -97,8 +102,9 @@ class PaymentWorkflowServiceTest {
         assertEquals(new BigDecimal("25000.00"), result.getAmount());
         assertEquals(2L, result.getCustomerId());
         assertEquals("customer@electronest.lk", result.getCustomerEmail());
-        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.PAID,
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.PENDING_PAYMENT,
                 order.getPaymentStatus());
+        assertEquals(PaymentStatus.PENDING, result.getPaymentStatus());
         verify(receiptRepository).save(any());
     }
 
@@ -107,7 +113,7 @@ class PaymentWorkflowServiceTest {
         Payment completed = new Payment();
         completed.setPaymentStatus(PaymentStatus.SUCCESSFUL);
 
-        when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
         when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(completed));
 
         assertThrows(
@@ -132,7 +138,120 @@ class PaymentWorkflowServiceTest {
                 () -> paymentService.processPayment(request, customer)
         );
 
-        verify(orderRepository, never()).findById(any());
+        verify(orderRepository, never()).findForUpdate(any());
+    }
+
+    @Test
+    void savedCardPaymentUsesOwnedMetadataWithoutFullNumber() {
+        PaymentRequest request = request(PaymentMethod.CREDIT_CARD);
+        request.setSavedCardId(7L);
+        request.setCvv("123");
+        var card = new lk.sliit.electronest.payment.model.SavedCard();
+        card.setMethod(PaymentMethod.DEBIT_CARD);
+        card.setHolder("Saved Customer");
+        card.setLast4("4242");
+        card.setExpiry("12/39");
+        when(savedCardService.owned(7L, customer)).thenReturn(card);
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(call -> call.getArgument(0));
+        Payment result = paymentService.processPayment(request, customer);
+        assertEquals(PaymentMethod.DEBIT_CARD, result.getPaymentMethod());
+        assertEquals("**** **** **** 4242", result.getMaskedCardNumber());
+        assertEquals("Saved Customer", result.getCardHolderName());
+    }
+
+    @Test
+    void unavailableSavedCardCannotChargeOrder() {
+        PaymentRequest request = request(PaymentMethod.CREDIT_CARD);
+        request.setSavedCardId(7L);
+        when(savedCardService.owned(7L, customer)).thenThrow(new IllegalArgumentException("Unavailable"));
+        assertThrows(IllegalArgumentException.class, () -> paymentService.processPayment(request, customer));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void newCardSaveUsesTheSameAccountService() {
+        PaymentRequest request = request(PaymentMethod.CREDIT_CARD);
+        request.setCardHolderName("Customer");
+        request.setCardNumber("4242424242424242");
+        request.setExpiryDate("12/39");
+        request.setCvv("123");
+        request.setSaveCard(true);
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(call -> call.getArgument(0));
+        paymentService.processPayment(request, customer);
+        verify(savedCardService).save(customer, PaymentMethod.CREDIT_CARD, "Customer", "4242424242424242", "12/39");
+    }
+
+    @Test
+    void pendingCodCannotBePurchasedTwice() {
+        Payment cod = new Payment();
+        cod.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        cod.setPaymentStatus(PaymentStatus.PENDING);
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(cod));
+        assertThrows(IllegalStateException.class,
+                () -> paymentService.processPayment(request(PaymentMethod.CASH_ON_DELIVERY), customer));
+        verify(productService, never()).decreaseStockForOrder(any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void cancellationRefundsAndRestoresStockOnlyOnce() {
+        Payment paid = new Payment();
+        paid.setPaymentStatus(PaymentStatus.SUCCESSFUL);
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(paid));
+        paymentService.cancelOrderPayment(order);
+        paymentService.cancelOrderPayment(order);
+        verify(productService).restoreStockForOrder(10L, 2);
+        assertEquals(PaymentStatus.REFUNDED, paid.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.REFUNDED, order.getPaymentStatus());
+    }
+
+    @Test
+    void codDeliveryCollectsCashWithoutDecreasingStockAgain() {
+        Payment cod = new Payment();
+        cod.setPaymentStatus(PaymentStatus.PENDING);
+        cod.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(cod));
+        paymentService.collectCodOnDelivery(order);
+        assertEquals(PaymentStatus.SUCCESSFUL, cod.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.PAID, order.getPaymentStatus());
+        verify(productService, never()).decreaseStockForOrder(any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void deliveredRefundDoesNotAssumePhysicalGoodsWereReturned() {
+        Payment paid = new Payment();
+        paid.setOrderId(20L);
+        paid.setPaymentStatus(PaymentStatus.SUCCESSFUL);
+        order.setStatus(lk.sliit.electronest.order.model.OrderStatus.DELIVERED);
+        when(paymentRepository.findOrderId(1L)).thenReturn(Optional.of(20L));
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(paid));
+        paymentService.refund(1L);
+        assertEquals(PaymentStatus.REFUNDED, paid.getPaymentStatus());
+        verify(productService, never()).restoreStockForOrder(any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void unsupportedPaymentMethodCannotConsumeStock() {
+        assertThrows(IllegalArgumentException.class,
+                () -> paymentService.processPayment(request(PaymentMethod.DIGITAL_WALLET), customer));
+        verify(productService, never()).decreaseStockForOrder(any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void insufficientStockDoesNotCreatePaymentReceiptOrClearCart() {
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of());
+        when(productService.decreaseStockForOrder(10L, 2)).thenThrow(new IllegalStateException("Insufficient stock"));
+        assertThrows(IllegalStateException.class,
+                () -> paymentService.processPayment(request(PaymentMethod.CASH_ON_DELIVERY), customer));
+        verify(paymentRepository, never()).save(any());
+        verify(receiptRepository, never()).save(any());
+        org.mockito.Mockito.verifyNoInteractions(cartItemRepository);
     }
 
     private PaymentRequest request(PaymentMethod method) {

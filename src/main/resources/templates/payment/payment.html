@@ -42,65 +42,41 @@
                 <p class="en-eyebrow">Payment method</p>
                 <h2>Select how you want to pay</h2>
 
-                <div class="en-field">
-                    <label for="paymentMethod">
-                        Payment method
+                <fieldset class="en-method-group">
+                    <legend>Saved payment methods</legend>
+                    <p class="en-muted" th:if="${#lists.isEmpty(savedCards)}">No saved cards yet. Save a card below or add one in Settings.</p>
+                    <label class="en-method-choice" th:each="card : ${savedCards}">
+                        <input type="radio" name="choice" th:value="|saved:${card.id}|" required>
+                        <span><strong th:text="|${#strings.replace(card.method.name(), '_', ' ')} •••• ${card.last4}|"></strong>
+                        <small th:text="|${card.holder} · Expires ${card.expiry}|"></small></span>
                     </label>
-
-                    <select id="paymentMethod"
-                            name="paymentMethod"
-                            required>
-
-                        <option value="" disabled selected>
-                            Choose payment method
-                        </option>
-
-                        <option th:each="method : ${paymentMethods}"
-                                th:value="${method}"
-                                th:text="${#strings.replace(
-                                    method.name(), '_', ' ')}">
-                        </option>
-                    </select>
+                    <a th:href="@{/settings#payment}">Manage saved cards</a>
+                </fieldset>
+                <fieldset class="en-method-group">
+                    <legend>Other payment methods</legend>
+                    <label class="en-method-choice"><input type="radio" name="choice" value="CREDIT_CARD" required> Credit Card</label>
+                    <label class="en-method-choice"><input type="radio" name="choice" value="DEBIT_CARD" required> Debit Card</label>
+                    <label class="en-method-choice"><input type="radio" name="choice" value="CASH_ON_DELIVERY" required> Cash on Delivery</label>
+                </fieldset>
+                <input type="hidden" id="paymentMethod" name="paymentMethod" disabled>
+                <input type="hidden" id="savedCardId" name="savedCardId" disabled>
+                <fieldset id="cardFields" class="en-method-group" hidden disabled>
+                    <legend>New card details</legend>
+                    <div class="en-field"><label for="cardHolderName">Name on card</label>
+                        <input id="cardHolderName" name="cardHolderName" maxlength="100" autocomplete="cc-name" required></div>
+                    <div class="en-field"><label for="cardNumber">Card number</label>
+                        <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required></div>
+                    <div class="en-field"><label for="expiryDate">Expiry (MM/YY)</label>
+                        <input id="expiryDate" name="expiryDate" placeholder="MM/YY" maxlength="5" pattern="[0-9]{2}/[0-9]{2}" autocomplete="cc-exp" required></div>
+                    <label class="en-save-card"><input type="checkbox" name="saveCard" value="true"> Save card to my account</label>
+                </fieldset>
+                <div id="cvvFields" class="en-field" hidden>
+                    <label for="cvv">CVV</label>
+                    <input id="cvv" name="cvv" type="password" inputmode="numeric" pattern="[0-9]{3,4}" maxlength="4" autocomplete="off" disabled>
                 </div>
+                <p class="en-muted">Saved cards are shared with Settings. Full card numbers and CVV are never stored.</p>
 
-                <div id="cardFields" style="display:none">
-
-                    <div class="en-field">
-                        <label for="cardHolderName">
-                            Card holder name
-                        </label>
-
-                        <input id="cardHolderName"
-                               type="text"
-                               name="cardHolderName"
-                               maxlength="100"
-                               autocomplete="cc-name"
-                               placeholder="Name on card">
-                    </div>
-
-                    <div class="en-field">
-                        <label for="cardNumber">
-                            Card number
-                        </label>
-
-                        <input id="cardNumber"
-                               type="text"
-                               name="cardNumber"
-                               inputmode="numeric"
-                               autocomplete="cc-number"
-                               minlength="12"
-                               maxlength="23"
-                               placeholder="1234 5678 9012 3456">
-                    </div>
-
-                    <p class="en-muted">
-                        ElectroNest only stores the masked last four digits
-                        for this simulated payment.
-                    </p>
-
-                </div>
-
-            </section>
+                </section>
 
             <aside class="en-card en-cart-summary">
 
@@ -124,7 +100,7 @@
 
                     <strong th:text="'Rs. '
                         + ${#numbers.formatDecimal(
-                            order.totalAmount(), 1, 2)}">
+                            order.totalAmount(), 1, 'COMMA', 2, 'POINT')}">
                         Rs. 0.00
                     </strong>
                 </div>
@@ -136,7 +112,7 @@
 
                 <p class="en-muted" style="margin-top:12px">
                     Payment processing is simulated for the ElectroNest
-                    project environment.
+                    project environment. Cash on Delivery reserves stock now; cash is due when delivered.
                 </p>
 
             </aside>
@@ -149,20 +125,33 @@
 
 <script>
 const paymentMethod = document.getElementById('paymentMethod');
+const savedCardId = document.getElementById('savedCardId');
 const cardFields = document.getElementById('cardFields');
-const cardHolderName = document.getElementById('cardHolderName');
-const cardNumber = document.getElementById('cardNumber');
-
+const cvv = document.getElementById('cvv');
 function syncPaymentFields() {
-    const selected = paymentMethod.value.toUpperCase();
-    const usesCard = selected.includes('CARD');
-
-    cardFields.style.display = usesCard ? 'block' : 'none';
-    cardHolderName.required = usesCard;
-    cardNumber.required = usesCard;
+    const choice = document.querySelector('input[name="choice"]:checked')?.value || '';
+    const saved = choice.startsWith('saved:');
+    const newCard = choice === 'CREDIT_CARD' || choice === 'DEBIT_CARD';
+    paymentMethod.disabled = saved || !choice;
+    paymentMethod.value = saved ? '' : choice;
+    savedCardId.disabled = !saved;
+    savedCardId.value = saved ? choice.slice(6) : '';
+    cardFields.hidden = !newCard;
+    cardFields.disabled = !newCard;
+    document.getElementById('cvvFields').hidden = !(newCard || saved);
+    cvv.disabled = !(newCard || saved);
+    cvv.required = newCard || saved;
+    cvv.value = '';
 }
-
-paymentMethod.addEventListener('change', syncPaymentFields);
+document.querySelectorAll('input[name="choice"]').forEach(input =>
+    input.addEventListener('change', syncPaymentFields));
+document.getElementById('cardNumber').addEventListener('input', event => {
+    event.target.value = event.target.value.replace(/\D/g, '').slice(0, 19).replace(/(.{4})/g, '$1 ').trim();
+});
+document.getElementById('expiryDate').addEventListener('input', event => {
+    const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+    event.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+});
 syncPaymentFields();
 </script>
 
