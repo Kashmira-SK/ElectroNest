@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>My Cart - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
@@ -11,6 +13,7 @@
 <header th:replace="~{fragments/site-header :: siteHeader('cart')}"></header>
 
 <main class="en-page">
+    <div id="cartUpdateError" class="en-alert en-alert-error" role="alert" hidden></div>
 
     <div class="en-alert en-alert-error"
          th:if="${errorMessage != null}"
@@ -71,12 +74,13 @@
                     </p>
 
                     <h2>
-                        <a th:href="@{/products/{id}(id=${item.productId()})}"
+                        <a th:if="${item.productId() != null}" th:href="@{/products/{id}(id=${item.productId()})}"
                            th:text="${item.name()}">Product</a>
+                        <span th:if="${item.productId() == null}" th:text="${item.name()}">Unavailable product</span>
                     </h2>
 
                     <p class="en-muted">
-                        <span th:text="'Rs. ' + ${#numbers.formatDecimal(item.unitPrice(), 1, 2)}">
+                        <span th:text="'Rs. ' + ${#numbers.formatDecimal(item.unitPrice(), 1, 'COMMA', 2, 'POINT')}">
                             Rs. 0.00
                         </span>
                         each
@@ -86,25 +90,34 @@
                        th:text="${item.stockQuantity()} + ' available'">
                         Stock
                     </p>
+                    <p class="en-field-error en-cart-availability" th:if="${item.quantity() > item.stockQuantity()}">
+                        Quantity exceeds current availability. Reduce it to the available stock or remove this item.
+                    </p>
+                    <form th:if="${item.stockQuantity() > 0 and item.quantity() > item.stockQuantity()}"
+                          th:action="@{/cart/update}" method="post">
+                        <input type="hidden" name="itemId" th:value="${item.itemId()}">
+                        <input type="hidden" name="quantity" th:value="${item.stockQuantity()}">
+                        <button type="submit" class="en-btn en-btn-secondary">Use available quantity</button>
+                    </form>
 
                     <div class="en-cart-actions">
 
-                        <form th:action="@{/cart/update}" method="post">
-                            <input type="hidden"
-                                   name="itemId"
-                                   th:value="${item.itemId()}">
+                        <div class="en-quantity-control"
+                             th:attr="data-item-id=${item.itemId()},data-stock=${item.stockQuantity()}">
 
-                            <input type="number"
-                                   name="quantity"
-                                   min="1"
-                                   th:max="${item.stockQuantity()}"
-                                   th:value="${item.quantity()}">
+                            <button type="button"
+                                    class="en-quantity-minus"
+                                    th:disabled="${item.quantity() <= 1}"
+                                    aria-label="Decrease quantity">−</button>
 
-                            <button class="en-btn en-btn-secondary"
-                                    type="submit">
-                                Update
-                            </button>
-                        </form>
+                            <strong class="en-quantity-value"
+                                    th:text="${item.quantity()}">1</strong>
+
+                            <button type="button"
+                                    class="en-quantity-plus"
+                                    th:disabled="${item.quantity() >= item.stockQuantity()}"
+                                    aria-label="Increase quantity">+</button>
+                        </div>
 
                         <form th:action="@{/cart/remove}" method="post">
                             <input type="hidden"
@@ -121,7 +134,8 @@
                 </div>
 
                 <strong class="en-cart-line-total"
-                        th:text="'Rs. ' + ${#numbers.formatDecimal(item.lineTotal(), 1, 2)}">
+                        th:attr="data-line-total=${item.itemId()}"
+                        th:text="'Rs. ' + ${#numbers.formatDecimal(item.lineTotal(), 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
 
@@ -135,19 +149,20 @@
 
             <div class="en-summary-row">
                 <span>Items</span>
-                <strong th:text="${#lists.size(cartItems)}">0</strong>
+                <strong id="cartItemCount" th:text="${totalItems}">0</strong>
             </div>
 
             <div class="en-summary-row">
                 <span>Subtotal</span>
-                <strong th:text="'Rs. ' + ${#numbers.formatDecimal(subtotal, 1, 2)}">
+                <strong id="cartSubtotal"
+                        th:text="'Rs. ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
             </div>
 
             <div class="en-summary-row">
                 <span>Delivery</span>
-                <span>Calculated at checkout</span>
+                <span>Rs. 0.00</span>
             </div>
 
             <hr>
@@ -161,5 +176,116 @@
     </div>
 
 </main>
+
+<script>
+const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+let cartUpdatePending = false;
+
+function formatMoney(value) {
+    return 'Rs. ' + new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(Number(value));
+}
+
+async function changeCartQuantity(control, change) {
+    if (cartUpdatePending) return;
+    cartUpdatePending = true;
+    const controls = document.querySelectorAll('.en-quantity-control');
+    controls.forEach(item => item.querySelectorAll('button').forEach(button => button.disabled = true));
+    document.getElementById('cartUpdateError').hidden = true;
+    const itemId = control.dataset.itemId;
+    const quantityElement = control.querySelector('.en-quantity-value');
+    const minusButton = control.querySelector('.en-quantity-minus');
+    const plusButton = control.querySelector('.en-quantity-plus');
+
+    const currentQuantity = Number(quantityElement.textContent);
+    const requestedQuantity = currentQuantity + change;
+
+    minusButton.disabled = true;
+    plusButton.disabled = true;
+
+    try {
+        const response = await fetch('/cart/update-quantity', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: new URLSearchParams({
+                itemId,
+                quantity: requestedQuantity
+            })
+        });
+
+        if (response.redirected || !response.headers.get('content-type')?.includes('application/json')) {
+            throw new Error('Your session may have expired. Refresh the page and sign in again.');
+        }
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Could not update cart quantity');
+        }
+
+        quantityElement.textContent = result.quantity;
+        control.dataset.stock = result.stockQuantity;
+        const warning = control.closest('.en-cart-item').querySelector('.en-cart-availability');
+        if (warning) warning.hidden = result.quantity <= result.stockQuantity;
+
+        const lineTotal = document.querySelector(
+            `[data-line-total="${itemId}"]`
+        );
+
+        if (lineTotal) {
+            lineTotal.textContent = formatMoney(result.lineTotal);
+        }
+
+        const subtotal = document.getElementById('cartSubtotal');
+        if (subtotal) {
+            subtotal.textContent = formatMoney(result.subtotal);
+        }
+
+        const itemCount = document.getElementById('cartItemCount');
+        if (itemCount) {
+            itemCount.textContent = result.totalItems;
+        }
+
+        minusButton.disabled = result.quantity <= 1;
+        plusButton.disabled = result.quantity >= result.stockQuantity;
+    } catch (error) {
+        const message = document.getElementById('cartUpdateError');
+        message.textContent = error.message + ' Refresh the cart if availability has changed.';
+        message.hidden = false;
+    } finally {
+        cartUpdatePending = false;
+        controls.forEach(item => {
+            const quantity = Number(item.querySelector('.en-quantity-value').textContent);
+            item.querySelector('.en-quantity-minus').disabled = quantity <= 1;
+            item.querySelector('.en-quantity-plus').disabled = quantity >= Number(item.dataset.stock);
+        });
+    }
+}
+
+document.querySelectorAll('form[action="/cart/remove"], form[action="/cart/update"]').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (cartUpdatePending) event.preventDefault();
+    });
+});
+document.querySelector('a[href="/checkout"]')?.addEventListener('click', event => {
+    if (cartUpdatePending) event.preventDefault();
+});
+
+document.querySelectorAll('.en-quantity-control').forEach(control => {
+    control.querySelector('.en-quantity-minus')
+        .addEventListener('click', () => changeCartQuantity(control, -1));
+
+    control.querySelector('.en-quantity-plus')
+        .addEventListener('click', () => changeCartQuantity(control, 1));
+});
+</script>
+
 </body>
 </html>

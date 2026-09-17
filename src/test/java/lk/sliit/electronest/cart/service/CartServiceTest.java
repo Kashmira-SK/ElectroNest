@@ -79,6 +79,39 @@ class CartServiceTest {
     }
 
     @Test
+    void deletedListingRemainsRemovableWithoutBreakingCart() {
+        CartItem item = new CartItem(2L, 10L, 2, BigDecimal.TEN);
+        item.setId(7L);
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(item));
+        when(productService.getProductById(10L)).thenThrow(new IllegalArgumentException("Product not found"));
+        var view = cartService.getCartItemViews(2L).getFirst();
+        assertEquals(7L, view.itemId());
+        assertEquals(0, view.stockQuantity());
+        assertEquals(BigDecimal.ZERO, cartService.getCartSummary(2L).subtotal());
+        when(cartItemRepository.findById(7L)).thenReturn(Optional.of(item));
+        cartService.removeItemFromCart(2L, 7L);
+        verify(cartItemRepository).delete(item);
+    }
+
+    @Test
+    void explicitlyOutOfStockListingIsUnavailableInSummary() {
+        product.setOutOfStock(true);
+        when(cartItemRepository.findByUserId(2L)).thenReturn(List.of(new CartItem(2L, 10L, 1, BigDecimal.TEN)));
+        when(productService.getProductById(10L)).thenReturn(product);
+        assertEquals(0, cartService.getCartItemViews(2L).getFirst().stockQuantity());
+    }
+
+    @Test
+    void combinedQuantityCannotOverflowIntoNegativeNumber() {
+        CartItem existing = new CartItem(2L, 10L, 1, BigDecimal.TEN);
+        when(productService.getProductById(10L)).thenReturn(product);
+        when(cartItemRepository.findByUserIdAndProductId(2L, 10L)).thenReturn(Optional.of(existing));
+        assertThrows(IllegalArgumentException.class,
+                () -> cartService.addItemToCart(2L, 10L, Integer.MAX_VALUE));
+        verify(cartItemRepository, never()).save(existing);
+    }
+
+    @Test
     void summaryUsesCurrentServerPriceInsteadOfStoredCartPrice() {
         CartItem item = new CartItem(2L, 10L, 2, new BigDecimal("1.00"));
         item.setId(7L);

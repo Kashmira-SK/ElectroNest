@@ -183,6 +183,8 @@
                             type="submit">
                         Save delivery details
                     </button>
+                    <a th:if="${hasSavedDelivery}" th:href="@{/checkout}" class="en-btn en-btn-secondary">Cancel edits</a>
+                    <p class="en-muted">Saving updates the delivery address on your account for future orders.</p>
 
                 </form>
             </div>
@@ -205,14 +207,14 @@
                                th:text="${item.quantity()}
                                     + ' × Rs. '
                                     + ${#numbers.formatDecimal(
-                                        item.unitPrice(), 1, 2)}">
+                                        item.unitPrice(), 1, 'COMMA', 2, 'POINT')}">
                                 Quantity
                             </p>
                         </div>
 
                         <strong th:text="'Rs. '
                             + ${#numbers.formatDecimal(
-                                item.lineTotal(), 1, 2)}">
+                                item.lineTotal(), 1, 'COMMA', 2, 'POINT')}">
                             Rs. 0.00
                         </strong>
 
@@ -230,14 +232,14 @@
 
             <div class="en-summary-row">
                 <span>Items</span>
-                <strong th:text="${#lists.size(cartItems)}">0</strong>
+                <strong th:text="${totalItems}">0</strong>
             </div>
 
             <div class="en-summary-row">
                 <span>Subtotal</span>
 
                 <strong th:text="'Rs. '
-                    + ${#numbers.formatDecimal(subtotal, 1, 2)}">
+                    + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
             </div>
@@ -251,16 +253,19 @@
                 <span>Total</span>
 
                 <strong th:text="'Rs. '
-                    + ${#numbers.formatDecimal(subtotal, 1, 2)}">
+                    + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
             </div>
 
             <form th:if="${hasSavedDelivery}"
+                  id="paymentContinueForm"
                   th:action="@{/checkout/order}"
                   method="post">
 
                 <button class="en-btn en-btn-primary"
+                        id="paymentContinueButton"
+                        th:disabled="${editingDelivery}"
                         type="submit">
                     Continue to payment
                 </button>
@@ -293,7 +298,22 @@ function editDelivery() {
     }
 
     form.style.display = 'block';
+    const continueButton = document.getElementById('paymentContinueButton');
+    if (continueButton) {
+        continueButton.disabled = true;
+        continueButton.textContent = 'Save delivery changes first';
+    }
+    form.querySelector('input:not([type="hidden"])')?.focus();
 }
+
+document.getElementById('paymentContinueForm')?.addEventListener('submit', event => {
+    if (document.getElementById('deliveryForm').style.display !== 'none') {
+        event.preventDefault();
+        editDelivery();
+        return;
+    }
+    document.getElementById('paymentContinueButton').disabled = true;
+});
 </script>
 
 </body>

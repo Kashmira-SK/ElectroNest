@@ -26,13 +26,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductService productService;
     private final VendorRepository vendorRepository;
+    private final lk.sliit.electronest.payment.service.PaymentWorkflowService payments;
 
     public OrderService(OrderRepository orderRepository,
                         ProductService productService,
-                        VendorRepository vendorRepository) {
+                        VendorRepository vendorRepository,
+                        lk.sliit.electronest.payment.service.PaymentWorkflowService payments) {
         this.orderRepository = orderRepository;
         this.productService = productService;
         this.vendorRepository = vendorRepository;
+        this.payments = payments;
+    }
+
+    public boolean readyForFulfilment(Order order) {
+        return payments.readyForFulfilment(order);
     }
 
     public List<Order> getOrderHistoryForCustomer(User customer) {
@@ -44,6 +51,7 @@ public class OrderService {
     }
 
     public List<Order> getOrderQueueForVendor(User vendor) {
+        requireApprovedSeller(vendor);
         return orderRepository.findByVendorId(vendor.getId());
     }
 
@@ -68,23 +76,24 @@ public class OrderService {
                                         User actor,
                                         OrderStatus targetStatus,
                                         boolean adminOverride) {
-        Order order = getOrderById(orderId);
-
+        Order order = orderRepository.findForUpdate(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
         assertActorMayModifyStatus(order, actor);
 
         OrderStatus currentStatus = order.getStatus();
 
-        if (currentStatus == OrderStatus.DELIVERED &&
-                actor.getRole() == Role.ADMIN &&
-                adminOverride) {
-            order.setStatus(targetStatus);
-        } else if (!currentStatus.canTransitionTo(targetStatus)) {
+        if (targetStatus == null || (!currentStatus.canTransitionTo(targetStatus)
+                && !(currentStatus == OrderStatus.DELIVERED && actor.getRole() == Role.ADMIN
+                && adminOverride && targetStatus == OrderStatus.CANCELLED))) {
             throw new IllegalStateException(
                     "Cannot move order from " + currentStatus + " to " + targetStatus
             );
-        } else {
-            order.setStatus(targetStatus);
         }
+        if (targetStatus == OrderStatus.CANCELLED) payments.cancelOrderPayment(order);
+        else {
+            if (!payments.readyForFulfilment(order)) throw new IllegalStateException("Payment or confirmed COD is required before fulfilment.");
+            if (targetStatus == OrderStatus.DELIVERED) payments.collectCodOnDelivery(order);
+        }
+        order.setStatus(targetStatus);
 
         order.setCancellationRequested(false);
         order.setUpdatedAt(LocalDateTime.now());
@@ -94,7 +103,7 @@ public class OrderService {
 
     @Transactional
     public Order requestCancellation(Long orderId, User customer) {
-        Order order = getOrderById(orderId);
+        Order order = orderRepository.findForUpdate(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
 
         if (!order.getCustomer().getId().equals(customer.getId())) {
             throw new SecurityException("You do not own this order");
@@ -107,6 +116,8 @@ public class OrderService {
         }
 
         if (order.getStatus() == OrderStatus.PENDING) {
+            payments.cancelOrderPayment(order);
+
             order.setStatus(OrderStatus.CANCELLED);
             order.setCancellationRequested(false);
         } else {
@@ -151,7 +162,7 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         for (OrderLineItemRequest itemRequest : request.items()) {
-            Product product = productService.decreaseStockForOrder(
+            Product product = productService.validateStockForOrder(
                     itemRequest.productId(),
                     itemRequest.quantity()
             );
@@ -203,6 +214,7 @@ public class OrderService {
         }
 
         if (actor.getRole() == Role.VENDOR) {
+            requireApprovedSeller(actor);
             boolean ownsItem = order.getLineItems().stream()
                     .anyMatch(item -> item.belongsToVendor(actor.getId()));
 
@@ -216,6 +228,15 @@ public class OrderService {
         );
     }
 
+    private void requireApprovedSeller(User user) {
+        vendorRepository.findByUser_Id(user.getId())
+                .filter(vendor -> vendor.getStatus() == lk.sliit.electronest.vendor.model.VendorStatus.APPROVED
+                        && vendor.getUser().getRole() == Role.VENDOR
+                        && vendor.getUser().getStatus() == lk.sliit.electronest.common.model.AccountStatus.ACTIVE)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+                        "An active approved seller account is required"));
+    }
+
     private void assertActorMayView(Order order, User viewer) {
         if (viewer.getRole() == Role.ADMIN) {
             return;
@@ -227,6 +248,7 @@ public class OrderService {
         }
 
         if (viewer.getRole() == Role.VENDOR) {
+            requireApprovedSeller(viewer);
             boolean ownsItem = order.getLineItems().stream()
                     .anyMatch(item -> item.belongsToVendor(viewer.getId()));
 
@@ -247,4 +269,14 @@ public class OrderService {
     private String clean(String value) {
         return blank(value) ? null : value.trim();
     }
+
+    private void restoreStock(Order order) {
+        for (OrderLineItem item : order.getLineItems()) {
+            productService.restoreStockForOrder(
+                    item.getProductId(),
+                    item.getQuantity()
+            );
+        }
+    }
+
 }

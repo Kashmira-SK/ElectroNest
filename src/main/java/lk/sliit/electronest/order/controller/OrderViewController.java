@@ -47,6 +47,7 @@ public class OrderViewController {
         List<OrderViewData> orders = orderService
                 .getOrderHistoryForCustomer(currentUser.getUser())
                 .stream()
+                .sorted(java.util.Comparator.comparing(Order::getId).reversed())
                 .map(order -> toView(order, null))
                 .toList();
 
@@ -93,6 +94,7 @@ public class OrderViewController {
         List<OrderViewData> orders = orderService
                 .getOrderQueueForVendor(currentUser.getUser())
                 .stream()
+                .sorted(java.util.Comparator.comparing(Order::getId).reversed())
                 .map(order -> toView(order, currentUser.getUser().getId()))
                 .toList();
 
@@ -169,7 +171,7 @@ public class OrderViewController {
                 .map(OrderItemView::lineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return new OrderViewData(order, items, displayTotal);
+        return new OrderViewData(order, items, displayTotal, orderService.readyForFulfilment(order));
     }
 
     private OrderItemView toItemView(OrderLineItem item) {

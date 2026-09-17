@@ -10,6 +10,7 @@ import lk.sliit.electronest.order.controller.dto.CreateOrderRequest;
 import lk.sliit.electronest.order.controller.dto.OrderLineItemRequest;
 import lk.sliit.electronest.order.model.Order;
 import lk.sliit.electronest.order.service.OrderService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @PreAuthorize("hasRole('CUSTOMER')")
@@ -48,6 +50,7 @@ public class CartViewController {
 
         model.addAttribute("cartItems", cartService.getCartItemViews(userId));
         model.addAttribute("subtotal", cartService.calculateSubtotal(userId));
+        model.addAttribute("totalItems", cartService.getCartSummary(userId).totalItems());
 
         return "cart/cart";
     }
@@ -107,6 +110,40 @@ public class CartViewController {
         return "redirect:/cart";
     }
 
+    @PostMapping("/cart/update-quantity")
+    @ResponseBody
+    public ResponseEntity<?> updateQuantityAjax(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam Long itemId,
+            @RequestParam Integer quantity) {
+
+        Long userId = currentUser.getUser().getId();
+
+        try {
+            cartService.updateItemQuantity(userId, itemId, quantity);
+
+            CartItemView item = cartService.getCartItemViews(userId)
+                    .stream()
+                    .filter(view -> view.itemId().equals(itemId))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new IllegalStateException("Updated cart item not found"));
+
+            var summary = cartService.getCartSummary(userId);
+
+            return ResponseEntity.ok(Map.of(
+                    "quantity", item.quantity(),
+                    "lineTotal", item.lineTotal(),
+                    "subtotal", summary.subtotal(),
+                    "totalItems", summary.totalItems(),
+                    "stockQuantity", item.stockQuantity()
+            ));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", ex.getMessage()));
+        }
+    }
+
     @PostMapping("/cart/remove")
     public String removeItem(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -135,12 +172,17 @@ public class CartViewController {
     @GetMapping("/checkout")
     public String checkout(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         Long userId = currentUser.getUser().getId();
         List<CartItemView> items = cartService.getCartItemViews(userId);
 
         if (items.isEmpty()) {
+            return "redirect:/cart";
+        }
+        if (items.stream().anyMatch(item -> item.quantity() > item.stockQuantity())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Some cart items are unavailable or exceed current stock. Adjust quantities or remove them before checkout.");
             return "redirect:/cart";
         }
 
@@ -149,6 +191,7 @@ public class CartViewController {
                         new IllegalStateException("User not found"));
 
         model.addAttribute("cartItems", items);
+        model.addAttribute("totalItems", items.stream().mapToLong(CartItemView::quantity).sum());
         model.addAttribute("subtotal", cartService.calculateSubtotal(userId));
         model.addAttribute("customer", user);
         model.addAttribute("hasSavedDelivery", hasSavedDelivery(user));

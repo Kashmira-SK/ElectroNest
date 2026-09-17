@@ -38,7 +38,11 @@ public class CartService {
         int requestedQuantity = quantity;
 
         if (existing.isPresent()) {
-            requestedQuantity += existing.get().getQuantity();
+            try {
+                requestedQuantity = Math.addExact(quantity, existing.get().getQuantity());
+            } catch (ArithmeticException ex) {
+                throw new IllegalArgumentException("Requested quantity is too large");
+            }
         }
 
         validateStock(product, requestedQuantity);
@@ -83,7 +87,7 @@ public class CartService {
     public List<CartItemView> getCartItemViews(Long userId) {
         return getCartItems(userId).stream()
                 .map(item -> {
-                    Product product = productService.getProductById(item.getProductId());
+                    Product product = productForCart(item);
 
                     BigDecimal lineTotal = product.getPrice()
                             .multiply(BigDecimal.valueOf(item.getQuantity()));
@@ -97,7 +101,7 @@ public class CartService {
                             item.getQuantity(),
                             product.getPrice(),
                             lineTotal,
-                            product.getStockQuantity()
+                            availableStock(product)
                     );
                 })
                 .toList();
@@ -130,7 +134,7 @@ public class CartService {
     }
 
     private CartItemResponse toResponse(CartItem item) {
-        Product product = productService.getProductById(item.getProductId());
+        Product product = productForCart(item);
 
         BigDecimal currentPrice = product.getPrice();
         BigDecimal lineTotal = currentPrice.multiply(
@@ -146,8 +150,26 @@ public class CartService {
                 item.getQuantity(),
                 currentPrice,
                 lineTotal,
-                product.getStockQuantity()
+                availableStock(product)
         );
+    }
+
+    private Product productForCart(CartItem item) {
+        try {
+            return productService.getProductById(item.getProductId());
+        } catch (IllegalArgumentException ex) {
+            Product unavailable = new Product();
+            unavailable.setName("Unavailable product");
+            unavailable.setPrice(BigDecimal.ZERO);
+            unavailable.setStockQuantity(0);
+            unavailable.setOutOfStock(true);
+            return unavailable;
+        }
+    }
+
+    private int availableStock(Product product) {
+        return Boolean.TRUE.equals(product.getOutOfStock()) || product.getStockQuantity() == null
+                ? 0 : product.getStockQuantity();
     }
 
     private CartItem getOwnedItem(Long userId, Long itemId) {
