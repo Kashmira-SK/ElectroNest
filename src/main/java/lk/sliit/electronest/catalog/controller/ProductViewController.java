@@ -21,12 +21,6 @@ import java.util.List;
 
 @Controller
 public class ProductViewController {
-    @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
-    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
-    public String unavailableProduct() {
-        return "catalog/product-unavailable";
-    }
-
     private final ProductService productService;
     private final ReviewService reviewService;
     private final UserRepository userRepository;
@@ -71,8 +65,15 @@ public class ProductViewController {
     public String showProduct(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            Model model) {
-        Product product = productService.getProductById(id);
+            Model model,
+            jakarta.servlet.http.HttpServletResponse response) {
+        Product product;
+        try {
+            product = productService.getProductById(id);
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(404);
+            return "catalog/product-unavailable";
+        }
         List<Review> reviews = reviewService.getProductReviews(id);
         Long viewerId = currentUser == null
                 ? null
