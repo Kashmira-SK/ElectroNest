@@ -18,16 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Handles:
- *  - RBAC Role Assignment       (updateRole)
- *  - Account Governance         (updateStatus, deactivateUser)
- *  - Reading user profiles      (getAllUsers, getUserById, searchUsers)
- *
- * Every role/status change writes a RoleChangeLog entry - this satisfies the
- * "keep a history of role changes for security and auditing purposes"
- * requirement from the proposal report.
- */
+/** Manages account roles and status, recording changes in the audit log. */
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -49,8 +40,6 @@ public class UserService {
         }
         return List.of(Role.CUSTOMER);
     }
-
-    // ---------- READ ----------
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -74,8 +63,6 @@ public class UserService {
     public List<RoleChangeLog> getAllAuditLogs() {
         return roleChangeLogRepository.findAllByOrderByChangedAtDesc();
     }
-
-    // ---------- UPDATE: RBAC ----------
 
     @Transactional
     public void updateRole(Long targetUserId, UpdateRoleForm form, User performingAdmin) {
@@ -104,8 +91,6 @@ public class UserService {
                 .build());
     }
 
-    // ---------- UPDATE: Account Governance ----------
-
     @Transactional
     public void updateStatus(Long targetUserId, UpdateStatusForm form, User performingAdmin) {
         preventSelfChange(targetUserId, performingAdmin);
@@ -132,14 +117,7 @@ public class UserService {
                 .build());
     }
 
-    // ---------- DELETE ----------
-
-    /**
-     * "Delete" in this platform means deactivating the account rather than a
-     * hard DB delete - this preserves order/review history tied to the user
-     * (a hard delete would break foreign keys in the Order/Review modules).
-     * Matches the requirement matrix: "D: Deactivate User Account".
-     */
+    /** Deactivation preserves purchase and review history. */
     @Transactional
     public void deactivateUser(Long targetUserId, User performingAdmin) {
         preventSelfChange(targetUserId, performingAdmin);
@@ -159,8 +137,6 @@ public class UserService {
                 .reason("Account deactivated by admin")
                 .build());
     }
-
-    // ---------- helpers ----------
 
     private User findUserOrThrow(Long id) {
         return userRepository.findById(id)

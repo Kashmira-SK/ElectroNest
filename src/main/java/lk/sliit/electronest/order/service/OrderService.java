@@ -305,13 +305,4 @@ public class OrderService {
         return blank(value) ? null : value.trim();
     }
 
-    private void restoreStock(Order order) {
-        for (OrderLineItem item : order.getLineItems()) {
-            productService.restoreStockForOrder(
-                    item.getProductId(),
-                    item.getQuantity()
-            );
-        }
-    }
-
 }

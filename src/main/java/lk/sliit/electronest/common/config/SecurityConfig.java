@@ -15,7 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableMethodSecurity // enables @PreAuthorize("hasRole('ADMIN')") on controller methods
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -24,7 +24,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // BCrypt - industry standard for hashing passwords, never store plain text
         return new BCryptPasswordEncoder();
     }
 
@@ -39,8 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/products", "/products/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 // Everything under /admin/** requires the ADMIN role
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // TEMP: other modules' REST APIs are open while each module builds its own
-                // auth/role checks. Tighten this per-endpoint as modules mature (pre-demo).
+                // API controllers enforce roles; catalog and search remain public.
                 .requestMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
             )

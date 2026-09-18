@@ -8,16 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Core User entity - shared by all three roles (Admin, Vendor, Customer).
- * The "role" column is what differentiates them (RBAC).
- *
- * NOTE: table is named "users" (not "user") because USER is a reserved
- * keyword in PostgreSQL and would break every query.
- *
- * Owner: Navodya W.M.G.G.G. (IT25102263)
- * Module: Admin Dashboard, Reports & User Account Management
- */
+/** Uses "users" because USER is a reserved PostgreSQL keyword. */
 @Entity
 @Table(name = "users")
 @Data

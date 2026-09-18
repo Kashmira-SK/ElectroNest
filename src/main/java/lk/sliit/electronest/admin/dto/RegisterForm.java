@@ -3,15 +3,10 @@ package lk.sliit.electronest.admin.dto;
 import lk.sliit.electronest.common.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * Bound to templates/auth/register.html via th:object="${registerForm}".
- * Public registration only ever creates CUSTOMER or VENDOR accounts -
- * see AuthController for why ADMIN is excluded from the dropdown.
- */
+/** Public registration creates customer accounts; seller access requires approval. */
 @Data
 public class RegisterForm {
 

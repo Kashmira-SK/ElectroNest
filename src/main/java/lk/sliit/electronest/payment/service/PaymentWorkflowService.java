@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -437,10 +436,6 @@ public class PaymentWorkflowService {
 
         String digits = normalizedCardNumber(cardNumber);
 
-        if (!digits.matches("\\d{12,19}") || !isLuhnValid(digits)) {
-            throw new IllegalArgumentException("Enter a valid card number");
-        }
-
         return "**** **** **** " + digits.substring(digits.length() - 4);
     }
 
@@ -459,28 +454,6 @@ public class PaymentWorkflowService {
     }
 
     private boolean passesLuhn(String digits) {
-        int sum = 0;
-        boolean doubleDigit = false;
-
-        for (int i = digits.length() - 1; i >= 0; i--) {
-            int digit = digits.charAt(i) - '0';
-
-            if (doubleDigit) {
-                digit *= 2;
-                if (digit > 9) {
-                    digit -= 9;
-                }
-            }
-
-            sum += digit;
-            doubleDigit = !doubleDigit;
-        }
-
-        return sum % 10 == 0;
-    }
-
-
-    private boolean isLuhnValid(String digits) {
         int sum = 0;
         boolean doubleDigit = false;
 
@@ -525,11 +498,7 @@ public class PaymentWorkflowService {
             throw new IllegalArgumentException("Card number is required");
         }
 
-        String digits = normalizedCardNumber(cardNumber);
-
-        if (!digits.matches("\\d{12,19}") || !isLuhnValid(digits)) {
-            throw new IllegalArgumentException("Enter a valid card number");
-        }
+        normalizedCardNumber(cardNumber);
 
         String expiry = request.getExpiryDate();
 
@@ -553,21 +522,6 @@ public class PaymentWorkflowService {
         if (request.getCvv() == null
                 || !request.getCvv().matches("\\d{3,4}")) {
             throw new IllegalArgumentException("CVV must be 3 or 4 digits");
-        }
-    }
-
-    private void validateExpiryDate(String expiryDate) {
-        if (expiryDate == null || expiryDate.isBlank()) {
-            throw new IllegalArgumentException("Card expiry date is required");
-        }
-
-        try {
-            YearMonth expiry = YearMonth.parse(expiryDate.trim());
-            if (expiry.isBefore(YearMonth.now())) {
-                throw new IllegalArgumentException("Card has expired");
-            }
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("Enter a valid card expiry date");
         }
     }
 

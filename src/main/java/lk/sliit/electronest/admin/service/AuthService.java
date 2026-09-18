@@ -11,12 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles the "User Authentication & Profiles" sub-function - registration.
- * Login itself is handled entirely by Spring Security's form-login
- * (see SecurityConfig) since we're a server-rendered Thymeleaf app, not a
- * REST API - Spring Security manages the session for us.
- */
+/** Registers customer accounts; Spring Security handles login sessions. */
 @Service
 @RequiredArgsConstructor
 public class AuthService {

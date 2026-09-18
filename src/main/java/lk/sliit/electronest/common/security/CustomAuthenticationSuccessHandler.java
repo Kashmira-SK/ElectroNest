@@ -10,11 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-/**
- * After a successful login, sends Admins straight to the Admin Dashboard.
- * Vendors/Customers go to the shared home page (their own modules will add
- * their own dashboards there later - see HomeController).
- */
+/** Routes suspended accounts to their status page and administrators to their dashboard. */
 @Component
 public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 

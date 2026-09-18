@@ -8,11 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Keeps a history of every role change and account-status change made by an
- * admin. The proposal rubric explicitly asks for this: "keep a history of
- * role changes for security and auditing purposes."
- */
+/** Records administrator changes to account roles and status. */
 @Entity
 @Table(name = "role_change_logs")
 @Data
