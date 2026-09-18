@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>File too large — ElectroNest</title>
+    <title>Something went wrong — ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
 </head>
 <body>
 <main class="en-shell">
     <div class="en-card en-center">
-        <p class="en-eyebrow">Upload problem</p>
-        <h1>That file is too large.</h1>
+        <p class="en-eyebrow">ElectroNest</p>
+        <h1>We couldn't complete that request.</h1>
         <p class="en-muted">
-            Please reduce the file size or number of files and try again.
+            Check the address and submitted details, or return home to continue.
         </p>
-        <a th:href="@{/}"
-           class="en-btn en-btn-primary">
+        <a th:href="@{/}" class="en-btn en-btn-primary">
             Back home
         </a>
     </div>

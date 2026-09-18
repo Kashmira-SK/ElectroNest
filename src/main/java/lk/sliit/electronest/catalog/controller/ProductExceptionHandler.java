@@ -17,6 +17,12 @@ public class ProductExceptionHandler {
                 .body(new ErrorResponse(403, "Access denied", List.of("Seller access is required")));
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ErrorResponse> handleOwnership(SecurityException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(403, "Access denied", List.of("You do not own this product")));
+    }
+
     // Handles @Valid validation failures (e.g. empty name, negative price)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
@@ -32,9 +38,8 @@ public class ProductExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
-    // Handles "Product not found" and other runtime errors thrown from the service layer
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ErrorResponse> handleApplicationException(RuntimeException ex) {
         HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("not found")
                 ? HttpStatus.NOT_FOUND
                 : HttpStatus.BAD_REQUEST;
@@ -42,7 +47,7 @@ public class ProductExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 status.value(),
                 status.getReasonPhrase(),
-                List.of(ex.getMessage())
+                List.of(ex.getMessage() == null ? "Invalid product request" : ex.getMessage())
         );
         return ResponseEntity.status(status).body(response);
     }

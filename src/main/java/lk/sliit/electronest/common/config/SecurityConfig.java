@@ -33,6 +33,8 @@ public class SecurityConfig {
         http
             .addFilterBefore(new AccountStateFilter(userRepository), CsrfFilter.class)
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+                .requestMatchers("/error").permitAll()
                 // Public pages - anyone can view/register/login
                 .requestMatchers("/", "/login", "/register", "/products", "/products/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 // Everything under /admin/** requires the ADMIN role
