@@ -249,7 +249,7 @@
 
                         <div class="en-field">
                             <label for="deliveryPhone">Phone number</label>
-                            <input id="deliveryPhone" type="tel" name="deliveryPhone" maxlength="20" autocomplete="tel" required
+                            <input id="deliveryPhone" pattern="\+?([ \(\)\-]*[0-9]){7,15}[ \(\)\-]*" title="Enter a local or international phone number with 7 to 15 digits" type="tel" name="deliveryPhone" maxlength="20" autocomplete="tel" required
                                    th:value="${addressDraft != null ? addressDraft['deliveryPhone'] : (user.deliveryPhone)}" placeholder="0771234567 or +94771234567">
                         </div>
 

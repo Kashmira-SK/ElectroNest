@@ -113,6 +113,21 @@ class AccountStateFilterTest {
     }
 
     @Test
+    void suspendedAccountsCannotBypassPaymentRestrictionsThroughVersionedApis() throws Exception {
+        authenticate();
+        when(repository.findById(2L)).thenReturn(Optional.of(user(Role.CUSTOMER, AccountStatus.SUSPENDED)));
+        for (String path : java.util.List.of("/api/v1/payments/my-payments", "/api/v1/receipts/1/download")) {
+            var request = new MockHttpServletRequest();
+            request.setMethod("GET");
+            request.setServletPath(path);
+            var response = new MockHttpServletResponse();
+            filter.doFilter(request, response, chain);
+            assertEquals(403, response.getStatus());
+        }
+        verifyNoInteractions(chain);
+    }
+
+    @Test
     void deactivationEndsExistingSession() throws Exception {
         authenticate();
         when(repository.findById(2L)).thenReturn(Optional.of(

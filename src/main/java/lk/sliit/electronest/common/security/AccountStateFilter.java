@@ -83,6 +83,8 @@ public class AccountStateFilter extends OncePerRequestFilter {
                 "/api/cart",
                 "/api/orders",
                 "/api/payments",
+                "/api/v1/payments",
+                "/api/v1/receipts",
                 "/api/products",
                 "/api/reviews",
                 "/api/vendors"

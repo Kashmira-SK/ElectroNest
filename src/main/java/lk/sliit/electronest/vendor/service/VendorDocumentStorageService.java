@@ -73,7 +73,7 @@ public class VendorDocumentStorageService {
                     .toLowerCase();
         }
 
-        if (!ALLOWED_TYPES.contains(file.getContentType())
+        if (file.getContentType() == null || !ALLOWED_TYPES.contains(file.getContentType())
                 || !ALLOWED_EXTENSIONS.contains(extension)) {
             throw new IllegalArgumentException(
                     "Only PDF, JPG, PNG and ZIP documents are allowed"
@@ -137,11 +137,10 @@ public class VendorDocumentStorageService {
         }
 
         try {
-            Files.deleteIfExists(
-                    storageDirectory
-                            .resolve(storedName)
-                            .normalize()
-            );
+            Path file = storageDirectory.resolve(storedName).normalize();
+            if (storageDirectory.equals(file.getParent())) {
+                Files.deleteIfExists(file);
+            }
         } catch (IOException ignored) {
         }
     }

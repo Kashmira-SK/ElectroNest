@@ -13,6 +13,9 @@ public class DeliveryDetailsForm {
 
     @NotBlank(message = "Contact number is required")
     @Size(max = 20, message = "Contact number must be 20 characters or fewer")
+    @jakarta.validation.constraints.Pattern(
+            regexp = lk.sliit.electronest.common.validation.DeliveryPhone.REGEX,
+            message = "Enter a local or international phone number with 7 to 15 digits")
     private String deliveryPhone;
 
     @NotBlank(message = "Address line 1 is required")

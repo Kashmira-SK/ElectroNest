@@ -106,7 +106,7 @@
                     <div class="en-field">
                         <label for="deliveryPhone">Contact number</label>
 
-                        <input id="deliveryPhone"
+                        <input id="deliveryPhone" pattern="\+?([ \(\)\-]*[0-9]){7,15}[ \(\)\-]*" title="Enter a local or international phone number with 7 to 15 digits"
                                type="tel"
                                th:field="*{deliveryPhone}"
                                required

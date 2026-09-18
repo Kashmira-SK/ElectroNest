@@ -71,7 +71,7 @@ public class ProductImageStorageService {
                     .toLowerCase(Locale.ROOT);
         }
 
-        if (!EXTENSIONS.contains(extension)
+        if (image.getContentType() == null || !EXTENSIONS.contains(extension)
                 || !TYPES.contains(image.getContentType())) {
             throw new IllegalArgumentException(
                     "Product images must be JPG, PNG or WEBP"

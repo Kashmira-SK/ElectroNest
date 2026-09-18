@@ -131,8 +131,9 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(CreateOrderRequest request, User customer) {
-        if (customer.getRole() != Role.CUSTOMER) {
-            throw new SecurityException("Only customers can create orders");
+        if (customer == null || customer.getRole() != Role.CUSTOMER
+                || customer.getStatus() != lk.sliit.electronest.common.model.AccountStatus.ACTIVE) {
+            throw new SecurityException("An active customer account is required to create orders");
         }
 
         validateDelivery(request);
@@ -141,6 +142,16 @@ public class OrderService {
             throw new IllegalArgumentException(
                     "An order must have at least one item"
             );
+        }
+
+        var productIds = new java.util.HashSet<Long>();
+        for (OrderLineItemRequest item : request.items()) {
+            if (item == null || item.productId() == null || item.productId() <= 0 || item.quantity() <= 0) {
+                throw new IllegalArgumentException("Each order item needs a valid product and positive quantity");
+            }
+            if (!productIds.add(item.productId())) {
+                throw new IllegalArgumentException("Include each product only once and set its quantity");
+            }
         }
 
         Order order = new Order();
@@ -173,6 +184,12 @@ public class OrderService {
                                     "Vendor not found for product " + product.getId()
                             ));
 
+            if (vendor.getStatus() != lk.sliit.electronest.vendor.model.VendorStatus.APPROVED
+                    || vendor.getUser().getRole() != Role.VENDOR
+                    || vendor.getUser().getStatus() != lk.sliit.electronest.common.model.AccountStatus.ACTIVE) {
+                throw new IllegalStateException("This product's seller is currently unavailable");
+            }
+
             OrderLineItem lineItem = new OrderLineItem();
 
             lineItem.setProductId(product.getId());
@@ -187,12 +204,24 @@ public class OrderService {
     }
 
     private void validateDelivery(CreateOrderRequest request) {
+        if (request == null) throw new IllegalArgumentException("Order details are required");
+        checkLength(request.deliveryName(), 100, "Delivery name");
+        checkLength(request.deliveryPhone(), 20, "Delivery phone");
+        checkLength(request.addressLine1(), 200, "Address line 1");
+        checkLength(request.addressLine2(), 200, "Address line 2");
+        checkLength(request.city(), 100, "City");
+        checkLength(request.postalCode(), 20, "Postal code");
+        checkLength(request.country(), 100, "Country");
         if (blank(request.deliveryName())) {
             throw new IllegalArgumentException("Delivery name is required");
         }
 
         if (blank(request.deliveryPhone())) {
             throw new IllegalArgumentException("Delivery phone is required");
+        }
+
+        if (!request.deliveryPhone().matches(lk.sliit.electronest.common.validation.DeliveryPhone.REGEX)) {
+            throw new IllegalArgumentException("Enter a local or international phone number with 7 to 15 digits");
         }
 
         if (blank(request.addressLine1())) {
@@ -260,6 +289,12 @@ public class OrderService {
         throw new SecurityException(
                 "User is not permitted to view this order"
         );
+    }
+
+    private void checkLength(String value, int maximum, String field) {
+        if (value != null && value.length() > maximum) {
+            throw new IllegalArgumentException(field + " must be " + maximum + " characters or fewer");
+        }
     }
 
     private boolean blank(String value) {

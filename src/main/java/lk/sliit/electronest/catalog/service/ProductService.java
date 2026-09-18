@@ -306,7 +306,13 @@ public class ProductService {
                 ? 0
                 : product.getStockQuantity();
 
-        product.setStockQuantity(stock + quantity);
+        final int restored;
+        try {
+            restored = Math.addExact(stock, quantity);
+        } catch (ArithmeticException ex) {
+            throw new IllegalStateException("Restored stock exceeds the supported quantity", ex);
+        }
+        product.setStockQuantity(restored);
         product.setOutOfStock(false);
 
         return productRepository.save(product);

@@ -195,6 +195,15 @@ class ProductServiceTest {
     }
 
     @Test
+    void restoringStockCannotOverflowIntoNegativeInventory() {
+        sampleProduct.setStockQuantity(Integer.MAX_VALUE);
+        when(productRepository.findForUpdate(1L)).thenReturn(Optional.of(sampleProduct));
+        assertThrows(IllegalStateException.class, () -> productService.restoreStockForOrder(1L, 1));
+        assertEquals(Integer.MAX_VALUE, sampleProduct.getStockQuantity());
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
     void getLowStockProducts_shouldReturnFilteredList() {
         when(productRepository.findByStockQuantityLessThan(5))
                 .thenReturn(List.of(sampleProduct));
