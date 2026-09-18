@@ -23,9 +23,11 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    @Size(max = 255, message = "Brand must be 255 characters or fewer")
     @NotBlank(message = "Brand is required")
     private String brand;
 
+    @Size(max = 255, message = "Category must be 255 characters or fewer")
     @NotBlank(message = "Category is required")
     private String category;
 
@@ -35,6 +37,7 @@ public class Product {
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be greater than zero")
+    @jakarta.validation.constraints.Digits(integer = 36, fraction = 2, message = "Price must have at most two decimal places")
     private BigDecimal price;
 
     @NotNull(message = "Stock quantity is required")

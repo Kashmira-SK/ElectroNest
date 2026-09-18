@@ -18,9 +18,11 @@ public class ProductForm {
     @Size(min = 2, max = 150, message = "Product name must be between 2 and 150 characters")
     private String name;
 
+    @Size(max = 255, message = "Brand must be 255 characters or fewer")
     @NotBlank(message = "Brand is required")
     private String brand;
 
+    @Size(max = 255, message = "Category must be 255 characters or fewer")
     @NotBlank(message = "Category is required")
     private String category;
 
@@ -29,6 +31,7 @@ public class ProductForm {
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be greater than zero")
+    @jakarta.validation.constraints.Digits(integer = 36, fraction = 2, message = "Price must have at most two decimal places")
     private BigDecimal price;
 
     @NotNull(message = "Stock quantity is required")

@@ -254,6 +254,25 @@ class PaymentWorkflowServiceTest {
         org.mockito.Mockito.verifyNoInteractions(cartItemRepository);
     }
 
+    @Test
+    void cardNumberCannotHideInvalidCharactersAroundValidDigits() {
+        PaymentRequest request = request(PaymentMethod.CREDIT_CARD);
+        request.setCardHolderName("Customer");
+        request.setCardNumber("bad4242424242424242");
+        request.setExpiryDate("12/39");
+        request.setCvv("123");
+        assertThrows(IllegalArgumentException.class, () -> paymentService.processPayment(request, customer));
+        verify(orderRepository, never()).findForUpdate(any());
+    }
+
+    @Test
+    void overlongCardHolderIsRejectedBeforeStockIsChanged() {
+        PaymentRequest request = request(PaymentMethod.CREDIT_CARD);
+        request.setCardHolderName("X".repeat(101));
+        assertThrows(IllegalArgumentException.class, () -> paymentService.processPayment(request, customer));
+        verify(orderRepository, never()).findForUpdate(any());
+    }
+
     private PaymentRequest request(PaymentMethod method) {
         PaymentRequest request = new PaymentRequest();
         request.setOrderId(20L);

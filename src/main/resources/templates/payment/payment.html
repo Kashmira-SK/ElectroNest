@@ -65,7 +65,7 @@
                     <div class="en-field"><label for="cardHolderName">Name on card</label>
                         <input id="cardHolderName" name="cardHolderName" maxlength="100" autocomplete="cc-name" required></div>
                     <div class="en-field"><label for="cardNumber">Card number</label>
-                        <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required></div>
+                        <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" pattern="[0-9 \-]{12,23}" maxlength="23" required></div>
                     <div class="en-field"><label for="expiryDate">Expiry (MM/YY)</label>
                         <input id="expiryDate" name="expiryDate" placeholder="MM/YY" maxlength="5" pattern="[0-9]{2}/[0-9]{2}" autocomplete="cc-exp" required></div>
                     <label class="en-save-card"><input type="checkbox" name="saveCard" value="true"> Save card to my account</label>

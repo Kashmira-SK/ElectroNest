@@ -56,6 +56,26 @@ class ProductServiceTest {
     }
 
     @Test
+    void invalidProductFieldsFailBeforePersistence() {
+        sampleProduct.setName("X");
+        assertThrows(IllegalArgumentException.class, () -> productService.createProduct(sampleProduct));
+        sampleProduct.setName("Valid name");
+        sampleProduct.setBrand("X".repeat(256));
+        assertThrows(IllegalArgumentException.class, () -> productService.createProduct(sampleProduct));
+        sampleProduct.setBrand("Brand");
+        sampleProduct.setPrice(new BigDecimal("0.001"));
+        assertThrows(IllegalArgumentException.class, () -> productService.createProduct(sampleProduct));
+        verifyNoInteractions(productRepository, vendorRepository);
+    }
+
+    @Test
+    void bulkPriceCannotSilentlyRoundFractionalCents() {
+        assertThrows(IllegalArgumentException.class,
+                () -> productService.bulkUpdatePriceForVendor(List.of(1L), new BigDecimal("10.999"), 1L));
+        verifyNoInteractions(productRepository);
+    }
+
+    @Test
     void createProduct_shouldSucceed_whenVendorIsApproved() {
         when(vendorRepository.findById(1L)).thenReturn(Optional.of(approvedVendor));
         when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);

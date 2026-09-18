@@ -103,6 +103,16 @@ class RolePageRegressionTest {
                 "/vendor/orders", "/vendor/profile", "/settings");
     }
 
+    @Test void sellerFormsExposeMatchingFieldLimits() throws Exception {
+        mvc.perform(get("/vendor/products/new").session(session(seller)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("minlength=\"2\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("maxlength=\"255\"")));
+        mvc.perform(get("/vendor/register").session(session(customer)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("maxlength=\"255\"")));
+    }
+
     @Test void adminPagesRender() throws Exception {
         check(admin, "/admin/dashboard", "/admin/users", "/admin/users/" + customer.getId(),
                 "/vendor/queue", "/vendor/manage", "/admin/reports", "/admin/reviews", "/admin/audit-logs", "/settings");

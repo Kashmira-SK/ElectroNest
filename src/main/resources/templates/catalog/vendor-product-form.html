@@ -72,6 +72,7 @@
 
                     <input type="text"
                            th:field="*{name}"
+                           minlength="2"
                            maxlength="150"
                            required
                            placeholder="MacBook Air M4">
@@ -82,7 +83,7 @@
                     <label>Brand</label>
 
                     <input type="text"
-                           th:field="*{brand}"
+                           th:field="*{brand}" maxlength="255"
                            list="brandOptions"
                            autocomplete="off"
                            required
@@ -99,7 +100,7 @@
                     <label>Category</label>
 
                     <input type="text"
-                           th:field="*{category}"
+                           th:field="*{category}" maxlength="255"
                            list="categoryOptions"
                            autocomplete="off"
                            required

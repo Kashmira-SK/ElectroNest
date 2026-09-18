@@ -224,6 +224,19 @@ public class ProductService {
             throw new IllegalArgumentException("Product name is required");
         }
 
+        if (product.getName().trim().length() < 2 || product.getName().length() > 150) {
+            throw new IllegalArgumentException("Product name must be between 2 and 150 characters");
+        }
+        if (product.getBrand() == null || product.getBrand().isBlank() || product.getBrand().length() > 255) {
+            throw new IllegalArgumentException("Brand is required and must be 255 characters or fewer");
+        }
+        if (product.getCategory() == null || product.getCategory().isBlank() || product.getCategory().length() > 255) {
+            throw new IllegalArgumentException("Category is required and must be 255 characters or fewer");
+        }
+        if (product.getDescription() != null && product.getDescription().length() > 1000) {
+            throw new IllegalArgumentException("Description cannot exceed 1000 characters");
+        }
+
         validatePrice(product.getPrice());
 
         if (product.getStockQuantity() == null ||
@@ -235,6 +248,9 @@ public class ProductService {
     private void validatePrice(BigDecimal price) {
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Price must be greater than zero");
+        }
+        if (price.stripTrailingZeros().scale() > 2 || price.precision() - price.scale() > 36) {
+            throw new IllegalArgumentException("Price must have at most two decimal places and 36 integer digits");
         }
     }
 

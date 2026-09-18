@@ -358,7 +358,7 @@
                         </div>
                         <div class="en-field">
                             <label for="savedCardNumber">Card number</label>
-                            <input id="savedCardNumber" name="number" inputmode="numeric" autocomplete="cc-number" maxlength="23" required>
+                            <input id="savedCardNumber" name="number" inputmode="numeric" autocomplete="cc-number" pattern="[0-9 \-]{12,23}" maxlength="23" required>
                         </div>
                         <div class="en-field">
                             <label for="savedCardExpiry">Expiry (MM/YY)</label>

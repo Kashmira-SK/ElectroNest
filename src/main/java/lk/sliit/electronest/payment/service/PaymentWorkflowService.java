@@ -435,7 +435,7 @@ public class PaymentWorkflowService {
             return null;
         }
 
-        String digits = cardNumber.replaceAll("\\D", "");
+        String digits = normalizedCardNumber(cardNumber);
 
         if (!digits.matches("\\d{12,19}") || !isLuhnValid(digits)) {
             throw new IllegalArgumentException("Enter a valid card number");
@@ -514,8 +514,9 @@ public class PaymentWorkflowService {
         }
 
         if (request.getCardHolderName() == null
-                || request.getCardHolderName().isBlank()) {
-            throw new IllegalArgumentException("Card holder name is required");
+                || request.getCardHolderName().isBlank()
+                || request.getCardHolderName().trim().length() > 100) {
+            throw new IllegalArgumentException("Enter the name on the card (up to 100 characters).");
         }
 
         String cardNumber = request.getCardNumber();
@@ -524,7 +525,7 @@ public class PaymentWorkflowService {
             throw new IllegalArgumentException("Card number is required");
         }
 
-        String digits = cardNumber.replaceAll("\\D", "");
+        String digits = normalizedCardNumber(cardNumber);
 
         if (!digits.matches("\\d{12,19}") || !isLuhnValid(digits)) {
             throw new IllegalArgumentException("Enter a valid card number");
