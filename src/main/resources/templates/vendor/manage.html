@@ -88,6 +88,7 @@
 
             <form th:if="${v.status.name() == 'APPROVED'}"
                   th:action="@{/vendor/manage/{id}/suspend(id=${v.id})}"
+                  onsubmit="return confirm('Suspend this seller and disable their seller access?')"
                   method="post">
                 <button class="en-btn en-btn-reject en-btn-sm"
                         type="submit">

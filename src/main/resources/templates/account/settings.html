@@ -237,9 +237,9 @@
                     <div class="en-settings-form-grid">
 
                         <div class="en-field">
-                            <label>Recipient name</label>
+                            <label for="deliveryName">Recipient name</label>
                             <input type="text"
-                                   name="deliveryName"
+                                   id="deliveryName" name="deliveryName"
                                    required
                                    maxlength="100"
                                    th:value="${addressDraft != null ? addressDraft['deliveryName'] : (user.deliveryName != null
@@ -254,43 +254,43 @@
                         </div>
 
                         <div class="en-field en-span-2">
-                            <label>Address line 1</label>
+                            <label for="deliveryAddressLine1">Address line 1</label>
                             <input type="text"
-                                   name="deliveryAddressLine1"
+                                   id="deliveryAddressLine1" name="deliveryAddressLine1"
                                    maxlength="200"
                                    required
                                    th:value="${addressDraft != null ? addressDraft['deliveryAddressLine1'] : (user.deliveryAddressLine1)}">
                         </div>
 
                         <div class="en-field en-span-2">
-                            <label>Address line 2</label>
+                            <label for="deliveryAddressLine2">Address line 2 (optional)</label>
                             <input type="text"
-                                   name="deliveryAddressLine2"
+                                   id="deliveryAddressLine2" name="deliveryAddressLine2"
                                    maxlength="200"
                                    th:value="${addressDraft != null ? addressDraft['deliveryAddressLine2'] : (user.deliveryAddressLine2)}">
                         </div>
 
                         <div class="en-field">
-                            <label>City</label>
+                            <label for="deliveryCity">City</label>
                             <input type="text"
-                                   name="deliveryCity"
+                                   id="deliveryCity" name="deliveryCity"
                                    maxlength="100"
                                    required
                                    th:value="${addressDraft != null ? addressDraft['deliveryCity'] : (user.deliveryCity)}">
                         </div>
 
                         <div class="en-field">
-                            <label>Postal code</label>
+                            <label for="deliveryPostalCode">Postal code (optional)</label>
                             <input type="text"
-                                   name="deliveryPostalCode"
+                                   id="deliveryPostalCode" name="deliveryPostalCode"
                                    maxlength="20"
                                    th:value="${addressDraft != null ? addressDraft['deliveryPostalCode'] : (user.deliveryPostalCode)}">
                         </div>
 
                         <div class="en-field en-span-2">
-                            <label>Country</label>
+                            <label for="deliveryCountry">Country</label>
                             <input type="text"
-                                   name="deliveryCountry"
+                                   id="deliveryCountry" name="deliveryCountry"
                                    maxlength="100"
                                    required
                                    th:value="${addressDraft != null ? addressDraft['deliveryCountry'] : (user.deliveryCountry != null
@@ -339,7 +339,8 @@
                         <strong th:text="|${#strings.replace(card.method.name(), '_', ' ')} •••• ${card.last4}|"></strong>
                         <p th:text="|${card.holder} · Expires ${card.expiry}|"></p>
                     </div>
-                    <form th:action="@{/settings/cards/{id}/remove(id=${card.id})}" method="post">
+                    <form th:action="@{/settings/cards/{id}/remove(id=${card.id})}" method="post"
+                          onsubmit="return confirm('Remove this saved card from your account?')">
                         <button type="submit" class="en-settings-remove">Remove</button>
                     </form>
                 </div>

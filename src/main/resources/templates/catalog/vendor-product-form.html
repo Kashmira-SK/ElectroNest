@@ -47,7 +47,7 @@
         </a>
     </div>
 
-    <div class="en-alert en-alert-error"
+    <div class="en-alert en-alert-error" role="alert"
          th:if="${errorMessage}"
          th:text="${errorMessage}">
     </div>
@@ -68,7 +68,7 @@
             <div class="en-product-editor-grid">
 
                 <div class="en-field en-span-2">
-                    <label>Product name</label>
+                    <label for="name">Product name</label>
 
                     <input type="text"
                            th:field="*{name}"
@@ -80,7 +80,7 @@
 
                 <div class="en-field">
 
-                    <label>Brand</label>
+                    <label for="brand">Brand</label>
 
                     <input type="text"
                            th:field="*{brand}" maxlength="255"
@@ -97,7 +97,7 @@
 
                 <div class="en-field">
 
-                    <label>Category</label>
+                    <label for="category">Category</label>
 
                     <input type="text"
                            th:field="*{category}" maxlength="255"
@@ -114,7 +114,7 @@
 
                 <div class="en-field en-span-2">
 
-                    <label>Description</label>
+                    <label for="description">Description (optional)</label>
 
                     <textarea th:field="*{description}"
                               maxlength="1000"
@@ -126,7 +126,7 @@
 
                 <div class="en-field">
 
-                    <label>Price (Rs.)</label>
+                    <label for="price">Price (Rs.)</label>
 
                     <input type="number"
                            th:field="*{price}"
@@ -138,7 +138,7 @@
 
                 <div class="en-field">
 
-                    <label>Stock quantity</label>
+                    <label for="stockQuantity">Stock quantity</label>
 
                     <input type="number"
                            th:field="*{stockQuantity}"
@@ -150,7 +150,7 @@
 
                 <div class="en-field en-span-2">
 
-                    <label>Product images</label>
+                    <label for="productImages">Product images</label>
 
                     <label class="en-product-upload"
                            for="productImages">
@@ -210,7 +210,7 @@
 
                 <div class="en-field en-span-2">
 
-                    <label>
+                    <label for="externalImageUrl">
                         External image URL
                         <span class="en-muted">
                             optional
@@ -218,7 +218,7 @@
                     </label>
 
                     <input type="url"
-                           name="externalImageUrl"
+                           id="externalImageUrl" name="externalImageUrl"
                            th:value="${externalImageUrl}"
                            maxlength="1000"
                            placeholder="https://...">

@@ -59,7 +59,7 @@
                 <div class="en-business-form-grid">
 
                     <div class="en-field en-span-2">
-                        <label>Business name</label>
+                        <label for="businessName">Business name</label>
 
                         <input type="text"
                                th:field="*{businessName}"
@@ -74,7 +74,7 @@
                     </div>
 
                     <div class="en-field en-span-2">
-                        <label>Business registration number</label>
+                        <label for="registrationNumber">Business registration number</label>
 
                         <input type="text"
                                th:field="*{registrationNumber}"
@@ -89,7 +89,7 @@
                     </div>
 
                     <div class="en-field en-span-2">
-                        <label>Business address</label>
+                        <label for="businessAddress">Business address</label>
 
                         <input type="text"
                                th:field="*{businessAddress}"
@@ -106,7 +106,7 @@
                     <div class="en-field en-span-2"
                          data-phone-widget>
 
-                        <label>Business phone</label>
+                        <label for="contactPhone">Business phone</label>
 
                         <input type="tel" th:field="*{contactPhone}" autocomplete="tel" inputmode="tel"
                                th:pattern="${T(lk.sliit.electronest.common.validation.SriLankanPhone).REGEX}"
