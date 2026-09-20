@@ -113,6 +113,22 @@ class RolePageRegressionTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("maxlength=\"255\"")));
     }
 
+    @Test void missingPaymentsAndReceiptsReturnNotFound() throws Exception {
+        for (String path : List.of("/payment?orderId=999999999", "/receipt?paymentId=999999999",
+                "/api/v1/payments/999999999", "/api/v1/receipts/999999999")) {
+            mvc.perform(get(path).session(session(customer))).andExpect(status().isNotFound());
+        }
+    }
+
+    @Test void anotherCustomersOrderIsForbiddenOnPaymentPage() throws Exception {
+        User other = User.builder().fullName("Other").email("other@regression.test")
+                .password("unused").role(Role.CUSTOMER).status(AccountStatus.ACTIVE).build();
+        users.saveAndFlush(other);
+        Long orderId = orders.findByCustomer_Id(customer.getId()).getFirst().getId();
+        mvc.perform(get("/payment").param("orderId", orderId.toString()).session(session(other)))
+                .andExpect(status().isForbidden()).andExpect(view().name("error/access-denied"));
+    }
+
     @Test void adminPagesRender() throws Exception {
         check(admin, "/admin/dashboard", "/admin/users", "/admin/users/" + customer.getId(),
                 "/vendor/queue", "/vendor/manage", "/admin/reports", "/admin/reviews", "/admin/audit-logs", "/settings");
