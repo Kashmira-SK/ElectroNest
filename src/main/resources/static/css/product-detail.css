@@ -1,0 +1,79 @@
+/* Product detail: a calm gallery, readable specifications and clear purchase area. */
+.en-product-detail-shell .en-product-back {
+  padding-block: 8px;
+  margin-bottom: 24px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  transition: color 160ms ease;
+}
+.en-product-detail-shell .en-product-back:hover { color: var(--en-blue); }
+.en-product-detail-shell .en-product-main-image {
+  position: relative;
+  border-color: #dde0e5;
+  border-radius: 14px;
+  box-shadow: 0 4px 8px rgb(20 22 26 / 2%), 0 20px 48px rgb(20 22 26 / 5%);
+}
+.en-product-detail-shell .en-product-main-image > img { padding: 24px; }
+.en-product-detail-shell .en-product-main-image > img[hidden] { display: none; }
+.en-product-detail-shell .en-product-thumbnails { gap: 12px; padding: 5px 3px; margin-top: 16px; }
+.en-product-detail-shell .en-product-thumbnails button {
+  border-radius: 8px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.en-product-detail-shell .en-product-thumbnails button:hover { border-color: var(--en-blue); }
+.en-product-detail-shell .en-product-detail-info { padding-top: 8px; min-width: 0; }
+.en-product-detail-shell .en-product-detail-meta span {
+  border-radius: 5px;
+  padding: 7px 10px;
+  background: var(--en-blue-soft);
+  color: var(--en-blue);
+  font-weight: 500;
+}
+.en-product-detail-shell .en-product-detail-info h1 { letter-spacing: -.045em; line-height: 1.12; overflow-wrap: anywhere; }
+.en-product-detail-shell .en-product-detail-description { color: var(--ink-soft); line-height: 1.8; }
+.en-product-detail-shell .en-product-seller { padding-block: 18px; color: var(--ink-soft); font-size: 14px; }
+.en-product-detail-shell .en-product-detail-buy { align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.en-product-detail-shell .en-product-detail-price { font-family: 'Space Grotesk', sans-serif; font-size: clamp(26px, 3vw, 36px); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.en-product-detail-shell :is(.en-detail-in-stock, .en-detail-out-stock) { font-size: 12px; }
+.en-product-detail-shell .en-product-detail-cart { padding-bottom: 8px; }
+.en-product-detail-shell .en-product-detail-cart input {
+  min-width: 0;
+  flex: 0 0 78px;
+  border: 1px solid var(--en-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--en-surface);
+  color: var(--en-text);
+  font: inherit;
+}
+.en-product-detail-shell .en-btn-primary {
+  min-height: 48px;
+  border-radius: 8px;
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+.en-product-detail-shell .en-btn-primary:not(:disabled):hover { box-shadow: 0 5px 16px rgb(40 100 240 / 18%); }
+.en-product-detail-shell .en-product-detail-info > .en-btn { margin-top: 24px; }
+.en-product-detail-shell :is(button, input):disabled { opacity: .5; cursor: not-allowed; }
+.en-product-detail-shell :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--en-blue); outline-offset: 4px; }
+.en-product-detail-shell .en-product-reviews { margin-top: 44px; border-radius: 12px; border-color: #dde0e5; }
+.en-product-detail-shell .en-product-reviews .en-page-header { gap: 20px; flex-wrap: wrap; padding-bottom: 24px; border-bottom: 1px solid var(--en-border); }
+.en-product-detail-shell .en-product-reviews h2 { margin-bottom: 0; letter-spacing: -.035em; }
+.en-product-detail-shell .en-product-reviews .en-empty { padding-block: 32px; }
+
+@keyframes en-detail-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .en-product-detail-shell .en-product-gallery { animation: en-detail-enter 450ms ease; }
+  .en-product-detail-shell .en-product-detail-info { animation: en-detail-enter 500ms 80ms ease backwards; }
+}
+@media (max-width: 800px) {
+  .en-product-detail-shell .en-product-detail-layout { gap: 28px; }
+  .en-product-detail-shell .en-product-main-image > img { padding: 16px; }
+  .en-product-detail-shell .en-product-detail-info h1 { font-size: clamp(30px, 7vw, 44px); }
+  .en-product-detail-shell .en-product-reviews { padding: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .en-product-detail-shell *, .en-product-detail-shell *::before, .en-product-detail-shell *::after { animation: none !important; transition: none !important; }
+}
