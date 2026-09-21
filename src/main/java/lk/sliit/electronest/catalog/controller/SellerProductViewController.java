@@ -47,6 +47,8 @@ public class SellerProductViewController {
 
         model.addAttribute("vendor", vendor);
         model.addAttribute("lowStockThreshold", LOW_STOCK_THRESHOLD);
+        model.addAttribute("lowStockProducts",
+                productService.getLowStockProductsForVendor(vendor.getId(), LOW_STOCK_THRESHOLD));
         model.addAttribute("products",
                 productService.getProductsByVendor(vendor.getId()));
 

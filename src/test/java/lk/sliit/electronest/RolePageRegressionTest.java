@@ -103,6 +103,57 @@ class RolePageRegressionTest {
                 "/vendor/orders", "/vendor/profile", "/settings");
     }
 
+    @Test void lowStockApiAndSummaryAreScopedToAuthenticatedVendor() throws Exception {
+        product.setStockQuantity(0);
+        products.saveAndFlush(product);
+        stockProduct("Own low stock", product.getVendorId(), 4);
+        stockProduct("Own threshold stock", product.getVendorId(), 5);
+        User otherSeller = User.builder().fullName("Other seller").email("other-seller@regression.test")
+                .password("unused").role(Role.VENDOR).status(AccountStatus.ACTIVE).build();
+        users.saveAndFlush(otherSeller);
+        Vendor other = new Vendor();
+        other.setUser(otherSeller);
+        other.setBusinessName("Other store");
+        other.setRegistrationNumber("OTHER-REG");
+        other.setStatus(VendorStatus.APPROVED);
+        vendors.saveAndFlush(other);
+        stockProduct("Other private low stock", other.getId(), 1);
+
+        mvc.perform(get("/api/products/low-stock").param("vendorId", other.getId().toString()).session(session(seller)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name", org.hamcrest.Matchers.containsInAnyOrder("Regression Product", "Own low stock")))
+                .andExpect(jsonPath("$[*].stockQuantity", org.hamcrest.Matchers.containsInAnyOrder(0, 4)));
+        mvc.perform(get("/api/products/low-stock").param("threshold", "1").session(session(seller)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].stockQuantity").value(0));
+        mvc.perform(get("/vendor/products").session(session(seller)))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("lowStockProducts", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Out of stock")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("#stock-" + product.getId())))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Other private low stock"))));
+    }
+
+    @Test void healthyStockHidesWarningsAndNegativeThresholdIsRejected() throws Exception {
+        mvc.perform(get("/vendor/products").session(session(seller)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Stock levels healthy.")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("id=\"stock-warning-title\""))));
+        mvc.perform(get("/api/products/low-stock").param("threshold", "-1").session(session(seller)))
+                .andExpect(status().isBadRequest());
+    }
+
+    private void stockProduct(String name, Long vendorId, int quantity) {
+        Product item = new Product();
+        item.setName(name);
+        item.setBrand("Brand");
+        item.setCategory("Accessories");
+        item.setPrice(BigDecimal.TEN);
+        item.setStockQuantity(quantity);
+        item.setVendorId(vendorId);
+        products.saveAndFlush(item);
+    }
+
     @Test void sellerFormsExposeMatchingFieldLimits() throws Exception {
         mvc.perform(get("/vendor/products/new").session(session(seller)))
                 .andExpect(status().isOk())

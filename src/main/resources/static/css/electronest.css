@@ -5811,3 +5811,10 @@ a.en-add-cart-btn:hover {
     position: static;
   }
 }
+
+/* Seller inventory summary */
+.en-stock-warning { margin-bottom: 1.5rem; padding: 1.25rem; }
+.en-stock-warning h2 { margin: 0 0 .5rem; font-size: 1.15rem; }
+.en-stock-warning ul { list-style: none; padding: 0; margin: 0; }
+.en-stock-warning li { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .6rem 0; }
+.en-stock-warning li > a:first-child { flex: 1 1 12rem; }

@@ -41,6 +41,23 @@
         You haven't listed any products yet.
     </div>
 
+    <section class="en-card en-stock-warning" aria-labelledby="stock-warning-title"
+             th:unless="${#lists.isEmpty(lowStockProducts)}">
+        <h2 id="stock-warning-title">Stock needs attention
+            (<span th:text="${#lists.size(lowStockProducts)}">0</span>)</h2>
+        <p class="en-muted">Products with fewer than <span th:text="${lowStockThreshold}">5</span> units remaining, including out-of-stock items.</p>
+        <ul>
+            <li th:each="item : ${lowStockProducts}">
+                <a th:href="${'#stock-' + item.id}" th:text="${item.name}">Product</a>
+                <span th:text="${item.stockQuantity + ' remaining'}">0 remaining</span>
+                <strong class="en-status en-status-rejected" th:if="${item.stockQuantity == 0}">Out of stock</strong>
+                <span class="en-status en-status-pending" th:unless="${item.stockQuantity == 0}">Low stock</span>
+                <a th:href="${'#stock-' + item.id}">Update stock</a>
+            </li>
+        </ul>
+    </section>
+    <p class="en-muted" th:if="${!#lists.isEmpty(products) and #lists.isEmpty(lowStockProducts)}">Stock levels healthy.</p>
+
     <form id="bulkPriceForm" class="en-seller-bulk" th:unless="${#lists.isEmpty(products)}"
           th:action="@{/vendor/products/bulk-price}" method="post"
           onsubmit="return confirm('Set every selected product to this price?')">
