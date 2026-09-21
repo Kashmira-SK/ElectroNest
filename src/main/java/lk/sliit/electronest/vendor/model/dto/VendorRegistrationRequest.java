@@ -21,7 +21,7 @@ public class VendorRegistrationRequest {
     @NotBlank(message = "Contact phone is required")
     @Pattern(
             regexp = lk.sliit.electronest.common.validation.SriLankanPhone.REGEX,
-            message = "Enter a valid contact phone number"
+            message = "Enter 0771234567 or +94771234567 (no spaces or hyphens)"
     )
     private String contactPhone;
 

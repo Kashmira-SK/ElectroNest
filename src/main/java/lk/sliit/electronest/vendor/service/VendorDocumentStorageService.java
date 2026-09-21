@@ -51,7 +51,11 @@ public class VendorDocumentStorageService {
         }
     }
 
-    public String store(MultipartFile file) {
+    public void validate(MultipartFile file) {
+        validatedExtension(file);
+    }
+
+    private String validatedExtension(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException(
                     "Verification document is required"
@@ -70,7 +74,7 @@ public class VendorDocumentStorageService {
         if (originalName != null && originalName.contains(".")) {
             extension = originalName
                     .substring(originalName.lastIndexOf('.'))
-                    .toLowerCase();
+                    .toLowerCase(java.util.Locale.ROOT);
         }
 
         if (file.getContentType() == null || !ALLOWED_TYPES.contains(file.getContentType())
@@ -80,6 +84,11 @@ public class VendorDocumentStorageService {
             );
         }
 
+        return extension;
+    }
+
+    public String store(MultipartFile file) {
+        String extension = validatedExtension(file);
         String storedName = UUID.randomUUID() + extension;
 
         Path destination =

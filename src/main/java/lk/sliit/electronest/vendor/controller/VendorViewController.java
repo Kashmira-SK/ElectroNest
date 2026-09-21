@@ -87,9 +87,14 @@ public class VendorViewController {
             @Valid @ModelAttribute("registrationRequest") VendorRegistrationRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            @RequestParam("document") MultipartFile document,
+            @RequestParam(value = "document", required = false) MultipartFile document,
             Model model) {
-        if (bindingResult.hasErrors()) {
+        try {
+            documentStorageService.validate(document);
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("documentValidationError", ex.getMessage());
+        }
+        if (bindingResult.hasErrors() || model.containsAttribute("documentValidationError")) {
             return "vendor/register";
         }
 
