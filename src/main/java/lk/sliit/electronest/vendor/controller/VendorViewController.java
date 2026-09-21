@@ -325,7 +325,7 @@ public class VendorViewController {
     public String approve(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         return executeQueueAction(
                 () -> vendorService.approveVendor(id),
-                "Vendor approved successfully.",
+                "Vendor approved successfully. Seller access is now enabled.",
                 redirectAttributes
         );
     }
@@ -338,7 +338,7 @@ public class VendorViewController {
             RedirectAttributes redirectAttributes) {
         return executeQueueAction(
                 () -> vendorService.requestMoreInfo(id, message),
-                "More information requested from vendor.",
+                "Information request saved. The vendor can review your instructions on their application.",
                 redirectAttributes
         );
     }

@@ -16,8 +16,7 @@ import lk.sliit.electronest.vendor.model.dto.VendorGuidanceResponse;
 import lk.sliit.electronest.vendor.model.dto.VendorProfileUpdateRequest;
 import lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest;
 import lk.sliit.electronest.vendor.repository.VendorRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +26,7 @@ import java.util.Locale;
 @Service
 public class VendorService {
 
-    private static final Logger log = LoggerFactory.getLogger(VendorService.class);
+    private final ApplicationEventPublisher events;
 
     private final VendorRepository vendorRepository;
     private final UserRepository userRepository;
@@ -38,7 +37,9 @@ public class VendorService {
             VendorRepository vendorRepository,
             UserRepository userRepository,
             ProductRepository productRepository,
-            OrderRepository orderRepository) {
+            OrderRepository orderRepository,
+            ApplicationEventPublisher events) {
+        this.events = events;
         this.vendorRepository = vendorRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
@@ -387,22 +388,9 @@ public class VendorService {
             String subject,
             String message) {
 
-        if (vendor.getUser() == null
-                || vendor.getUser().getEmail() == null
-                || vendor.getUser().getEmail().isBlank()) {
-            log.info(
-                    "SIMULATED VENDOR EMAIL SKIPPED | subject={} | message={}",
-                    subject,
-                    message
-            );
-            return;
-        }
-
-        log.info(
-                "SIMULATED VENDOR EMAIL | to={} | subject={} | message={}",
-                vendor.getUser().getEmail(),
-                subject,
-                message
-        );
+        events.publishEvent(new VendorStatusEmail(
+                vendor.getId(),
+                vendor.getUser() == null ? null : vendor.getUser().getEmail(),
+                subject, message));
     }
 }

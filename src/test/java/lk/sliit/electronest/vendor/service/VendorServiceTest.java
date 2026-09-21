@@ -44,11 +44,14 @@ class VendorServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher events;
+
     private VendorService vendorService;
 
     @BeforeEach
     void setUp() {
-        vendorService = new VendorService(vendorRepository, userRepository, productRepository, orderRepository);
+        vendorService = new VendorService(vendorRepository, userRepository, productRepository, orderRepository, events);
     }
 
     @Test
@@ -109,6 +112,9 @@ class VendorServiceTest {
         assertEquals(VendorStatus.APPROVED, vendor.getStatus());
         assertEquals(Role.VENDOR, vendor.getUser().getRole());
         verify(userRepository).save(vendor.getUser());
+        verify(events).publishEvent(org.mockito.ArgumentMatchers.argThat((VendorStatusEmail event) ->
+                event.recipient().equals("seller@example.com")
+                        && event.subject().contains("approved") && event.message().contains("manage your store")));
     }
 
     @Test
@@ -131,10 +137,14 @@ class VendorServiceTest {
         vendorService.requestMoreInfo(7L, " Replace document ");
         assertEquals(VendorStatus.INFO_REQUESTED, vendor.getStatus());
         assertEquals("Replace document", vendor.getRejectionReason());
+        verify(events).publishEvent(org.mockito.ArgumentMatchers.argThat((VendorStatusEmail event) ->
+                event.message().endsWith("Replace document")));
         assertEquals(Role.CUSTOMER, vendor.getUser().getRole());
         vendor.setStatus(VendorStatus.PENDING);
         vendorService.rejectVendor(7L, "Invalid registration");
         assertEquals(VendorStatus.REJECTED, vendor.getStatus());
+        verify(events).publishEvent(org.mockito.ArgumentMatchers.argThat((VendorStatusEmail event) ->
+                event.message().endsWith("Invalid registration")));
         assertEquals(Role.CUSTOMER, vendor.getUser().getRole());
     }
 
@@ -181,6 +191,7 @@ class VendorServiceTest {
     private Vendor reviewable(VendorStatus status, Role role) {
         Vendor vendor = vendor(status);
         User user = new User();
+        user.setEmail("seller@example.com");
         user.setRole(role);
         user.setStatus(AccountStatus.ACTIVE);
         vendor.setUser(user);
