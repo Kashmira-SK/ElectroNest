@@ -195,6 +195,7 @@ function purchaseControl(product, available) {
     const cartForm = document.createElement('form');
     cartForm.method = 'post';
     cartForm.action = '/cart/add';
+    cartForm.dataset.cartAddUrl = '/api/cart/items';
     cartForm.className = 'en-add-cart-form';
 
     const productInput = document.createElement('input');

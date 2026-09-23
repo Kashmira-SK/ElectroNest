@@ -12,6 +12,7 @@
     <link rel="stylesheet"
           th:href="@{/css/electronest.css}">
     <link rel="stylesheet" th:href="@{/css/product-detail.css}">
+    <script th:src="@{/js/cart-add.js}" defer></script>
 </head>
 <body>
 
@@ -131,6 +132,7 @@
                     and currentUser.role.name() == 'CUSTOMER'
                     and !accountSuspended}"
                   th:action="@{/cart/add}"
+                  th:attr="data-cart-add-url=@{/api/cart/items}"
                   method="post"
                   class="en-product-detail-cart">
 
