@@ -21,6 +21,7 @@ import java.util.List;
 @Profile("demo")
 public class DemoDataSeeder implements CommandLineRunner {
 
+    private final lk.sliit.electronest.cart.promo.PromoCodeRepository promoCodes;
     private final UserRepository userRepository;
     private final VendorRepository vendorRepository;
     private final ProductRepository productRepository;
@@ -30,7 +31,9 @@ public class DemoDataSeeder implements CommandLineRunner {
             UserRepository userRepository,
             VendorRepository vendorRepository,
             ProductRepository productRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            lk.sliit.electronest.cart.promo.PromoCodeRepository promoCodes) {
+        this.promoCodes = promoCodes;
 
         this.userRepository = userRepository;
         this.vendorRepository = vendorRepository;
@@ -40,6 +43,13 @@ public class DemoDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        if (promoCodes.findByCodeIgnoreCase("WELCOME10").isEmpty()) {
+            var promo = new lk.sliit.electronest.cart.promo.PromoCode();
+            promo.setCode("WELCOME10");
+            promo.setDiscountType(lk.sliit.electronest.cart.promo.PromoCode.DiscountType.PERCENTAGE);
+            promo.setDiscountValue(new BigDecimal("10"));
+            promoCodes.save(promo);
+        }
 
         createOrUpdateUser(
                 "ElectroNest Admin",

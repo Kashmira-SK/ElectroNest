@@ -175,6 +175,10 @@
                 </div>
             </section>
 
+            <p class="en-muted" th:if="${order.promoCode != null}">
+                Promo <strong th:text="${order.promoCode}"></strong>:
+                saved <span th:text="'Rs. ' + ${#numbers.formatDecimal(order.discountAmount, 1, 'COMMA', 2, 'POINT')}"></span>.
+            </p>
             <div class="en-order-meta">
                 <div>
                     <strong>Payment</strong>

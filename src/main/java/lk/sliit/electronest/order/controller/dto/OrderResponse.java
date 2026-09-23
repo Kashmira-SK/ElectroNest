@@ -13,6 +13,8 @@ public record OrderResponse(
         OrderStatus status,
         PaymentStatus paymentStatus,
         BigDecimal totalAmount,
+        String promoCode,
+        BigDecimal discountAmount,
         boolean cancellationRequested,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -24,6 +26,8 @@ public record OrderResponse(
                 order.getStatus(),
                 order.getPaymentStatus(),
                 order.totalAmount(),
+                order.getPromoCode(),
+                order.getDiscountAmount(),
                 order.isCancellationRequested(),
                 order.getCreatedAt(),
                 order.getUpdatedAt()

@@ -21,19 +21,19 @@ class CheckoutTest {
         var cart = mock(CartService.class);
         var users = mock(UserRepository.class);
         var orders = mock(OrderService.class);
-        var controller = new CartViewController(cart, users, orders);
+        var controller = new CartViewController(cart, users, orders, mock(lk.sliit.electronest.cart.promo.PromoCodeService.class));
         User user = new User();
         user.setId(1L);
         var principal = new CustomUserDetails(user);
         when(cart.getCartItemViews(1L)).thenReturn(List.of(item(0)));
         var redirect = new RedirectAttributesModelMap();
-        assertEquals("redirect:/cart", controller.checkout(principal, new ExtendedModelMap(), redirect));
+        assertEquals("redirect:/cart", controller.checkout(principal, new ExtendedModelMap(), redirect, new org.springframework.mock.web.MockHttpSession()));
         assertTrue(redirect.getFlashAttributes().containsKey("errorMessage"));
         verifyNoInteractions(orders, users);
         when(cart.getCartItemViews(1L)).thenReturn(List.of(item(5)));
         when(users.findById(1L)).thenReturn(Optional.of(user));
         var model = new ExtendedModelMap();
-        assertEquals("cart/checkout", controller.checkout(principal, model, redirect));
+        assertEquals("cart/checkout", controller.checkout(principal, model, redirect, new org.springframework.mock.web.MockHttpSession()));
         assertEquals(3L, model.get("totalItems"));
     }
 

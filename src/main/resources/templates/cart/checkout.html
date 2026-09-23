@@ -238,7 +238,7 @@
             <div class="en-summary-row">
                 <span>Subtotal</span>
 
-                <strong th:text="'Rs. '
+                <strong id="checkoutSubtotal" th:text="'Rs. '
                     + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
@@ -249,11 +249,29 @@
                 <strong>Rs. 0.00</strong>
             </div>
 
+            <form id="promoForm" th:action="@{/checkout/promo}" method="post">
+                <div class="en-field">
+                    <label for="promoCode">Promo code (optional)</label>
+                    <input id="promoCode" name="code" maxlength="50" autocomplete="off"
+                           th:value="${checkoutQuote.code}" aria-describedby="promoFeedback">
+                </div>
+                <div class="en-actions">
+                    <button class="en-btn en-btn-secondary" name="action" value="apply" type="submit">Apply</button>
+                    <button class="en-btn en-btn-secondary" name="action" value="remove" type="submit">Remove</button>
+                </div>
+            </form>
+            <p id="promoFeedback" role="status" aria-live="polite" th:class="${promoError != null ? 'en-field-error' : 'en-muted'}"
+               th:text="${promoError != null ? promoError : (checkoutQuote.code != null ? checkoutQuote.code + ' applied.' : '')}"></p>
+            <div class="en-summary-row">
+                <span>Discount</span>
+                <strong id="checkoutDiscount" th:text="'− Rs. ' + ${#numbers.formatDecimal(checkoutQuote.discount, 1, 'COMMA', 2, 'POINT')}">Rs. 0.00</strong>
+            </div>
+
             <div class="en-summary-row en-summary-total">
                 <span>Total</span>
 
-                <strong th:text="'Rs. '
-                    + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}">
+                <strong id="checkoutTotal" th:text="'Rs. '
+                    + ${#numbers.formatDecimal(checkoutQuote.total, 1, 'COMMA', 2, 'POINT')}">
                     Rs. 0.00
                 </strong>
             </div>
@@ -288,6 +306,7 @@
 
 </main>
 
+<script th:src="@{/js/checkout-promo.js}" defer></script>
 <script>
 function editDelivery() {
     const saved = document.getElementById('savedDelivery');

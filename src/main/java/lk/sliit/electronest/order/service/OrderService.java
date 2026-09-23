@@ -23,6 +23,7 @@ import java.util.NoSuchElementException;
 @Service
 public class OrderService {
 
+    private final lk.sliit.electronest.cart.promo.PromoCodeService promos;
     private final OrderRepository orderRepository;
     private final ProductService productService;
     private final VendorRepository vendorRepository;
@@ -31,7 +32,9 @@ public class OrderService {
     public OrderService(OrderRepository orderRepository,
                         ProductService productService,
                         VendorRepository vendorRepository,
-                        lk.sliit.electronest.payment.service.PaymentWorkflowService payments) {
+                        lk.sliit.electronest.payment.service.PaymentWorkflowService payments,
+                        lk.sliit.electronest.cart.promo.PromoCodeService promos) {
+        this.promos = promos;
         this.orderRepository = orderRepository;
         this.productService = productService;
         this.vendorRepository = vendorRepository;
@@ -200,6 +203,12 @@ public class OrderService {
             order.addLineItem(lineItem);
         }
 
+        // Snapshot the discount once, from trusted product prices. No request totals are accepted.
+        if (request.promoCode() != null && !request.promoCode().isBlank()) {
+            var quote = promos.quote(request.promoCode(), order.subtotalAmount(), order.getDeliveryFee());
+            order.setPromoCode(quote.code());
+            order.setDiscountAmount(quote.discount());
+        }
         return orderRepository.save(order);
     }
 

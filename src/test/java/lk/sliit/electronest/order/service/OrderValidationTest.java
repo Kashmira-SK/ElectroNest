@@ -18,7 +18,7 @@ class OrderValidationTest {
     final OrderRepository orders = mock(OrderRepository.class);
     final ProductService products = mock(ProductService.class);
     final VendorRepository vendors = mock(VendorRepository.class);
-    final OrderService service = new OrderService(orders, products, vendors, mock(PaymentWorkflowService.class));
+    final OrderService service = new OrderService(orders, products, vendors, mock(PaymentWorkflowService.class), mock(lk.sliit.electronest.cart.promo.PromoCodeService.class));
     final User customer = User.builder().id(1L).role(Role.CUSTOMER).status(AccountStatus.ACTIVE).build();
 
     @Test void rejectsNullInvalidAndDuplicateItemsBeforeLookingUpProducts() {

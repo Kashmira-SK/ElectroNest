@@ -171,6 +171,7 @@ public class OrderViewController {
                 .map(OrderItemView::lineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        if (vendorUserId == null) displayTotal = order.totalAmount();
         return new OrderViewData(order, items, displayTotal, orderService.readyForFulfilment(order));
     }
 

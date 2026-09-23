@@ -95,6 +95,14 @@
                     <strong>LKR</strong>
                 </div>
 
+                <div class="en-summary-row">
+                    <span>Subtotal</span>
+                    <strong th:text="'Rs. ' + ${#numbers.formatDecimal(order.subtotalAmount(), 1, 'COMMA', 2, 'POINT')}"></strong>
+                </div>
+                <div class="en-summary-row" th:if="${order.promoCode != null}">
+                    <span>Discount (<span th:text="${order.promoCode}"></span>)</span>
+                    <strong th:text="'− Rs. ' + ${#numbers.formatDecimal(order.discountAmount, 1, 'COMMA', 2, 'POINT')}"></strong>
+                </div>
                 <div class="en-summary-row en-summary-total">
                     <span>Amount</span>
 

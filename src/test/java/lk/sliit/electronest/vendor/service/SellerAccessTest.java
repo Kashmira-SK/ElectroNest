@@ -25,7 +25,8 @@ class SellerAccessTest {
         var orders = mock(OrderRepository.class);
         var productController = new ProductController(products, vendors);
         var orderService = new OrderService(orders, products, vendors,
-                mock(lk.sliit.electronest.payment.service.PaymentWorkflowService.class));
+                mock(lk.sliit.electronest.payment.service.PaymentWorkflowService.class),
+                mock(lk.sliit.electronest.cart.promo.PromoCodeService.class));
         User user = new User();
         user.setId(20L);
         user.setRole(Role.VENDOR);

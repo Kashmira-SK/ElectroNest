@@ -357,10 +357,11 @@ public class PaymentWorkflowService {
         receipt.setCustomerEmail(customer.getEmail());
         receipt.setDeliveryAddress(deliveryAddress(order));
         receipt.setItemizedSummary(itemizedSummary(order));
-        receipt.setSubtotal(order.totalAmount());
+        receipt.setSubtotal(order.subtotalAmount());
         receipt.setTaxAmount(BigDecimal.ZERO);
-        receipt.setShippingFee(BigDecimal.ZERO);
-        receipt.setDiscountAmount(BigDecimal.ZERO);
+        receipt.setShippingFee(order.getDeliveryFee());
+        receipt.setDiscountAmount(order.getDiscountAmount());
+        receipt.setPromoCode(order.getPromoCode());
         receipt.setTotalAmount(order.totalAmount());
         receipt.setPaymentMethod(payment.getPaymentMethod().name());
 

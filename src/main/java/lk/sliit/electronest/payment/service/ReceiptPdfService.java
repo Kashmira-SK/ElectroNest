@@ -34,6 +34,7 @@ public class ReceiptPdfService {
             money(document, "Subtotal", receipt.getSubtotal());
             money(document, "Tax", receipt.getTaxAmount());
             money(document, "Shipping", receipt.getShippingFee());
+            line(document, "Promo code", receipt.getPromoCode());
             money(document, "Discount", receipt.getDiscountAmount());
             money(document, "Total", receipt.getTotalAmount());
             line(document, "Payment method", receipt.getPaymentMethod());

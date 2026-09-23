@@ -66,12 +66,26 @@ public class Order {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
 
+    @Column(length = 50)
+    private String promoCode;
+
+    @Column(nullable = false, columnDefinition = "numeric(38,2) default 0")
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, columnDefinition = "numeric(38,2) default 0")
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
+
     public void addLineItem(OrderLineItem item) {
         item.setOrder(this);
         this.lineItems.add(item);
     }
 
     public BigDecimal totalAmount() {
+        return subtotalAmount().add(deliveryFee).subtract(discountAmount).max(BigDecimal.ZERO);
+    }
+
+    public BigDecimal subtotalAmount() {
         return lineItems.stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

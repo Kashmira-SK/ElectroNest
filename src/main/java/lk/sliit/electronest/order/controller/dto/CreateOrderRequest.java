@@ -10,6 +10,12 @@ public record CreateOrderRequest(
         String city,
         String postalCode,
         String country,
-        List<OrderLineItemRequest> items
+        List<OrderLineItemRequest> items,
+        String promoCode
 ) {
+    public CreateOrderRequest(String deliveryName, String deliveryPhone, String addressLine1,
+                              String addressLine2, String city, String postalCode, String country,
+                              List<OrderLineItemRequest> items) {
+        this(deliveryName, deliveryPhone, addressLine1, addressLine2, city, postalCode, country, items, null);
+    }
 }

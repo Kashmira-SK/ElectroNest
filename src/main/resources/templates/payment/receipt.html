@@ -133,6 +133,10 @@
                 </strong>
             </div>
 
+            <div class="en-summary-row" th:if="${receipt.discountAmount.signum() > 0}">
+                <span>Discount <span th:if="${receipt.promoCode}" th:text="'(' + ${receipt.promoCode} + ')'"></span></span>
+                <strong th:text="'− Rs. ' + ${#numbers.formatDecimal(receipt.discountAmount, 1, 'COMMA', 2, 'POINT')}"></strong>
+            </div>
             <div class="en-summary-row en-summary-total">
                 <span>Total paid</span>
 

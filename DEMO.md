@@ -62,3 +62,18 @@ For real delivery configure environment variables (never commit credentials):
 `SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH` / `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE`.
 SMTP connection, read and write timeouts default to three seconds.
 Admin success messages confirm the saved decision, not delivery to an inbox.
+
+## Checkout promo code
+
+The demo profile seeds `WELCOME10` once: 10% off the item subtotal, no minimum
+or expiry. Repeated starts keep the existing code and any changes to it.
+Use Apply or Remove at checkout. Only one code is held per checkout; applying again
+replaces it without stacking. Invalid codes clear the discount and allow full-price checkout.
+Delivery edits stay in place when JavaScript is enabled; the form also works without JavaScript.
+
+Codes are persisted in `promo_codes` (uppercase unique code, PERCENTAGE or FIXED,
+value, active flag, optional UTC activation/expiry and minimum item subtotal).
+Percentage discounts apply to items; fixed discounts are in LKR and capped at the
+subtotal plus delivery. Amounts round to two decimals. Delivery currently remains free.
+There is no promo administration UI. Codes are revalidated at order creation;
+orders and receipts retain their code/discount snapshot even if the promotion later changes.

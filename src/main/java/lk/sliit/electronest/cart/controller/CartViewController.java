@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpSession;
+import java.math.BigDecimal;
+import lk.sliit.electronest.cart.promo.PromoCodeService;
+import lk.sliit.electronest.cart.promo.InvalidPromoCodeException;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +32,7 @@ import java.util.Map;
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CartViewController {
 
+    private final PromoCodeService promos;
     private final CartService cartService;
     private final UserRepository userRepository;
     private final OrderService orderService;
@@ -35,7 +40,8 @@ public class CartViewController {
     public CartViewController(
             CartService cartService,
             UserRepository userRepository,
-            OrderService orderService) {
+            OrderService orderService, PromoCodeService promos) {
+        this.promos = promos;
         this.cartService = cartService;
         this.userRepository = userRepository;
         this.orderService = orderService;
@@ -173,7 +179,7 @@ public class CartViewController {
     public String checkout(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes, HttpSession session) {
 
         Long userId = currentUser.getUser().getId();
         List<CartItemView> items = cartService.getCartItemViews(userId);
@@ -192,7 +198,18 @@ public class CartViewController {
 
         model.addAttribute("cartItems", items);
         model.addAttribute("totalItems", items.stream().mapToLong(CartItemView::quantity).sum());
-        model.addAttribute("subtotal", cartService.calculateSubtotal(userId));
+        BigDecimal subtotal = cartService.calculateSubtotal(userId);
+        model.addAttribute("subtotal", subtotal);
+        PromoCodeService.Quote quote;
+        try {
+            quote = promos.quote((String) session.getAttribute(CheckoutPromoController.sessionKey(userId)),
+                    subtotal, BigDecimal.ZERO);
+        } catch (InvalidPromoCodeException ex) {
+            session.removeAttribute(CheckoutPromoController.sessionKey(userId));
+            model.addAttribute("promoError", ex.getMessage() + " You can continue at full price.");
+            quote = promos.quote(null, subtotal, BigDecimal.ZERO);
+        }
+        model.addAttribute("checkoutQuote", quote);
         model.addAttribute("customer", user);
         model.addAttribute("hasSavedDelivery", hasSavedDelivery(user));
         model.addAttribute(
@@ -255,7 +272,7 @@ public class CartViewController {
     @PostMapping("/checkout/order")
     public String createOrder(
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes, HttpSession session) {
 
         Long userId = currentUser.getUser().getId();
 
@@ -297,7 +314,8 @@ public class CartViewController {
                 user.getDeliveryCity(),
                 user.getDeliveryPostalCode(),
                 user.getDeliveryCountry(),
-                orderItems
+                orderItems,
+                (String) session.getAttribute(CheckoutPromoController.sessionKey(userId))
         );
 
         try {
@@ -306,8 +324,14 @@ public class CartViewController {
                     currentUser.getUser()
             );
 
+            session.removeAttribute(CheckoutPromoController.sessionKey(userId));
             return "redirect:/payment?orderId=" + order.getId();
 
+        } catch (InvalidPromoCodeException ex) {
+            session.removeAttribute(CheckoutPromoController.sessionKey(userId));
+            redirectAttributes.addFlashAttribute("promoError", ex.getMessage()
+                    + " Review the full-price total and continue, or apply another code.");
+            return "redirect:/checkout";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
