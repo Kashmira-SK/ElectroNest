@@ -4407,6 +4407,16 @@ body > .en-navbar .en-admin-nav a:hover::after {
   margin-left: auto;
 }
 
+form[data-cart-add-url] {
+  flex-wrap: wrap;
+}
+
+form[data-cart-add-url] [role="status"] {
+  display: block;
+  flex-basis: 100%;
+  margin-top: 6px;
+}
+
 .en-add-cart-btn {
   display: inline-flex;
   align-items: center;

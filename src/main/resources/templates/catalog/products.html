@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
     <link rel="stylesheet" th:href="@{/css/shop.css}">
     <script th:src="@{/js/catalog.js}" defer></script>
+    <script th:src="@{/js/cart-add.js}" defer></script>
 </head>
 <body th:attr="data-logged-in=${loggedIn},
                     data-customer=${loggedIn and currentUser.role.name() == 'CUSTOMER'},
