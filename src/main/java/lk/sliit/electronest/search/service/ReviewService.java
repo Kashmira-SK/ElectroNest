@@ -183,8 +183,8 @@ public class ReviewService {
                 orderRepository.findByCustomer_Id(customerId);
 
         return orders.stream()
-                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
                 .flatMap(order -> order.getLineItems().stream())
+                .filter(item -> item.effectiveStatus() == OrderStatus.DELIVERED)
                 .anyMatch(item ->
                         item.getProductId().equals(productId));
     }

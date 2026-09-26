@@ -58,7 +58,7 @@
                 </div>
 
                 <span class="en-status"
-                      th:text="${order.status}">
+                      th:text="${view.displayStatus}">
                     PENDING
                 </span>
             </div>
@@ -118,17 +118,17 @@
             <div class="en-alert en-alert-error"
                  th:if="${order.cancellationRequested}"
                  style="margin-top: 18px;">
-                The customer has requested cancellation. Cancel the order or continue fulfilment after resolving the request.
+                The customer has requested cancellation. Resolve the request before continuing. Mixed-vendor cancellation must be reviewed by an administrator.
             </div>
 
             <div class="en-alert"
-                 th:if="${!view.readyForFulfilment and !order.status.isTerminal()}"
+                 th:if="${!view.readyForFulfilment and !view.displayStatus.isTerminal()}"
                  style="margin-top: 18px;">
                 Awaiting successful payment before fulfilment can begin.
             </div>
 
             <div class="en-actions"
-                 th:if="${order.status.name() == 'PENDING' and view.readyForFulfilment}">
+                 th:if="${view.displayStatus.name() == 'PENDING' and view.readyForFulfilment}">
 
                 <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
                       method="post" th:attr="data-cancellation=${order.cancellationRequested}">
@@ -145,8 +145,8 @@
             </div>
 
             <div class="en-actions"
-                 th:if="${order.status.name() == 'PROCESSING' and view.readyForFulfilment}">
-                <p th:if="${order.paymentStatus.name() == 'PENDING_PAYMENT'}">Collect the cash before marking this COD order delivered.</p>
+                 th:if="${view.displayStatus.name() == 'PROCESSING' and view.readyForFulfilment}">
+                <p th:if="${order.paymentStatus.name() == 'PENDING_PAYMENT'}">Collect <strong th:text="'Rs. ' + ${#numbers.formatDecimal(view.sellerAmount, 1, 'COMMA', 2, 'POINT')}"></strong> for your items before marking them delivered. The order payment is confirmed after all sellers deliver.</p>
 
                 <form th:action="@{/vendor/orders/{id}/status(id=${order.id})}"
                       method="post" th:attr="data-cancellation=${order.cancellationRequested}">
@@ -162,22 +162,22 @@
 
             </div>
 
-            <form class="en-actions" th:if="${!order.status.isTerminal()}"
+            <form class="en-actions" th:if="${!view.displayStatus.isTerminal() and !order.mixedVendor}"
                   th:action="@{/vendor/orders/{id}/status(id=${order.id})}" method="post"
                   onsubmit="return confirm('Cancel this entire order? Any paid amount will be marked refunded and reserved stock released.')">
                 <input type="hidden" name="status" value="CANCELLED">
                 <button type="submit" class="en-btn en-btn-reject"
                         th:text="${order.cancellationRequested ? 'Accept cancellation request' : 'Cancel order'}">Cancel order</button>
             </form>
-            <p class="en-muted">Status changes apply to the entire order, including any items from other sellers.</p>
+            <p class="en-muted">Status changes apply only to your items. Mixed-vendor cancellations require administrator review.</p>
 
             <p class="en-muted"
-               th:if="${order.status.name() == 'DELIVERED'}">
-                This order has been completed.
+               th:if="${view.displayStatus.name() == 'DELIVERED'}">
+                Your items have been delivered.
             </p>
 
             <p class="en-muted"
-               th:if="${order.status.name() == 'CANCELLED'}">
+               th:if="${view.displayStatus.name() == 'CANCELLED'}">
                 This order has been cancelled.
             </p>
 
@@ -192,7 +192,7 @@ document.querySelectorAll('form[data-cancellation]').forEach(form => {
     form.addEventListener('submit', event => {
         const delivery = form.querySelector('input[name="status"]').value === 'DELIVERED';
         const message = form.dataset.cancellation === 'true'
-            ? 'Continue fulfilment and decline the customer’s cancellation request?'
+            ? 'Continue fulfilment of your items despite the customer’s cancellation request?'
             : delivery ? 'Confirm delivery is complete and any cash due has been collected?' : null;
         if (message && !confirm(message)) event.preventDefault();
     });

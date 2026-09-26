@@ -126,7 +126,7 @@ public class OrderViewController {
 
             redirectAttributes.addFlashAttribute(
                     "successMessage",
-                    "Order #" + order.getId() + " updated to " + order.getStatus() + "."
+                    "Your items in order #" + order.getId() + " updated to " + order.statusForVendor(currentUser.getUser().getId()) + "."
             );
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute(
@@ -172,7 +172,9 @@ public class OrderViewController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (vendorUserId == null) displayTotal = order.totalAmount();
-        return new OrderViewData(order, items, displayTotal, orderService.readyForFulfilment(order));
+        return new OrderViewData(order, items, displayTotal, orderService.readyForFulfilment(order),
+                vendorUserId == null ? order.getStatus() : order.statusForVendor(vendorUserId),
+                vendorUserId == null ? order.totalAmount() : order.amountForVendor(vendorUserId));
     }
 
     private OrderItemView toItemView(OrderLineItem item) {
@@ -193,7 +195,8 @@ public class OrderViewController {
                 productName,
                 item.getQuantity(),
                 item.getUnitPrice(),
-                lineTotal
+                lineTotal,
+                item.effectiveStatus()
         );
     }
 }

@@ -82,23 +82,31 @@ public class OrderService {
         Order order = orderRepository.findForUpdate(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
         assertActorMayModifyStatus(order, actor);
 
-        OrderStatus currentStatus = order.getStatus();
-
-        if (targetStatus == null || (!currentStatus.canTransitionTo(targetStatus)
-                && !(currentStatus == OrderStatus.DELIVERED && actor.getRole() == Role.ADMIN
-                && adminOverride && targetStatus == OrderStatus.CANCELLED))) {
-            throw new IllegalStateException(
-                    "Cannot move order from " + currentStatus + " to " + targetStatus
-            );
+        boolean seller = actor.getRole() == Role.VENDOR;
+        if (seller && targetStatus == OrderStatus.CANCELLED && order.isMixedVendor()) {
+            throw new IllegalStateException("A seller cannot cancel a mixed-vendor order. Ask an administrator to review the customer's whole-order cancellation.");
         }
-        if (targetStatus == OrderStatus.CANCELLED) payments.cancelOrderPayment(order);
-        else {
-            if (!payments.readyForFulfilment(order)) throw new IllegalStateException("Payment or confirmed COD is required before fulfilment.");
-            if (targetStatus == OrderStatus.DELIVERED) payments.collectCodOnDelivery(order);
+        var selected = order.getLineItems().stream()
+                .filter(item -> !seller || item.belongsToVendor(actor.getId())).toList();
+        boolean override = actor.getRole() == Role.ADMIN && adminOverride && targetStatus == OrderStatus.CANCELLED;
+        if (targetStatus == null || selected.stream().anyMatch(item -> item.effectiveStatus() != targetStatus
+                && !item.effectiveStatus().canTransitionTo(targetStatus)
+                && !(override && item.effectiveStatus() == OrderStatus.DELIVERED))) {
+            throw new IllegalStateException("That fulfilment transition is not allowed for these items.");
         }
-        order.setStatus(targetStatus);
-
-        order.setCancellationRequested(false);
+        if (selected.stream().allMatch(item -> item.effectiveStatus() == targetStatus)) return order;
+        if (targetStatus == OrderStatus.CANCELLED) {
+            payments.cancelOrderPayment(order);
+        } else if (!payments.readyForFulfilment(order)) {
+            throw new IllegalStateException("Payment or confirmed COD is required before fulfilment.");
+        }
+        // Materialize legacy status before changing the aggregate, including the untouched seller's lines.
+        order.getLineItems().forEach(item -> item.setFulfilmentStatus(item.effectiveStatus()));
+        selected.forEach(item -> item.setFulfilmentStatus(targetStatus));
+        order.setStatus(Order.aggregateStatus(order.getLineItems().stream().map(OrderLineItem::getFulfilmentStatus).toList()));
+        if (order.getStatus() == OrderStatus.DELIVERED) payments.collectCodOnDelivery(order);
+        // A seller cannot silently dismiss a cancellation involving another seller.
+        if (!seller || !order.isMixedVendor()) order.setCancellationRequested(false);
         order.setUpdatedAt(LocalDateTime.now());
 
         return orderRepository.save(order);
@@ -112,6 +120,9 @@ public class OrderService {
             throw new SecurityException("You do not own this order");
         }
 
+        if (order.hasDeliveredItems() && !order.getStatus().isTerminal()) {
+            throw new IllegalStateException("Some items have already been delivered. Contact support to resolve returns before cancelling.");
+        }
         if (order.getStatus().isTerminal()) {
             throw new IllegalStateException(
                     "Order is already " + order.getStatus()
@@ -198,6 +209,7 @@ public class OrderService {
             lineItem.setProductId(product.getId());
             lineItem.setVendor(vendor.getUser());
             lineItem.setQuantity(itemRequest.quantity());
+            lineItem.setFulfilmentStatus(OrderStatus.PENDING);
             lineItem.setUnitPrice(product.getPrice());
 
             order.addLineItem(lineItem);

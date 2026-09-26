@@ -7,6 +7,7 @@ public record OrderItemView(
         String productName,
         int quantity,
         BigDecimal unitPrice,
-        BigDecimal lineTotal
+        BigDecimal lineTotal,
+        lk.sliit.electronest.order.model.OrderStatus fulfilmentStatus
 ) {
 }

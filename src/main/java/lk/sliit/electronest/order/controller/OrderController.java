@@ -44,7 +44,7 @@ public class OrderController {
         return ResponseEntity.ok(
                 orderService.getOrderQueueForVendor(currentUser.getUser())
                         .stream()
-                        .map(OrderResponse::from)
+                        .map(order -> OrderResponse.from(order, currentUser.getUser().getId()))
                         .toList()
         );
     }
@@ -86,7 +86,8 @@ public class OrderController {
                         orderService.getOrderByIdForViewer(
                                 orderId,
                                 currentUser.getUser()
-                        )
+                        ), currentUser.getUser().getRole() == lk.sliit.electronest.common.model.Role.VENDOR
+                                ? currentUser.getUser().getId() : null
                 )
         );
     }
@@ -105,7 +106,8 @@ public class OrderController {
                 request.adminOverride()
         );
 
-        return ResponseEntity.ok(OrderResponse.from(updated));
+        return ResponseEntity.ok(OrderResponse.from(updated, currentUser.getUser().getRole() == lk.sliit.electronest.common.model.Role.VENDOR
+                ? currentUser.getUser().getId() : null));
     }
 
     @PostMapping("/{orderId}/cancellation-request")

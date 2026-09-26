@@ -252,6 +252,9 @@ public class PaymentWorkflowService {
 
     /** Caller holds the order lock; cancellation releases stock only once. */
     public void cancelOrderPayment(Order order) {
+        if (order.getStatus() != lk.sliit.electronest.order.model.OrderStatus.DELIVERED && order.hasDeliveredItems()) {
+            throw new IllegalStateException("Some items have already been delivered. Resolve returns before cancelling this order.");
+        }
         List<Payment> payments = paymentRepository.findByOrderId(order.getId());
         boolean allocated = payments.stream().anyMatch(p ->
                 p.getPaymentStatus() == PaymentStatus.SUCCESSFUL || isPendingCod(p));

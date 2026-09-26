@@ -46,6 +46,15 @@ public class OrderLineItem {
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
+    @Enumerated(EnumType.STRING)
+    private OrderStatus fulfilmentStatus;
+
+    /** Null values retain the status of orders created before per-seller tracking. */
+    public OrderStatus effectiveStatus() {
+        if (order != null && order.getStatus() == OrderStatus.CANCELLED) return OrderStatus.CANCELLED;
+        return fulfilmentStatus != null ? fulfilmentStatus : order.getStatus();
+    }
+
     public boolean belongsToVendor(Long vendorId) {
         return this.vendor != null && this.vendor.getId().equals(vendorId);
     }
