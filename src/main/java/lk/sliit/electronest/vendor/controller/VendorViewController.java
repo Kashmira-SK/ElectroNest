@@ -296,6 +296,8 @@ public class VendorViewController {
         }
 
         return ResponseEntity.ok()
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Cache-Control", "no-store")
                 .contentType(mediaType)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,

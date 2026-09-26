@@ -47,16 +47,14 @@ public class VendorService {
     }
 
     @Transactional
-    public Vendor registerVendor(Long userId, VendorRegistrationRequest request) {
-        return registerVendor(userId, request, null);
-    }
-
-    @Transactional
     public Vendor registerVendor(
             Long userId,
             VendorRegistrationRequest request,
             String documentPath) {
 
+        if (documentPath == null || documentPath.isBlank()) {
+            throw new IllegalArgumentException("Verification document is required");
+        }
         if (vendorRepository.existsByUser_Id(userId)) {
             throw new DuplicateVendorApplicationException(
                     "You already have a vendor application"

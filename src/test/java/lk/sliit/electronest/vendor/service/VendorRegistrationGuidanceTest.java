@@ -59,7 +59,7 @@ class VendorRegistrationGuidanceTest {
     }
 
     @Test void malformedPhonePreservesOtherFieldsAndShowsFormat() throws Exception {
-        mvc.perform(application("077-123-4567").file(document("proof.pdf", "application/pdf", new byte[]{1})))
+        mvc.perform(application("077-123-4567").file(document("proof.pdf", "application/pdf", "%PDF-1.7\nproof".getBytes())))
                 .andExpect(status().isOk()).andExpect(view().name("vendor/register"))
                 .andExpect(model().attributeHasFieldErrors("registrationRequest", "contactPhone"))
                 .andExpect(content().string(containsString("value=\"My Business\"")))
@@ -90,6 +90,37 @@ class VendorRegistrationGuidanceTest {
         } finally {
             vendors.findByUser_Id(user.getId()).ifPresent(vendor -> storage.deleteQuietly(vendor.getIdDocumentPath()));
         }
+    }
+
+    @Test void jsonCannotBypassDocumentRequirement() throws Exception {
+        mvc.perform(post("/api/vendors/register").servletPath("/api/vendors/register").session(session)
+                        .header("X-CSRF-TOKEN",csrf).contentType("application/json")
+                        .content("{\"businessName\":\"Store\",\"registrationNumber\":\"REG\",\"businessAddress\":\"Street\",\"contactPhone\":\"0771234567\"}"))
+                .andExpect(status().isUnsupportedMediaType());
+        assertFalse(vendors.existsByUser_Id(user.getId()));
+    }
+
+    @Test void apiRequiresRealDocumentAndUsesAuthenticatedOwner() throws Exception {
+        var missing = apiApplication();
+        mvc.perform(missing).andExpect(status().isBadRequest());
+        mvc.perform(apiApplication().file(document("forged.pdf","application/pdf","<html>Not a PDF</html>".getBytes())))
+                .andExpect(status().isBadRequest());
+        assertFalse(vendors.existsByUser_Id(user.getId()));
+        try {
+            mvc.perform(apiApplication().param("userId","99999")
+                            .file(document("real.pdf","application/pdf","%PDF-1.7\nproof".getBytes())))
+                    .andExpect(status().isCreated()).andExpect(jsonPath("$.businessName").value("API Store"));
+            assertNotNull(vendors.findByUser_Id(user.getId()).orElseThrow().getIdDocumentPath());
+        } finally {
+            vendors.findByUser_Id(user.getId()).ifPresent(v -> storage.deleteQuietly(v.getIdDocumentPath()));
+        }
+    }
+
+    private MockMultipartHttpServletRequestBuilder apiApplication() {
+        var request = multipart("/api/vendors/register");
+        request.session(session).param("_csrf",csrf).param("businessName","API Store")
+                .param("registrationNumber","API-123").param("businessAddress","42 Road").param("contactPhone","0771234567");
+        return request;
     }
 
     private MockMultipartHttpServletRequestBuilder application(String phone) {

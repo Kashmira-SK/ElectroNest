@@ -21,19 +21,29 @@ import java.util.List;
 public class VendorController {
 
     private final VendorService vendorService;
+    private final lk.sliit.electronest.vendor.service.VendorDocumentStorageService documents;
 
-    public VendorController(VendorService vendorService) {
+    public VendorController(VendorService vendorService,
+                            lk.sliit.electronest.vendor.service.VendorDocumentStorageService documents) {
+        this.documents = documents;
         this.vendorService = vendorService;
     }
 
     // Vendor self-registration
     @PreAuthorize("hasAnyRole('CUSTOMER', 'VENDOR')")
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = "multipart/form-data")
     public ResponseEntity<VendorResponse> register(
-            @Valid @RequestBody VendorRegistrationRequest request,
+            @Valid @ModelAttribute VendorRegistrationRequest request,
+            @RequestParam(value = "document", required = false) org.springframework.web.multipart.MultipartFile document,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-        Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(VendorResponse.from(saved));
+        String stored = documents.store(document);
+        try {
+            Vendor saved = vendorService.registerVendor(currentUser.getUser().getId(), request, stored);
+            return ResponseEntity.status(HttpStatus.CREATED).body(VendorResponse.from(saved));
+        } catch (RuntimeException ex) {
+            documents.deleteQuietly(stored);
+            throw ex;
+        }
     }
 
     // Admin: view pending verification queue
