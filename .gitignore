@@ -46,3 +46,8 @@ application-local.yml
 
 /uploads/
 data/
+
+### Local assignment reports and database evidence ###
+/ddd-report/
+/ddd-evidence/
+/se-design-doc/
