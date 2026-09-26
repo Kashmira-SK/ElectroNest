@@ -18,6 +18,35 @@
         <a th:href="@{/admin/reports}" class="en-btn en-btn-secondary">Refresh figures</a>
     </div>
 
+    <section class="en-card">
+        <h2>Sales and account growth</h2>
+        <form th:action="@{/admin/reports}" method="get" class="en-actions">
+            <div class="en-field"><label for="reportFrom">From</label><input id="reportFrom" name="from" type="date" th:value="${from}" min="1970-01-01" th:max="${today}" required></div>
+            <div class="en-field"><label for="reportUntil">Through</label><input id="reportUntil" name="until" type="date" th:value="${until}" th:max="${today}" required></div>
+            <button class="en-btn en-btn-primary" type="submit">Generate report</button>
+        </form>
+        <p class="en-field-error" th:if="${reportError}" th:text="${reportError}"></p>
+        <div th:if="${salesReport != null}">
+            <p class="en-muted">Inclusive dates, using server-local creation dates. Successful payment values exclude currently refunded, cancelled, failed and pending payments. This is not a settlement or profit report.</p>
+            <p>Previous comparison: <span th:text="${salesReport.previousFrom}"></span> through <span th:text="${salesReport.previousUntil}"></span>.</p>
+            <table class="en-report-table">
+                <thead><tr><th>Metric</th><th>Selected period</th><th>Previous period</th><th>Growth</th></tr></thead>
+                <tbody>
+                    <tr><th>Successful payment value (LKR)</th><td th:text="${salesReport.current.sales}"></td><td th:text="${salesReport.previous.sales}"></td><td th:text="${salesReport.salesGrowth != null ? salesReport.salesGrowth + '%' : 'N/A (zero baseline)'}"></td></tr>
+                    <tr><th>Successful payments</th><td th:text="${salesReport.current.successfulPayments}"></td><td th:text="${salesReport.previous.successfulPayments}"></td><td>—</td></tr>
+                    <tr><th>Orders placed</th><td th:text="${salesReport.current.orders}"></td><td th:text="${salesReport.previous.orders}"></td><td>—</td></tr>
+                    <tr><th>New accounts</th><td th:text="${salesReport.current.accounts}"></td><td th:text="${salesReport.previous.accounts}"></td><td th:text="${salesReport.accountGrowth != null ? salesReport.accountGrowth + '%' : 'N/A (zero baseline)'}"></td></tr>
+                </tbody>
+            </table>
+            <p><a class="en-btn en-btn-secondary" th:href="@{/admin/reports/export(from=${from},until=${until})}">Download CSV</a></p>
+            <details><summary>Daily breakdown</summary>
+                <table class="en-report-table"><thead><tr><th>Date</th><th>Sales (LKR)</th><th>Payments</th><th>Orders</th><th>New accounts</th></tr></thead>
+                    <tbody><tr th:each="day : ${salesReport.days}"><td th:text="${day.date}"></td><td th:text="${day.totals.sales}"></td><td th:text="${day.totals.successfulPayments}"></td><td th:text="${day.totals.orders}"></td><td th:text="${day.totals.accounts}"></td></tr></tbody>
+                </table>
+            </details>
+        </div>
+    </section>
+
     <section class="en-stat-grid" aria-label="All-time marketplace activity">
         <div class="en-stat"><p class="en-eyebrow">Orders placed</p><p class="en-stat-value" th:text="${summary.totalOrders}">0</p><p class="en-muted">Includes every order status</p></div>
         <div class="en-stat"><p class="en-eyebrow">Payment records</p><p class="en-stat-value" th:text="${summary.totalPayments}">0</p><p class="en-muted">Not a count of paid orders</p></div>

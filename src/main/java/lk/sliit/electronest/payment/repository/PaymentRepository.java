@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    List<Payment> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            java.time.LocalDateTime from, java.time.LocalDateTime until);
+
     @org.springframework.data.jpa.repository.Query("select p.orderId from Payment p where p.id = :id")
     Optional<Long> findOrderId(@org.springframework.data.repository.query.Param("id") Long id);
 

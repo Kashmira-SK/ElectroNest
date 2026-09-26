@@ -56,12 +56,6 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    @GetMapping("/reports")
-    public String reports(Model model) {
-        model.addAttribute("summary", reportService.getDashboardSummary());
-        return "admin/reports";
-    }
-
     // GET /admin/users?keyword=... - list all users, optionally filtered by search
     @GetMapping("/users")
     public String listUsers(@RequestParam(required = false) String keyword, Model model) {

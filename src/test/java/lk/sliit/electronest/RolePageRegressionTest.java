@@ -180,6 +180,21 @@ class RolePageRegressionTest {
                 .andExpect(status().isForbidden()).andExpect(view().name("error/access-denied"));
     }
 
+    @Test void reportRangeExportAndAccessRules() throws Exception {
+        mvc.perform(get("/admin/reports").param("from", "2026-01-01").param("until", "2026-01-02").session(session(admin)))
+                .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Download CSV")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("N/A (zero baseline)")));
+        mvc.perform(get("/admin/reports/export").param("from", "2026-01-01").param("until", "2026-01-02").session(session(admin)))
+                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("2026-01-02,0,0,0,0")));
+        mvc.perform(get("/admin/reports/export").param("from", "2026-01-01").param("until", "2026-01-02").session(session(customer)))
+                .andExpect(redirectedUrl("/access-denied"));
+        mvc.perform(get("/admin/reports/export").param("from", "2026-01-02").param("until", "2026-01-01").session(session(admin)))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/reports").param("from", "2026-01-02").param("until", "2026-01-01").session(session(admin)))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("reportError"));
+    }
+
     @Test void adminPagesRender() throws Exception {
         check(admin, "/admin/dashboard", "/admin/users", "/admin/users/" + customer.getId(),
                 "/vendor/queue", "/vendor/manage", "/admin/reports", "/admin/reviews", "/admin/audit-logs", "/settings");
