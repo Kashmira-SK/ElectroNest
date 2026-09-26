@@ -12,7 +12,7 @@ public class ProductSpecification {
 
     public static Specification<Product> filter(String keyword, String category, String brand,
                                                 BigDecimal minPrice, BigDecimal maxPrice,
-                                                Boolean inStockOnly) {
+                                                Boolean inStockOnly, Integer minRamGb, Integer minStorageGb) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -46,6 +46,8 @@ public class ProductSpecification {
                 predicates.add(cb.greaterThan(root.get("stockQuantity"), 0));
             }
 
+            if (minRamGb != null) predicates.add(cb.greaterThanOrEqualTo(root.get("ramGb"), minRamGb));
+            if (minStorageGb != null) predicates.add(cb.greaterThanOrEqualTo(root.get("storageGb"), minStorageGb));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

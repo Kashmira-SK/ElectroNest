@@ -93,6 +93,11 @@
                     : 'No description provided.'}">
             </p>
 
+            <dl th:if="${product.ramGb != null or product.storageGb != null}">
+                <dt th:if="${product.ramGb != null}">RAM</dt><dd th:if="${product.ramGb != null}" th:text="${product.ramGb + ' GB'}"></dd>
+                <dt th:if="${product.storageGb != null}">Storage</dt><dd th:if="${product.storageGb != null}" th:text="${product.storageGb + ' GB'}"></dd>
+            </dl>
+
             <div class="en-product-seller"
                  th:if="${seller != null}">
 

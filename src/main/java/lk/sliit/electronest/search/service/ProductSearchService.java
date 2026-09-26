@@ -17,9 +17,9 @@ public class ProductSearchService {
 
     public Page<Product> search(String keyword, String category, String brand,
                                 BigDecimal minPrice, BigDecimal maxPrice,
-                                Boolean inStockOnly, Pageable pageable) {
+                                Boolean inStockOnly, Integer minRamGb, Integer minStorageGb, Pageable pageable) {
         return productRepository.findAll(
-                ProductSpecification.filter(keyword, category, brand, minPrice, maxPrice, inStockOnly),
+                ProductSpecification.filter(keyword, category, brand, minPrice, maxPrice, inStockOnly, minRamGb, minStorageGb),
                 pageable
         );
     }

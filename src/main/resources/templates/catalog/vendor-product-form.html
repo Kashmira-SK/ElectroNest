@@ -112,6 +112,17 @@
 
                 </div>
 
+                <div class="en-field">
+                    <label for="ramGb">RAM (GB, optional)</label>
+                    <input type="number" th:field="*{ramGb}" min="1" max="4096" step="1" placeholder="e.g. 16">
+                    <small class="en-field-hint">Leave blank if RAM does not apply.</small>
+                </div>
+                <div class="en-field">
+                    <label for="storageGb">Storage (GB, optional)</label>
+                    <input type="number" th:field="*{storageGb}" min="1" max="1048576" step="1" placeholder="e.g. 512">
+                    <small class="en-field-hint">Use GB (1 TB = 1024 GB), or leave blank.</small>
+                </div>
+
                 <div class="en-field en-span-2">
 
                     <label for="description">Description (optional)</label>

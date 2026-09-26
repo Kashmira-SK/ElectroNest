@@ -277,6 +277,8 @@ public class SellerProductViewController {
         product.setBrand(form.getBrand());
         product.setCategory(form.getCategory());
         product.setDescription(form.getDescription());
+        product.setRamGb(form.getRamGb());
+        product.setStorageGb(form.getStorageGb());
         product.setPrice(form.getPrice());
         product.setStockQuantity(form.getStockQuantity());
         product.setImageUrl(form.getImageUrl());
@@ -290,6 +292,8 @@ public class SellerProductViewController {
         form.setBrand(product.getBrand());
         form.setCategory(product.getCategory());
         form.setDescription(product.getDescription());
+        form.setRamGb(product.getRamGb());
+        form.setStorageGb(product.getStorageGb());
         form.setPrice(product.getPrice());
         form.setStockQuantity(product.getStockQuantity());
         form.setImageUrl(product.getImageUrl());

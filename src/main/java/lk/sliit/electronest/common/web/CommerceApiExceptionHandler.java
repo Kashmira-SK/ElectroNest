@@ -4,6 +4,7 @@ import lk.sliit.electronest.cart.controller.CartController;
 import lk.sliit.electronest.payment.controller.PaymentController;
 import lk.sliit.electronest.payment.controller.ReceiptController;
 import lk.sliit.electronest.search.controller.ReviewController;
+import lk.sliit.electronest.search.controller.ProductSearchController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,7 +14,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice(assignableTypes = {CartController.class, PaymentController.class,
-        ReceiptController.class, ReviewController.class})
+        ReceiptController.class, ReviewController.class, ProductSearchController.class})
 public class CommerceApiExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> missing(NoSuchElementException ex) {

@@ -59,6 +59,8 @@ public class ProductService {
         existing.setBrand(clean(updatedProduct.getBrand()));
         existing.setCategory(clean(updatedProduct.getCategory()));
         existing.setDescription(clean(updatedProduct.getDescription()));
+        existing.setRamGb(updatedProduct.getRamGb());
+        existing.setStorageGb(updatedProduct.getStorageGb());
         existing.setPrice(updatedProduct.getPrice());
         existing.setStockQuantity(updatedProduct.getStockQuantity());
         existing.setImageUrl(clean(updatedProduct.getImageUrl()));
@@ -215,7 +217,13 @@ public class ProductService {
         }
     }
 
+    public static void validateHardware(Integer ramGb, Integer storageGb) {
+        if (ramGb != null && (ramGb < 1 || ramGb > 4096)) throw new IllegalArgumentException("RAM must be between 1 and 4096 GB");
+        if (storageGb != null && (storageGb < 1 || storageGb > 1048576)) throw new IllegalArgumentException("Storage must be between 1 and 1048576 GB");
+    }
+
     private void validateProduct(Product product) {
+        validateHardware(product.getRamGb(), product.getStorageGb());
         if (product.getVendorId() == null) {
             throw new IllegalArgumentException("Vendor is required");
         }

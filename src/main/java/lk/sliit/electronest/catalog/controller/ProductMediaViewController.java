@@ -52,6 +52,8 @@ public class ProductMediaViewController {
             @RequestParam(required = false) String externalImageUrl,
             @RequestParam(value = "images", required = false)
             MultipartFile[] images,
+            @RequestParam(required = false) Integer ramGb,
+            @RequestParam(required = false) Integer storageGb,
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
 
@@ -68,6 +70,7 @@ public class ProductMediaViewController {
                 );
             }
 
+            ProductService.validateHardware(ramGb, storageGb);
             validate(
                     name,
                     brand,
@@ -137,6 +140,8 @@ public class ProductMediaViewController {
                                 : description.trim()
                 );
 
+                product.setRamGb(ramGb);
+                product.setStorageGb(storageGb);
                 product.setPrice(price);
                 product.setStockQuantity(stockQuantity);
                 product.setVendorId(vendor.getId());
@@ -216,6 +221,8 @@ public class ProductMediaViewController {
             submitted.setBrand(brand);
             submitted.setCategory(category);
             submitted.setDescription(description);
+            submitted.setRamGb(ramGb);
+            submitted.setStorageGb(storageGb);
             submitted.setPrice(price);
             submitted.setStockQuantity(stockQuantity);
             redirectAttributes.addFlashAttribute("product", submitted);
