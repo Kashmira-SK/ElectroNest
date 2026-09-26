@@ -144,7 +144,7 @@
                                name="document"
                                accept=".pdf,.jpg,.jpeg,.png,.zip,application/pdf,image/jpeg,image/png,application/zip,application/x-zip-compressed"
                                required aria-describedby="documentHint documentValidationError">
-                        <small id="documentHint" class="en-field-hint">PDF, JPG, PNG or ZIP, maximum 15 MB. Re-select your file if the form returns with errors.</small>
+                        <small id="documentHint" class="en-field-hint">Original PDF, JPG, PNG or ZIP files, maximum 15 MB; renaming another format will not work. Re-select your file if the form returns with errors.</small>
                         <p id="documentValidationError" class="en-field-error"
                            th:if="${documentValidationError}" th:text="${documentValidationError}"></p>
                     </div>

@@ -84,7 +84,36 @@ public class VendorDocumentStorageService {
             );
         }
 
+        String expectedType = switch (extension) {
+            case ".pdf" -> "application/pdf";
+            case ".png" -> "image/png";
+            case ".jpg", ".jpeg" -> "image/jpeg";
+            default -> "application/zip";
+        };
+        if (!file.getContentType().equals(expectedType) && !file.getContentType().equals("application/octet-stream")
+                && !(extension.equals(".zip") && file.getContentType().equals("application/x-zip-compressed"))) {
+            throw new IllegalArgumentException("Document type does not match its filename");
+        }
+        try (var stream = file.getInputStream()) {
+            byte[] header = stream.readNBytes(8);
+            boolean matches = switch (extension) {
+                case ".pdf" -> startsWith(header, new byte[]{'%', 'P', 'D', 'F', '-'});
+                case ".png" -> startsWith(header, new byte[]{(byte)137,80,78,71,13,10,26,10});
+                case ".jpg", ".jpeg" -> startsWith(header, new byte[]{(byte)255,(byte)216,(byte)255});
+                default -> startsWith(header, new byte[]{80,75,3,4}) || startsWith(header, new byte[]{80,75,5,6})
+                        || startsWith(header, new byte[]{80,75,7,8});
+            };
+            if (!matches) throw new IllegalArgumentException("File contents do not match the selected PDF, JPG, PNG or ZIP format");
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Could not read the verification document. Select the file again.");
+        }
         return extension;
+    }
+
+    private boolean startsWith(byte[] value, byte[] prefix) {
+        if (value.length < prefix.length) return false;
+        for (int i = 0; i < prefix.length; i++) if (value[i] != prefix[i]) return false;
+        return true;
     }
 
     public String store(MultipartFile file) {

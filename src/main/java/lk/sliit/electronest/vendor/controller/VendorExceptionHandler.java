@@ -31,6 +31,11 @@ public class VendorExceptionHandler {
         return error(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidDocument(IllegalArgumentException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidVendorReviewReasonException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidReason(
             InvalidVendorReviewReasonException ex) {

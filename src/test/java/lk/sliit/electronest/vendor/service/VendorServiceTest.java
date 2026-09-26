@@ -55,6 +55,13 @@ class VendorServiceTest {
     }
 
     @Test
+    void registrationCannotBypassRequiredDocumentAtServiceBoundary() {
+        assertThrows(IllegalArgumentException.class, () -> vendorService.registerVendor(7L,
+                new lk.sliit.electronest.vendor.model.dto.VendorRegistrationRequest(), null));
+        org.mockito.Mockito.verifyNoInteractions(vendorRepository, userRepository, events);
+    }
+
+    @Test
     void approvedVendorCanUpdateProfile() {
         Vendor vendor = vendor(VendorStatus.APPROVED);
         VendorProfileUpdateRequest request = request();
