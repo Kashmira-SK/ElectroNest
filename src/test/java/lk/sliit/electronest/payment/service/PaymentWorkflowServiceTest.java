@@ -35,9 +35,6 @@ import static org.mockito.Mockito.when;
 class PaymentWorkflowServiceTest {
 
     @Mock
-    private PayHereGateway payHere;
-
-    @Mock
     private PaymentRepository paymentRepository;
 
     @Mock

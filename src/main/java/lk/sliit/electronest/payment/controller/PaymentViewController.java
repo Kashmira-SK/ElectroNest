@@ -60,13 +60,6 @@ public class PaymentViewController {
         if (order.getStatus().isTerminal()) return "redirect:/orders";
 
         model.addAttribute("order", order);
-        if (paymentService.hostedPaymentEnabled()) {
-            var pending = paymentService.getOrderPaymentsForViewer(orderId, currentUser.getUser()).stream()
-                    .filter(p -> p.isPayHere() && p.getPaymentStatus() == lk.sliit.electronest.payment.model.PaymentStatus.PENDING)
-                    .findFirst();
-            if (pending.isPresent()) return "redirect:/payment/payhere/status?paymentId=" + pending.get().getId();
-            return "payment/hosted-payment";
-        }
         model.addAttribute("savedCards", savedCardService.list(currentUser.getUser()));
         model.addAttribute(
                 "paymentMethods",
@@ -120,29 +113,6 @@ public class PaymentViewController {
 
             return "redirect:/payment?orderId=" + orderId;
         }
-    }
-
-    @PostMapping("/payment/payhere")
-    public String startPayHere(@RequestParam Long orderId,
-                              @AuthenticationPrincipal CustomUserDetails currentUser,
-                              Model model, RedirectAttributes redirect) {
-        try {
-            model.addAttribute("fields", paymentService.beginPayHere(orderId, currentUser.getUser()));
-            return "payment/payhere-redirect";
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            redirect.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/payment?orderId=" + orderId;
-        }
-    }
-
-    @GetMapping("/payment/payhere/status")
-    public String payHereStatus(@RequestParam Long paymentId,
-                               @AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
-        Payment payment = paymentService.getPaymentForViewer(paymentId, currentUser.getUser());
-        if (payment.getPaymentStatus() == lk.sliit.electronest.payment.model.PaymentStatus.SUCCESSFUL)
-            return "redirect:/receipt?paymentId=" + paymentId;
-        model.addAttribute("payment", payment);
-        return "payment/payhere-status";
     }
 
     @GetMapping("/receipt")

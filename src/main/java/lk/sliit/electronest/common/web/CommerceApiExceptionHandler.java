@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice(assignableTypes = {CartController.class, PaymentController.class,
-        ReceiptController.class, ReviewController.class, ProductSearchController.class,
-        lk.sliit.electronest.payment.controller.PayHereNotificationController.class})
+        ReceiptController.class, ReviewController.class, ProductSearchController.class})
 public class CommerceApiExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> missing(NoSuchElementException ex) {

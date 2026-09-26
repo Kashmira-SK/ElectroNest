@@ -80,17 +80,6 @@ public class Payment {
         updatedAt = LocalDateTime.now();
     }
 
-    @Column(length = 32)
-    private String gateway;
-
-    private Boolean gatewayReviewRequired;
-    public boolean isGatewayReviewRequired() { return Boolean.TRUE.equals(gatewayReviewRequired); }
-    public void setGatewayReviewRequired(boolean required) { gatewayReviewRequired = required; }
-
-    public String getGateway() { return gateway; }
-    public void setGateway(String gateway) { this.gateway = gateway; }
-    public boolean isPayHere() { return "PAYHERE_SANDBOX".equals(gateway); }
-
     // Getters and Setters
 
     public Long getId() {
