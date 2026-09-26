@@ -180,6 +180,40 @@ class RolePageRegressionTest {
                 .andExpect(status().isForbidden()).andExpect(view().name("error/access-denied"));
     }
 
+    @Test void hardwareFiltersComposeWithKeywordAndExcludeUnknownSpecs() throws Exception {
+        product.setRamGb(16); product.setStorageGb(512); products.saveAndFlush(product);
+        stockProduct("Unknown specs", product.getVendorId(), 4);
+        mvc.perform(get("/api/search/products").param("keyword","Regression").param("minRamGb","16").param("minStorageGb","512"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].ramGb").value(16));
+        mvc.perform(get("/api/search/products").param("minRamGb","32"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/search/products").param("minStorageGb","512"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+        for (String invalid : List.of("0", "-1", "1.5", "4097", "1 OR 1=1")) {
+            mvc.perform(get("/api/search/products").param("minRamGb",invalid)).andExpect(status().isBadRequest());
+        }
+        mvc.perform(get("/products/"+product.getId())).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("512 GB")));
+        mvc.perform(get("/vendor/products/"+product.getId()+"/edit").session(session(seller)))
+                .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("value=\"16\"")));
+    }
+
+    @Test void sellerCanPersistSpecsButInvalidSpecsDoNotChangeProduct() throws Exception {
+        var sellerSession = session(seller);
+        var page = mvc.perform(get("/vendor/products/"+product.getId()+"/edit").session(sellerSession)).andReturn();
+        String token = ((org.springframework.security.web.csrf.CsrfToken) page.getRequest()
+                .getAttribute(org.springframework.security.web.csrf.CsrfToken.class.getName())).getToken();
+        String payload = "{\"name\":\"Regression Product\",\"brand\":\"Brand\",\"category\":\"Audio\",\"price\":10,\"stockQuantity\":5,\"ramGb\":16,\"storageGb\":512}";
+        mvc.perform(put("/api/products/"+product.getId()).session(sellerSession).header("X-CSRF-TOKEN",token)
+                        .contentType("application/json").content(payload))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.ramGb").value(16)).andExpect(jsonPath("$.storageGb").value(512));
+        mvc.perform(put("/api/products/"+product.getId()).session(sellerSession).header("X-CSRF-TOKEN",token)
+                        .contentType("application/json").content(payload.replace("\"ramGb\":16", "\"ramGb\":-1")))
+                .andExpect(status().isBadRequest());
+        org.junit.jupiter.api.Assertions.assertEquals(16, products.findById(product.getId()).orElseThrow().getRamGb());
+    }
+
     @Test void reportRangeExportAndAccessRules() throws Exception {
         mvc.perform(get("/admin/reports").param("from", "2026-01-01").param("until", "2026-01-02").session(session(admin)))
                 .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Download CSV")))

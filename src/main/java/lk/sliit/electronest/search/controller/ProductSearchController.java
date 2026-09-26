@@ -27,9 +27,12 @@ public class ProductSearchController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Boolean inStockOnly,
+            @RequestParam(required = false) Integer minRamGb,
+            @RequestParam(required = false) Integer minStorageGb,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
+        lk.sliit.electronest.catalog.service.ProductService.validateHardware(minRamGb, minStorageGb);
         if (page < 0) {
             throw new IllegalArgumentException(
                     "Page cannot be negative"
@@ -73,6 +76,7 @@ public class ProductSearchController {
                 minPrice,
                 maxPrice,
                 inStockOnly,
+                minRamGb, minStorageGb,
                 pageable
         );
     }

@@ -83,3 +83,22 @@ test('guest keeps login-to-purchase behavior', () => {
     assert.equal(state.mode, 'login');
     assert.equal(state.label, 'Log in to purchase');
 });
+
+
+test('hardware filter URL preserves both minimums alongside existing filters', () => {
+    const app = shop('?minRamGb=16&minStorageGb=512&brand=Brand');
+    assert.equal(app.element('minRamGb').value, '16');
+    assert.equal(app.element('minStorageGb').value, '512');
+    const params = vm.runInContext('params()', app.context);
+    assert.equal(params.get('minRamGb'), '16');
+    assert.equal(params.get('minStorageGb'), '512');
+    assert.equal(params.get('brand'), 'Brand');
+});
+
+test('fractional and negative hardware filters do not request results', () => {
+    for (const query of ['?minRamGb=-1', '?minStorageGb=1.5', '?minRamGb=4097']) {
+        const app = shop(query);
+        assert.equal(app.pending.length, 0);
+        assert.equal(app.element('searchError').hidden, false);
+    }
+});

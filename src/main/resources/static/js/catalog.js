@@ -18,6 +18,8 @@ const ui = {
     brand: $('brand'),
     minPrice: $('minPrice'),
     maxPrice: $('maxPrice'),
+    minRamGb: $('minRamGb'),
+    minStorageGb: $('minStorageGb'),
     stock: $('inStockOnly'),
     search: $('searchButton'),
     filters: $('advancedFilters'),
@@ -51,6 +53,8 @@ function readUrl() {
     ui.brand.value = p.get('brand') || '';
     ui.minPrice.value = p.get('minPrice') || '';
     ui.maxPrice.value = p.get('maxPrice') || '';
+    ui.minRamGb.value = p.get('minRamGb') || '';
+    ui.minStorageGb.value = p.get('minStorageGb') || '';
     ui.stock.checked = p.get('inStockOnly') === 'true';
 
     const page = Number(p.get('page') || 0);
@@ -67,6 +71,8 @@ function filterCount() {
         ui.brand.value,
         ui.minPrice.value,
         ui.maxPrice.value,
+        ui.minRamGb.value,
+        ui.minStorageGb.value,
         ui.stock.checked ? '1' : ''
     ].filter(Boolean).length;
 }
@@ -91,6 +97,8 @@ function params() {
     if (ui.brand.value) p.set('brand', ui.brand.value);
     if (ui.minPrice.value) p.set('minPrice', ui.minPrice.value);
     if (ui.maxPrice.value) p.set('maxPrice', ui.maxPrice.value);
+    if (ui.minRamGb.value) p.set('minRamGb', ui.minRamGb.value);
+    if (ui.minStorageGb.value) p.set('minStorageGb', ui.minStorageGb.value);
     if (ui.stock.checked) p.set('inStockOnly', 'true');
 
     p.set('page', state.page);
@@ -428,6 +436,13 @@ async function load() {
 }
 
 function validateFilters() {
+    for (const [input, maximum, label] of [[ui.minRamGb, 4096, 'RAM'], [ui.minStorageGb, 1048576, 'Storage']]) {
+        if (input.validity.badInput || (input.value !== '' && (!Number.isInteger(Number(input.value)) || Number(input.value) < 1 || Number(input.value) > maximum))) {
+            ui.error.hidden = false;
+            ui.error.textContent = `${label} must be a whole number from 1 to ${maximum} GB.`;
+            return false;
+        }
+    }
     const minimum = ui.minPrice.value === '' ? null : Number(ui.minPrice.value);
     const maximum = ui.maxPrice.value === '' ? null : Number(ui.maxPrice.value);
     let message = '';
@@ -467,6 +482,8 @@ ui.reset.addEventListener('click', () => {
     ui.brand.value = '';
     ui.minPrice.value = '';
     ui.maxPrice.value = '';
+    ui.minRamGb.value = '';
+    ui.minStorageGb.value = '';
     ui.stock.checked = false;
     search();
 });
@@ -477,6 +494,8 @@ ui.clear.addEventListener('click', () => {
     ui.brand.value = '';
     ui.minPrice.value = '';
     ui.maxPrice.value = '';
+    ui.minRamGb.value = '';
+    ui.minStorageGb.value = '';
     ui.stock.checked = false;
 
     state.page = 0;

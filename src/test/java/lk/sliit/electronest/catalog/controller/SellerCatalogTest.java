@@ -59,7 +59,7 @@ class SellerCatalogTest {
         when(products.createProduct(product)).thenReturn(product);
         var redirect = new RedirectAttributesModelMap();
         String result = new ProductMediaViewController(products, vendors, storage).saveProduct(
-                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", null, principal, redirect);
+                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", null, null, null, principal, redirect);
         assertEquals("redirect:/vendor/products", result);
         assertEquals(List.of("/images/first.jpg", "/images/second.jpg"), product.getImageUrls());
         assertEquals("/images/first.jpg", product.getImageUrl());
@@ -72,7 +72,7 @@ class SellerCatalogTest {
         when(vendors.getVendorForUser(20L)).thenReturn(vendor);
         var redirect = new RedirectAttributesModelMap();
         new ProductMediaViewController(products, vendors, storage).saveProduct(
-                null, "My listing", "Brand", "Category", "Text", BigDecimal.ZERO, 4, "", null, principal, redirect);
+                null, "My listing", "Brand", "Category", "Text", BigDecimal.ZERO, 4, "", null, null, null, principal, redirect);
         var form = (lk.sliit.electronest.catalog.dto.ProductForm) redirect.getFlashAttributes().get("product");
         assertEquals("My listing", form.getName());
         verifyNoInteractions(products, storage);

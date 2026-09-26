@@ -14,9 +14,9 @@ class ProductSearchControllerTest {
     void paginationUsesStableProductOrdering() {
         var service = mock(ProductSearchService.class);
         var controller = new ProductSearchController(service);
-        controller.searchProducts("phone", null, null, null, null, true, 1, 12);
+        controller.searchProducts("phone", null, null, null, null, true, null, null, 1, 12);
         var page = ArgumentCaptor.forClass(Pageable.class);
-        verify(service).search(eq("phone"), isNull(), isNull(), isNull(), isNull(), eq(true), page.capture());
+        verify(service).search(eq("phone"), isNull(), isNull(), isNull(), isNull(), eq(true), isNull(), isNull(), page.capture());
         assertEquals(1, page.getValue().getPageNumber());
         assertEquals(Sort.Direction.DESC, page.getValue().getSort().getOrderFor("id").getDirection());
     }
