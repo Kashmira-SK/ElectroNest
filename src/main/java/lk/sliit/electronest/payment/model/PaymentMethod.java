@@ -6,5 +6,6 @@ public enum PaymentMethod {
     ONLINE_BANKING,
     CASH_ON_DELIVERY,
     DIGITAL_WALLET,
-    MOBILE_PAYMENT
+    MOBILE_PAYMENT,
+    PAYHERE
 }

@@ -30,6 +30,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(csrf -> csrf.ignoringRequestMatchers(request -> "POST".equals(request.getMethod())
+                    && "/api/payments/payhere/notify".equals(request.getServletPath())))
             .addFilterBefore(new AccountStateFilter(userRepository), CsrfFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()

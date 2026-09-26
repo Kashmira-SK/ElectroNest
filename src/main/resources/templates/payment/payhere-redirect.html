@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Continue to PayHere — ElectroNest</title><link rel="stylesheet" th:href="@{/css/electronest.css}"></head>
+<body class="en-customer-page">
+<header th:replace="~{fragments/site-header :: siteHeader('cart')}"></header>
+<main class="en-page"><section class="en-card">
+    <h1>Continue to PayHere sandbox</h1>
+    <p th:text="|Total: LKR ${fields['amount']}|"></p>
+    <p>Your items are reserved while payment is awaiting confirmation. Submit this payment once, then check its status.</p>
+    <!-- Literal external action: do not send the application's CSRF token to the provider. -->
+    <form action="https://sandbox.payhere.lk/pay/checkout" method="post">
+        <input th:each="field : ${fields}" type="hidden" th:name="${field.key}" th:value="${field.value}">
+        <button class="en-btn en-btn-primary" type="submit">Open secure test checkout</button>
+    </form>
+    <a th:href="${fields['return_url']}">Check payment status</a>
+</section></main></body></html>

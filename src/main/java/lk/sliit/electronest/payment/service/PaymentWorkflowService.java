@@ -27,6 +27,7 @@ import java.util.UUID;
 @Service
 public class PaymentWorkflowService {
 
+    private final PayHereGateway payHere;
     private final PaymentRepository paymentRepository;
     private final ReceiptRepository receiptRepository;
     private final OrderRepository orderRepository;
@@ -39,7 +40,9 @@ public class PaymentWorkflowService {
                                   OrderRepository orderRepository,
                                   ProductService productService,
                                   SavedCardService savedCardService,
-                                  lk.sliit.electronest.cart.repository.CartItemRepository cartItemRepository) {
+                                  lk.sliit.electronest.cart.repository.CartItemRepository cartItemRepository,
+                                  PayHereGateway payHere) {
+        this.payHere = payHere;
         this.paymentRepository = paymentRepository;
         this.receiptRepository = receiptRepository;
         this.orderRepository = orderRepository;
@@ -55,6 +58,10 @@ public class PaymentWorkflowService {
             throw new IllegalArgumentException("Order is required");
         }
 
+        if (payHere.isEnabled() && (request.getPaymentMethod() != PaymentMethod.CASH_ON_DELIVERY
+                || request.getSavedCardId() != null)) {
+            throw new IllegalArgumentException("Use hosted PayHere checkout for online payment.");
+        }
         var savedCard = request.getSavedCardId() == null ? null
                 : savedCardService.owned(request.getSavedCardId(), customer);
         if (savedCard != null) {
@@ -89,7 +96,7 @@ public class PaymentWorkflowService {
                 .stream()
                 .anyMatch(payment -> payment.getPaymentStatus() == PaymentStatus.SUCCESSFUL
                         || payment.getPaymentStatus() == PaymentStatus.REFUNDED
-                        || isPendingCod(payment));
+                        || payment.getPaymentStatus() == PaymentStatus.PENDING || payment.isGatewayReviewRequired());
 
         if (alreadyPaid) {
             throw new IllegalStateException("Order has already been paid");
@@ -138,6 +145,12 @@ public class PaymentWorkflowService {
             savedCardService.save(customer, request.getPaymentMethod(), request.getCardHolderName(),
                     request.getCardNumber(), request.getExpiryDate());
         }
+        removePurchasedItems(order, customer);
+
+        return saved;
+    }
+
+    private void removePurchasedItems(Order order, User customer) {
         for (OrderLineItem item : order.getLineItems()) {
             cartItemRepository.findByUserIdAndProductId(customer.getId(), item.getProductId()).ifPresent(cartItem -> {
                 if (cartItem.getQuantity() <= item.getQuantity()) cartItemRepository.delete(cartItem);
@@ -147,8 +160,88 @@ public class PaymentWorkflowService {
                 }
             });
         }
+    }
 
-        return saved;
+    public boolean hostedPaymentEnabled() { return payHere.isEnabled(); }
+
+    @Transactional
+    public java.util.Map<String, String> beginPayHere(Long orderId, User customer) {
+        payHere.requireConfigured();
+        if (customer.getRole() != Role.CUSTOMER) throw new SecurityException("Only customers can pay");
+        Order order = orderRepository.findForUpdate(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
+        if (!order.getCustomer().getId().equals(customer.getId())) throw new SecurityException("You do not own this order");
+        if (order.getStatus() != lk.sliit.electronest.order.model.OrderStatus.PENDING)
+            throw new IllegalStateException("Only pending orders can begin payment");
+        if (paymentRepository.findByOrderId(orderId).stream().anyMatch(p ->
+                p.isGatewayReviewRequired() || p.getPaymentStatus() == PaymentStatus.PENDING || p.getPaymentStatus() == PaymentStatus.SUCCESSFUL
+                        || p.getPaymentStatus() == PaymentStatus.REFUNDED))
+            throw new IllegalStateException("A payment already exists. Check payment status before trying again.");
+        if (order.totalAmount().signum() <= 0) throw new IllegalArgumentException("Use cash on delivery for a zero-total order.");
+        for (OrderLineItem item : sortedItems(order)) productService.decreaseStockForOrder(item.getProductId(), item.getQuantity());
+        Payment payment = new Payment();
+        payment.setGateway("PAYHERE_SANDBOX");
+        payment.setTransactionId("PH-" + UUID.randomUUID());
+        payment.setOrderId(orderId);
+        payment.setOrderNumber(orderNumber(order));
+        payment.setCustomerId(customer.getId());
+        payment.setCustomerEmail(customer.getEmail());
+        payment.setAmount(order.totalAmount());
+        payment.setCurrency("LKR");
+        payment.setPaymentMethod(PaymentMethod.PAYHERE);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setNotes("PayHere sandbox; awaiting verified provider notification; stock reserved");
+        paymentRepository.save(payment);
+        order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.PENDING_PAYMENT);
+        orderRepository.save(order);
+        return payHere.checkout(payment, order);
+    }
+
+    @Transactional
+    public void receivePayHereNotification(java.util.Map<String, String> fields) {
+        payHere.verify(fields);
+        Long paymentId = paymentRepository.findIdByTransactionId(fields.get("order_id"))
+                .orElseThrow(() -> new NoSuchElementException("Payment not found"));
+        Payment payment = lockedPayment(paymentId);
+        Order order = orderRepository.findForUpdate(payment.getOrderId()).orElseThrow();
+        if (!payment.isPayHere() || !payment.getCurrency().equals(fields.get("payhere_currency"))
+                || payment.getAmount().compareTo(new BigDecimal(fields.get("payhere_amount"))) != 0)
+            throw new SecurityException("Payment notification does not match the checkout");
+        String status = fields.get("status_code");
+        if ("0".equals(status)) return;
+        if ("-3".equals(status)) {
+            if (payment.getPaymentStatus() == PaymentStatus.SUCCESSFUL || payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                payment.setPaymentStatus(PaymentStatus.FAILED);
+                payment.setGatewayReviewRequired(true);
+                payment.setFailureReason("Provider reported a chargeback; administrator review required");
+                order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.FAILED);
+                paymentRepository.save(payment);
+                orderRepository.save(order);
+            }
+            return;
+        }
+        // Do not fulfil an out-of-order success after stock was released. Keep it visible for reconciliation.
+        if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
+            if ("2".equals(status) && payment.getPaymentStatus() != PaymentStatus.SUCCESSFUL) {
+                payment.setGatewayReviewRequired(true);
+                payment.setFailureReason("Unexpected provider success after a terminal result; administrator reconciliation required");
+                paymentRepository.save(payment);
+            }
+            return;
+        }
+        if ("2".equals(status)) {
+            payment.setPaymentStatus(PaymentStatus.SUCCESSFUL);
+            payment.setNotes("PayHere sandbox payment verified");
+            order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.PAID);
+            createReceipt(payment, order, order.getCustomer());
+            removePurchasedItems(order, order.getCustomer());
+        } else {
+            payment.setPaymentStatus("-1".equals(status) ? PaymentStatus.CANCELLED : PaymentStatus.FAILED);
+            payment.setFailureReason("Provider did not complete the payment");
+            for (OrderLineItem item : sortedItems(order)) productService.restoreStockForOrder(item.getProductId(), item.getQuantity());
+            order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.FAILED);
+        }
+        paymentRepository.save(payment);
+        orderRepository.save(order);
     }
 
     public List<Payment> myPayments(User customer) {
@@ -206,6 +299,8 @@ public class PaymentWorkflowService {
     public Payment updateStatus(Long id, PaymentStatus status) {
         Payment payment = lockedPayment(id);
         Order order = orderRepository.findForUpdate(payment.getOrderId()).orElseThrow();
+        if (payment.isPayHere()) throw new IllegalStateException(
+                "PayHere payments require provider reconciliation; local status changes cannot cancel or refund a gateway charge.");
         if (status == null) throw new IllegalArgumentException("Payment status is required");
         if (payment.getPaymentStatus() == status) return payment;
         if (status == PaymentStatus.REFUNDED && payment.getPaymentStatus() == PaymentStatus.SUCCESSFUL) {
@@ -256,6 +351,9 @@ public class PaymentWorkflowService {
             throw new IllegalStateException("Some items have already been delivered. Resolve returns before cancelling this order.");
         }
         List<Payment> payments = paymentRepository.findByOrderId(order.getId());
+        if (payments.stream().anyMatch(p -> p.isPayHere()
+                && (p.isGatewayReviewRequired() || p.getPaymentStatus() == PaymentStatus.PENDING || p.getPaymentStatus() == PaymentStatus.SUCCESSFUL)))
+            throw new IllegalStateException("This PayHere payment must be resolved with the provider before cancelling the order.");
         boolean allocated = payments.stream().anyMatch(p ->
                 p.getPaymentStatus() == PaymentStatus.SUCCESSFUL || isPendingCod(p));
         if (allocated && order.getStatus() != lk.sliit.electronest.order.model.OrderStatus.CANCELLED
@@ -280,7 +378,8 @@ public class PaymentWorkflowService {
     }
 
     public boolean readyForFulfilment(Order order) {
-        return paymentRepository.findByOrderId(order.getId()).stream()
+        var payments = paymentRepository.findByOrderId(order.getId());
+        return payments.stream().noneMatch(Payment::isGatewayReviewRequired) && payments.stream()
                 .anyMatch(payment -> payment.getPaymentStatus() == PaymentStatus.SUCCESSFUL || isPendingCod(payment));
     }
 
