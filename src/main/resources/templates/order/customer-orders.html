@@ -81,6 +81,7 @@
                     <div class="en-order-item" th:each="item : ${view.items}">
                         <div>
                             <strong th:text="${item.productName}">Product</strong>
+                            <span class="en-status" th:text="${item.fulfilmentStatus}"></span>
                             <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}"></span>
                         </div>
                         <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">Rs. 0.00</strong>
@@ -89,7 +90,7 @@
             </div>
 
             <section class="en-order-reviews"
-                     th:if="${order.status.name() == 'DELIVERED'}">
+                     th:if="${order.hasDeliveredItems()}">
 
                 <div class="en-order-reviews-heading">
                     <div>
@@ -101,7 +102,7 @@
 
                 <div class="en-order-review-list">
                     <article class="en-order-review"
-                             th:each="item, reviewStat : ${view.items}"
+                             th:each="item, reviewStat : ${view.items}" th:if="${item.fulfilmentStatus.name() == 'DELIVERED'}"
                              th:attr="data-product-id=${item.productId}">
 
                         <div class="en-order-review-heading">
@@ -236,7 +237,7 @@
             </div>
 
             <div class="en-actions"
-                 th:if="${!order.status.isTerminal() and !order.cancellationRequested}">
+                 th:if="${!order.status.isTerminal() and !order.cancellationRequested and !order.hasDeliveredItems()}">
                 <form th:action="@{/orders/{id}/cancel(id=${order.id})}"
                       method="post"
                       onsubmit="return confirm('Cancel this order or request cancellation?')">

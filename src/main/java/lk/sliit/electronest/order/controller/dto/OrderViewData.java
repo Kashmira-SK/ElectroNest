@@ -9,6 +9,8 @@ public record OrderViewData(
         Order order,
         List<OrderItemView> items,
         BigDecimal displayTotal,
-        boolean readyForFulfilment
+        boolean readyForFulfilment,
+        lk.sliit.electronest.order.model.OrderStatus displayStatus,
+        BigDecimal sellerAmount
 ) {
 }

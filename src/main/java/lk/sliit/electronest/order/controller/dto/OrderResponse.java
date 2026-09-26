@@ -17,20 +17,27 @@ public record OrderResponse(
         BigDecimal discountAmount,
         boolean cancellationRequested,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        java.util.List<ItemStatus> fulfilment
 ) {
-    public static OrderResponse from(Order order) {
+    public record ItemStatus(Long productId, OrderStatus status) {}
+
+    public static OrderResponse from(Order order) { return from(order, null); }
+
+    public static OrderResponse from(Order order, Long vendorUserId) {
         return new OrderResponse(
                 order.getId(),
                 order.getCustomer().getId(),
-                order.getStatus(),
+                vendorUserId == null ? order.getStatus() : order.statusForVendor(vendorUserId),
                 order.getPaymentStatus(),
-                order.totalAmount(),
+                vendorUserId == null ? order.totalAmount() : order.amountForVendor(vendorUserId),
                 order.getPromoCode(),
-                order.getDiscountAmount(),
+                vendorUserId == null ? order.getDiscountAmount() : null,
                 order.isCancellationRequested(),
                 order.getCreatedAt(),
-                order.getUpdatedAt()
+                order.getUpdatedAt(),
+                order.getLineItems().stream().filter(item -> vendorUserId == null || item.belongsToVendor(vendorUserId))
+                        .map(item -> new ItemStatus(item.getProductId(), item.effectiveStatus())).toList()
         );
     }
 }
