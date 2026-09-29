@@ -121,7 +121,7 @@
                             </button>
                         </div>
 
-                        <form class="en-order-review-form" hidden>
+                        <form class="en-order-review-form" method="post" enctype="multipart/form-data" hidden>
                             <fieldset class="en-order-rating-field">
                                 <legend>Your rating</legend>
 
@@ -149,6 +149,11 @@
                                           placeholder="What did you like or dislike about this product?"></textarea>
                             </label>
 
+                            <label class="en-order-review-copy">
+                                <span>Photo (optional)</span>
+                                <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                                <small>JPG, JPEG, PNG or WEBP, up to 8 MB. Leave empty to keep your current photo.</small>
+                            </label>
                             <div class="en-order-review-actions">
                                 <button type="button" class="en-btn en-btn-secondary en-review-cancel">Cancel</button>
                                 <button type="submit"
@@ -162,6 +167,7 @@
                             <p class="en-order-review-status"></p>
                             <strong class="en-order-review-rating"></strong>
                             <p class="en-order-review-text"></p>
+                            <img class="en-review-photo" alt="Your review photo" loading="lazy" hidden>
                             <div class="en-order-review-actions">
                                 <button type="button" class="en-btn en-btn-secondary en-review-edit">Edit review</button>
                                 <button type="button" class="en-btn en-btn-secondary en-review-delete">Delete review</button>
@@ -290,6 +296,10 @@ document.addEventListener('DOMContentLoaded', () => {
         stars.textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
         stars.setAttribute('aria-label', rating + ' out of 5 stars');
         area.querySelector('.en-order-review-text').textContent = review.reviewText || 'No written review.';
+        const photo = area.querySelector('.en-review-photo');
+        photo.hidden = !review.photoPath;
+        if (review.photoPath) photo.src = review.photoPath;
+        else photo.removeAttribute('src');
         area.querySelector('.en-order-review-status').textContent = review.status === 'HIDDEN'
             ? 'Your review · Hidden by moderation'
             : 'Your review' + (review.verified ? ' · Verified purchase' : '');
@@ -304,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function request(url, options = {}) {
         const response = await fetch(url, { ...options, headers: {
             'Accept': 'application/json',
-            ...(options.body ? {'Content-Type': 'application/json'} : {}),
+            ...(options.body && !(options.body instanceof FormData) ? {'Content-Type': 'application/json'} : {}),
             ...(options.method && csrfHeader ? {[csrfHeader]: csrfToken} : {})
         }});
         if (response.redirected) throw new Error('Your session has expired. Sign in again, then reload this page.');
@@ -367,13 +377,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .forEach(control => control.disabled = true));
         area.querySelector('.en-order-review-error').hidden = true;
         try {
-            const result = await request(review ? '/api/reviews/' + review.id : '/api/reviews/product/' + id, {
-                method: deleting ? 'DELETE' : review ? 'PUT' : 'POST',
-                ...(deleting ? {} : {body: JSON.stringify({
-                    rating: Number(fields.get('rating')),
-                    reviewText: fields.get('reviewText'),
-                    photoPath: review?.photoPath || null
-                })})
+            const url = deleting ? '/api/review-photos/' + review.id
+                : '/api/review-photos/product/' + id + (review ? '/' + review.id : '');
+            const result = await request(url, {
+                method: deleting ? 'DELETE' : 'POST',
+                ...(deleting ? {} : {body: fields})
             });
             if (deleting) reviews.delete(id);
             else reviews.set(id, result);

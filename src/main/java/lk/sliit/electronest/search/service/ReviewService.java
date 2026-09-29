@@ -171,6 +171,14 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
+    public Review getOwnedReview(Long id, User customer) {
+        Review review = getReview(id);
+        if (customer.getRole() != Role.CUSTOMER || !review.getCustomerId().equals(customer.getId())) {
+            throw new SecurityException("You cannot modify another customer's review");
+        }
+        return review;
+    }
+
     private Review getReview(Long id) {
         return reviewRepository.findById(id)
                 .orElseThrow(() ->
