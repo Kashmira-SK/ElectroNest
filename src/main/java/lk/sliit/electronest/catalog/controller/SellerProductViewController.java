@@ -119,7 +119,14 @@ public class SellerProductViewController {
             if (!model.containsAttribute("product")) {
                 model.addAttribute("product", toForm(product));
             }
-            model.addAttribute("currentImages", product.getImageUrls());
+            var images = new java.util.LinkedHashSet<String>();
+            if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+                images.add(product.getImageUrl());
+            }
+            if (product.getImageUrls() != null) {
+                product.getImageUrls().stream().filter(url -> url != null && !url.isBlank()).forEach(images::add);
+            }
+            model.addAttribute("currentImages", new java.util.ArrayList<>(images));
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/vendor/products";

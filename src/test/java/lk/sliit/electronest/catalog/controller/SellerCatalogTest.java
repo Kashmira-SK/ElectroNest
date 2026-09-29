@@ -59,7 +59,7 @@ class SellerCatalogTest {
         when(products.createProduct(product)).thenReturn(product);
         var redirect = new RedirectAttributesModelMap();
         String result = new ProductMediaViewController(products, vendors, storage).saveProduct(
-                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", null, null, null, principal, redirect);
+                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", null, null, null, null, principal, redirect);
         assertEquals("redirect:/vendor/products", result);
         assertEquals(List.of("/images/first.jpg", "/images/second.jpg"), product.getImageUrls());
         assertEquals("/images/first.jpg", product.getImageUrl());
@@ -72,9 +72,101 @@ class SellerCatalogTest {
         when(vendors.getVendorForUser(20L)).thenReturn(vendor);
         var redirect = new RedirectAttributesModelMap();
         new ProductMediaViewController(products, vendors, storage).saveProduct(
-                null, "My listing", "Brand", "Category", "Text", BigDecimal.ZERO, 4, "", null, null, null, principal, redirect);
+                null, "My listing", "Brand", "Category", "Text", BigDecimal.ZERO, 4, "", null, null, null, null, principal, redirect);
         var form = (lk.sliit.electronest.catalog.dto.ProductForm) redirect.getFlashAttributes().get("product");
         assertEquals("My listing", form.getName());
         verifyNoInteractions(products, storage);
+    }
+
+    private Product editableProduct(List<String> images) {
+        seller();
+        when(vendors.getVendorForUser(20L)).thenReturn(vendor);
+        Product product = new Product();
+        product.setId(1L);
+        product.setVendorId(7L);
+        product.setImageUrls(images);
+        product.setImageUrl(images.get(0));
+        when(products.getProductById(1L)).thenReturn(product);
+        return product;
+    }
+
+    private String save(List<String> removals, org.springframework.web.multipart.MultipartFile[] uploads) {
+        return new ProductMediaViewController(products, vendors, storage).saveProduct(
+                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", uploads,
+                removals, null, null, new CustomUserDetails(user), new RedirectAttributesModelMap());
+    }
+
+    @Test void removingThumbnailPromotesNextImageAndDeletesOnlyRemovedFileAfterSave() {
+        Product product = editableProduct(List.of("/images/products-upload/first.jpg", "https://example.com/second.png"));
+        when(products.createProduct(product)).thenReturn(product);
+        assertEquals("redirect:/vendor/products", save(List.of(product.getImageUrl()), null));
+        assertEquals(List.of("https://example.com/second.png"), product.getImageUrls());
+        assertEquals("https://example.com/second.png", product.getImageUrl());
+        var order = inOrder(products, storage);
+        order.verify(products).createProduct(product);
+        order.verify(storage).deleteUrlQuietly("/images/products-upload/first.jpg");
+        verifyNoMoreInteractions(storage);
+    }
+
+    @Test void removingNonThumbnailPreservesOrder() {
+        Product product = editableProduct(List.of("first", "second", "third"));
+        when(products.createProduct(product)).thenReturn(product);
+        save(List.of("second"), null);
+        assertEquals(List.of("first", "third"), product.getImageUrls());
+        assertEquals("first", product.getImageUrl());
+        verify(storage).deleteUrlQuietly("second");
+        verifyNoMoreInteractions(storage);
+    }
+
+    @Test void removingLegacyThumbnailLeavesEmptyGallery() {
+        Product product = editableProduct(List.of("https://example.com/only.jpg"));
+        product.setImageUrls(List.of());
+        when(products.createProduct(product)).thenReturn(product);
+        save(List.of(product.getImageUrl()), null);
+        assertNull(product.getImageUrl());
+        assertTrue(product.getImageUrls().isEmpty());
+    }
+
+    @Test void anotherProductsImageCannotBeRemoved() {
+        editableProduct(List.of("owned"));
+        assertEquals("redirect:/vendor/products/1/edit", save(List.of("not-owned"), null));
+        verify(products, never()).createProduct(any());
+        verifyNoInteractions(storage);
+    }
+
+    @Test void anotherVendorCannotRemoveImages() {
+        Product product = editableProduct(List.of("owned"));
+        product.setVendorId(99L);
+        assertEquals("redirect:/vendor/products/1/edit", save(List.of("owned"), null));
+        assertEquals(List.of("owned"), product.getImageUrls());
+        verify(products, never()).createProduct(any());
+        verifyNoInteractions(storage);
+    }
+
+    @Test void unapprovedVendorCannotRemoveImages() {
+        editableProduct(List.of("owned"));
+        vendor.setStatus(VendorStatus.PENDING);
+        assertEquals("redirect:/vendor/products/1/edit", save(List.of("owned"), null));
+        verify(products, never()).createProduct(any());
+        verifyNoInteractions(storage);
+    }
+
+    @Test void failedSaveDoesNotDeleteExistingFile() {
+        Product product = editableProduct(List.of("owned"));
+        when(products.createProduct(product)).thenThrow(new IllegalStateException("Save failed"));
+        assertEquals("redirect:/vendor/products/1/edit", save(List.of("owned"), null));
+        verifyNoInteractions(storage);
+    }
+
+    @Test void uploadsStillReplaceGallery() {
+        Product product = editableProduct(List.of("first", "second"));
+        var upload = new org.springframework.mock.web.MockMultipartFile("images", "new.png", "image/png", new byte[]{1});
+        when(storage.store(upload)).thenReturn("new");
+        when(products.createProduct(product)).thenReturn(product);
+        save(List.of(), new org.springframework.web.multipart.MultipartFile[]{upload});
+        assertEquals(List.of("new"), product.getImageUrls());
+        assertEquals("new", product.getImageUrl());
+        verify(storage).deleteUrlQuietly("first");
+        verify(storage).deleteUrlQuietly("second");
     }
 }

@@ -33,14 +33,16 @@ public class ProductImageStorageService {
                     "image/webp"
             );
 
-    private final Path directory =
-            Paths.get("uploads", "product-images")
-                    .toAbsolutePath()
-                    .normalize();
+    private final Path directory;
 
     public ProductImageStorageService() {
+        this(Paths.get("uploads", "product-images"));
+    }
+
+    ProductImageStorageService(Path directory) {
+        this.directory = directory.toAbsolutePath().normalize();
         try {
-            Files.createDirectories(directory);
+            Files.createDirectories(this.directory);
         } catch (IOException ex) {
             throw new IllegalStateException(
                     "Could not initialize product image storage",
@@ -142,11 +144,15 @@ public class ProductImageStorageService {
         String filename =
                 url.substring(URL_PREFIX.length());
 
+        // Only direct filenames are managed here; reject traversal even if it normalizes inside.
+        if (filename.isBlank() || filename.contains("/") || filename.contains("\\")
+                || filename.equals(".") || filename.equals("..") || filename.indexOf('\0') >= 0) {
+            return;
+        }
         try {
-            Path file =
-                    directory.resolve(filename).normalize();
-
-            if (file.getParent().equals(directory)) {
+            Path file = directory.resolve(filename).normalize();
+            if (directory.toRealPath().equals(directory) && file.getParent().equals(directory)
+                    && !Files.isDirectory(file, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
                 Files.deleteIfExists(file);
             }
         } catch (IOException ignored) {
