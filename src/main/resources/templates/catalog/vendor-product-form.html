@@ -191,9 +191,15 @@
                          class="en-product-upload-preview">
                     </div>
                     <div class="en-product-upload-preview" th:if="${currentImages != null and !#lists.isEmpty(currentImages)}">
-                        <div class="en-product-preview-item" th:each="url, image : ${currentImages}">
-                            <img th:src="${url}" th:alt="${'Current image ' + (image.index + 1)}">
-                            <span th:text="${image.first ? 'Current thumbnail' : 'Current image ' + (image.index + 1)}"></span>
+                        <div th:each="url, image : ${currentImages}">
+                            <div class="en-product-preview-item">
+                                <img th:src="${url}" th:alt="${'Current image ' + (image.index + 1)}">
+                                <span th:text="${image.first ? 'Current thumbnail' : 'Current image ' + (image.index + 1)}"></span>
+                            </div>
+                            <label class="en-product-image-remove">
+                                <input type="checkbox" name="removeImages" th:value="${url}">
+                                Remove on save
+                            </label>
                         </div>
                     </div>
 

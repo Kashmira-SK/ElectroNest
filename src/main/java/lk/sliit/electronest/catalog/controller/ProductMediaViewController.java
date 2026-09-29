@@ -52,6 +52,7 @@ public class ProductMediaViewController {
             @RequestParam(required = false) String externalImageUrl,
             @RequestParam(value = "images", required = false)
             MultipartFile[] images,
+            @RequestParam(value = "removeImages", required = false) List<String> removeImages,
             @RequestParam(required = false) Integer ramGb,
             @RequestParam(required = false) Integer storageGb,
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -95,6 +96,12 @@ public class ProductMediaViewController {
             }
 
             List<String> oldGallery = gallery(product);
+            List<String> removals = removeImages == null ? List.of() : removeImages;
+            if (!oldGallery.containsAll(removals)) {
+                throw new IllegalArgumentException("You can only remove images from this product");
+            }
+            List<String> remainingGallery = new ArrayList<>(oldGallery);
+            remainingGallery.removeAll(removals);
             List<MultipartFile> uploads = nonEmpty(images);
             if (!blank(externalImageUrl)) {
                 java.net.URI external;
@@ -170,11 +177,7 @@ public class ProductMediaViewController {
                             externalImageUrl.trim();
 
                     List<String> existingGallery =
-                            new ArrayList<>(
-                                    product.getImageUrls() == null
-                                            ? List.of()
-                                            : product.getImageUrls()
-                            );
+                            new ArrayList<>(remainingGallery);
 
                     existingGallery.remove(external);
                     existingGallery.add(0, external);
@@ -184,12 +187,15 @@ public class ProductMediaViewController {
 
                     product.setImageUrls(existingGallery);
                     product.setImageUrl(external);
+                } else if (!removals.isEmpty()) {
+                    product.setImageUrls(remainingGallery);
+                    product.setImageUrl(remainingGallery.isEmpty() ? null : remainingGallery.get(0));
                 }
 
                 Product saved =
                         productService.createProduct(product);
 
-                if (!stored.isEmpty()) {
+                if (!stored.isEmpty() || !removals.isEmpty()) {
                     for (String old : oldGallery) {
                         if (!saved.getImageUrls().contains(old)) {
                             imageStorage.deleteUrlQuietly(old);

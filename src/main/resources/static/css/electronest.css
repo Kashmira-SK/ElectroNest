@@ -5607,6 +5607,20 @@ a.en-add-cart-btn:hover {
   font-weight: 700;
 }
 
+.en-field .en-product-image-remove {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.en-field .en-product-image-remove input {
+  width: auto;
+  padding: 0;
+  flex-shrink: 0;
+}
+
 .en-current-product-image {
   display: flex;
   align-items: center;
