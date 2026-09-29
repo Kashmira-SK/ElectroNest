@@ -6,6 +6,7 @@ public record ReviewDisplay(
         Long id,
         int rating,
         String reviewText,
+        String photoPath,
         boolean verified,
         LocalDateTime createdAt,
         String customerName,

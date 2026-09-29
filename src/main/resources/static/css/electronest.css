@@ -5842,3 +5842,17 @@ a.en-add-cart-btn:hover {
 .en-stock-warning ul { list-style: none; padding: 0; margin: 0; }
 .en-stock-warning li { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .6rem 0; }
 .en-stock-warning li > a:first-child { flex: 1 1 12rem; }
+
+.en-review-photo {
+  display: block;
+  width: auto;
+  max-width: min(100%, 320px);
+  max-height: 240px;
+  object-fit: contain;
+  margin: 12px 0;
+  border-radius: 6px;
+}
+
+.en-review-photo[hidden] {
+  display: none;
+}

@@ -160,6 +160,7 @@ public class ProductViewController {
                 review.getId(),
                 review.getRating(),
                 review.getReviewText(),
+                review.getPhotoPath(),
                 review.isVerified(),
                 review.getCreatedAt(),
                 customerName,

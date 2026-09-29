@@ -227,7 +227,7 @@
         <form th:if="${reviewEligible}"
               class="en-product-review-form"
               th:action="@{/products/{id}/reviews(id=${product.id})}"
-              method="post">
+              method="post" enctype="multipart/form-data">
 
             <label for="rating">Rating</label>
             <select id="rating" name="rating" required>
@@ -243,6 +243,10 @@
                       name="reviewText"
                       maxlength="2000"
                       rows="5"></textarea>
+
+            <label for="reviewPhoto">Photo (optional)</label>
+            <input id="reviewPhoto" name="photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+            <small class="en-muted">JPG, JPEG, PNG or WEBP, up to 8 MB.</small>
 
             <button type="submit" class="en-btn en-btn-primary">
                 Publish review
@@ -277,6 +281,9 @@
                    th:text="${review.reviewText}">
                     Review text
                 </p>
+
+                <img class="en-review-photo" th:if="${review.photoPath != null and !review.photoPath.isBlank()}"
+                     th:src="${review.photoPath}" alt="Customer review photo" loading="lazy">
 
                 <time th:datetime="${review.createdAt}"
                       th:text="${#temporals.format(review.createdAt, 'dd MMM yyyy')}">
