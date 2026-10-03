@@ -152,10 +152,17 @@
                     <label for="stockQuantity">Stock quantity</label>
 
                     <input type="number"
-                           th:field="*{stockQuantity}"
+                           id="stockQuantity"
+                           name="stockQuantity"
+                           th:value="${stockQuantityDraft != null ? stockQuantityDraft : product.stockQuantity}"
                            min="0"
+                           max="2147483647"
                            step="1"
+                           th:attr="aria-invalid=${#fields.hasErrors('stockQuantity')},aria-describedby=${#fields.hasErrors('stockQuantity') ? 'stockQuantityError' : null}"
                            required>
+                    <p id="stockQuantityError" class="en-field-error"
+                       th:if="${#fields.hasErrors('stockQuantity')}"
+                       th:errors="*{stockQuantity}"></p>
 
                 </div>
 

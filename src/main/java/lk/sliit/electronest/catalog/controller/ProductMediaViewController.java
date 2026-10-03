@@ -14,6 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -48,7 +51,7 @@ public class ProductMediaViewController {
             @RequestParam String category,
             @RequestParam(required = false) String description,
             @RequestParam BigDecimal price,
-            @RequestParam Integer stockQuantity,
+            @RequestParam(value = "stockQuantity", required = false) String submittedStockQuantity,
             @RequestParam(required = false) String externalImageUrl,
             @RequestParam(value = "images", required = false)
             MultipartFile[] images,
@@ -59,6 +62,8 @@ public class ProductMediaViewController {
             RedirectAttributes redirectAttributes) {
 
         boolean editing = id != null;
+        Integer stockQuantity = null;
+        String stockError = null;
 
         try {
             Vendor vendor = vendorService.getVendorForUser(
@@ -69,6 +74,19 @@ public class ProductMediaViewController {
                 throw new IllegalStateException(
                         "Only approved vendors can manage products"
                 );
+            }
+
+            // Parse here so invalid stock returns to the form instead of Spring's generic 400 page.
+            try {
+                stockQuantity = Integer.valueOf(submittedStockQuantity == null ? "" : submittedStockQuantity.trim());
+            } catch (NumberFormatException ex) {
+                stockError = "Stock quantity must be a whole number between 0 and 2147483647.";
+            }
+            if (stockQuantity != null && stockQuantity < 0) {
+                stockError = "Stock quantity must be a whole number between 0 and 2147483647.";
+            }
+            if (stockError != null) {
+                throw new IllegalArgumentException(stockError);
             }
 
             ProductService.validateHardware(ramGb, storageGb);
@@ -232,6 +250,13 @@ public class ProductMediaViewController {
             submitted.setPrice(price);
             submitted.setStockQuantity(stockQuantity);
             redirectAttributes.addFlashAttribute("product", submitted);
+            if (stockError != null) {
+                redirectAttributes.addFlashAttribute("stockQuantityDraft", submittedStockQuantity);
+                var errors = new BeanPropertyBindingResult(submitted, "product");
+                errors.addError(new FieldError("product", "stockQuantity", submittedStockQuantity,
+                        true, null, null, stockError));
+                redirectAttributes.addFlashAttribute(BindingResult.MODEL_KEY_PREFIX + "product", errors);
+            }
             redirectAttributes.addFlashAttribute("externalImageUrl", externalImageUrl);
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
