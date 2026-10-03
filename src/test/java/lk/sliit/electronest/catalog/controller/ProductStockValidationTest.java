@@ -106,8 +106,9 @@ class ProductStockValidationTest {
                 .andExpect(view().name("catalog/vendor-product-form"))
                 .andExpect(model().attributeHasFieldErrors("product", "stockQuantity"))
                 .andExpect(content().string(containsString("https://example.com/submitted.png")))
-                .andExpect(content().string(containsString("reselect any image files")))
                 .andReturn().getResponse().getContentAsString();
+        assertFalse(html.contains("Re-select your image files"));
+        assertFalse(result.getFlashMap().containsKey("errorMessage"));
         assertInputAttribute(html, "stockQuantity", "value", stock);
         assertInputAttribute(html, "stockQuantity", "max", "2147483647");
         assertInputAttribute(html, "stockQuantity", "aria-invalid", "true");

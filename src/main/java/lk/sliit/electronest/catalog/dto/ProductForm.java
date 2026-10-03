@@ -47,4 +47,8 @@ public class ProductForm {
     private Integer stockQuantity;
 
     private String imageUrl;
+
+    private String externalImageUrl;
+
+    private java.util.List<String> removeImages = java.util.List.of();
 }

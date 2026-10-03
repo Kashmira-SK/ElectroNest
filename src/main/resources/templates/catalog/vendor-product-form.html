@@ -60,6 +60,10 @@
               method="post"
               enctype="multipart/form-data">
 
+            <div class="en-alert en-alert-error" role="alert" th:if="${#fields.hasGlobalErrors()}">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+
             <input th:if="${product.id != null}"
                    type="hidden"
                    name="id"
@@ -75,7 +79,9 @@
                            minlength="2"
                            maxlength="150"
                            required
-                           placeholder="MacBook Air M4">
+                           placeholder="MacBook Air M4" th:attr="aria-invalid=${#fields.hasErrors('name')},aria-describedby=${#fields.hasErrors('name') ? 'nameError' : null}">
+                    <p id="nameError" class="en-field-error"
+                       th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
                 </div>
 
                 <div class="en-field">
@@ -87,7 +93,9 @@
                            list="brandOptions"
                            autocomplete="off"
                            required
-                           placeholder="Choose or type a brand">
+                           placeholder="Choose or type a brand" th:attr="aria-invalid=${#fields.hasErrors('brand')},aria-describedby=${#fields.hasErrors('brand') ? 'brandError' : null}">
+                    <p id="brandError" class="en-field-error"
+                       th:if="${#fields.hasErrors('brand')}" th:errors="*{brand}"></p>
 
                     <small class="en-field-hint">
                         Pick a suggestion or type your own brand.
@@ -104,7 +112,9 @@
                            list="categoryOptions"
                            autocomplete="off"
                            required
-                           placeholder="Choose or type a category">
+                           placeholder="Choose or type a category" th:attr="aria-invalid=${#fields.hasErrors('category')},aria-describedby=${#fields.hasErrors('category') ? 'categoryError' : null}">
+                    <p id="categoryError" class="en-field-error"
+                       th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></p>
 
                     <small class="en-field-hint">
                         Pick a suggestion or type your own category.
@@ -114,12 +124,20 @@
 
                 <div class="en-field">
                     <label for="ramGb">RAM (GB, optional)</label>
-                    <input type="number" th:field="*{ramGb}" min="1" max="4096" step="1" placeholder="e.g. 16">
+                    <input th:type="${#fields.hasErrors('ramGb') ? 'text' : 'number'}"
+                           id="ramGb" name="ramGb" inputmode="numeric"
+                           th:value="${productFieldValues != null ? productFieldValues['ramGb'] : product.ramGb}" min="1" max="4096" step="1" placeholder="e.g. 16" th:attr="aria-invalid=${#fields.hasErrors('ramGb')},aria-describedby=${#fields.hasErrors('ramGb') ? 'ramGbError' : null}">
+                    <p id="ramGbError" class="en-field-error"
+                       th:if="${#fields.hasErrors('ramGb')}" th:errors="*{ramGb}"></p>
                     <small class="en-field-hint">Leave blank if RAM does not apply.</small>
                 </div>
                 <div class="en-field">
                     <label for="storageGb">Storage (GB, optional)</label>
-                    <input type="number" th:field="*{storageGb}" min="1" max="1048576" step="1" placeholder="e.g. 512">
+                    <input th:type="${#fields.hasErrors('storageGb') ? 'text' : 'number'}"
+                           id="storageGb" name="storageGb" inputmode="numeric"
+                           th:value="${productFieldValues != null ? productFieldValues['storageGb'] : product.storageGb}" min="1" max="1048576" step="1" placeholder="e.g. 512" th:attr="aria-invalid=${#fields.hasErrors('storageGb')},aria-describedby=${#fields.hasErrors('storageGb') ? 'storageGbError' : null}">
+                    <p id="storageGbError" class="en-field-error"
+                       th:if="${#fields.hasErrors('storageGb')}" th:errors="*{storageGb}"></p>
                     <small class="en-field-hint">Use GB (1 TB = 1024 GB), or leave blank.</small>
                 </div>
 
@@ -130,8 +148,10 @@
                     <textarea th:field="*{description}"
                               maxlength="1000"
                               rows="6"
-                              placeholder="Describe the product, condition and important specifications.">
+                              placeholder="Describe the product, condition and important specifications." th:attr="aria-invalid=${#fields.hasErrors('description')},aria-describedby=${#fields.hasErrors('description') ? 'descriptionError' : null}">
                     </textarea>
+                    <p id="descriptionError" class="en-field-error"
+                       th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></p>
 
                 </div>
 
@@ -139,11 +159,14 @@
 
                     <label for="price">Price (Rs.)</label>
 
-                    <input type="number"
-                           th:field="*{price}"
+                    <input th:type="${#fields.hasErrors('price') ? 'text' : 'number'}"
+                           id="price" name="price" inputmode="decimal"
+                           th:value="${productFieldValues != null ? productFieldValues['price'] : product.price}"
                            min="0.01"
                            step="0.01"
-                           required>
+                           required th:attr="aria-invalid=${#fields.hasErrors('price')},aria-describedby=${#fields.hasErrors('price') ? 'priceError' : null}">
+                    <p id="priceError" class="en-field-error"
+                       th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></p>
 
                 </div>
 
@@ -151,10 +174,9 @@
 
                     <label for="stockQuantity">Stock quantity</label>
 
-                    <input type="number"
-                           id="stockQuantity"
-                           name="stockQuantity"
-                           th:value="${stockQuantityDraft != null ? stockQuantityDraft : product.stockQuantity}"
+                    <input th:type="${#fields.hasErrors('stockQuantity') ? 'text' : 'number'}"
+                           id="stockQuantity" name="stockQuantity" inputmode="numeric"
+                           th:value="${productFieldValues != null ? productFieldValues['stockQuantity'] : product.stockQuantity}"
                            min="0"
                            max="2147483647"
                            step="1"
@@ -192,8 +214,15 @@
                            type="file"
                            name="images"
                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                           multiple>
+                           multiple aria-describedby="productImagesError productImagesReselect"
+                           th:attr="aria-invalid=${imageValidationError != null}">
+                    <p id="productImagesError" class="en-field-error"
+                       th:if="${imageValidationError}" th:text="${imageValidationError}"></p>
+                    <p id="productImagesReselect" class="en-field-hint" th:if="${reselectProductImages}">
+                        Re-select your image files before retrying. Your other entered values were kept.
+                    </p>
 
+                    <p id="productImagesClientError" class="en-field-error" role="alert" hidden></p>
                     <div id="imagePreview"
                          class="en-product-upload-preview">
                     </div>
@@ -204,7 +233,8 @@
                                 <span th:text="${image.first ? 'Current thumbnail' : 'Current image ' + (image.index + 1)}"></span>
                             </div>
                             <label class="en-product-image-remove">
-                                <input type="checkbox" name="removeImages" th:value="${url}">
+                                <input type="checkbox" name="removeImages" th:value="${url}"
+                                       th:checked="${product.removeImages != null and #lists.contains(product.removeImages, url)}">
                                 Remove on save
                             </label>
                         </div>
@@ -243,9 +273,12 @@
 
                     <input type="url"
                            id="externalImageUrl" name="externalImageUrl"
-                           th:value="${externalImageUrl}"
+                           th:field="*{externalImageUrl}"
                            maxlength="1000"
-                           placeholder="https://...">
+                           placeholder="https://..."
+                           th:attr="aria-invalid=${#fields.hasErrors('externalImageUrl')},aria-describedby=${#fields.hasErrors('externalImageUrl') ? 'externalImageUrlError' : null}">
+                    <p id="externalImageUrlError" class="en-field-error"
+                       th:if="${#fields.hasErrors('externalImageUrl')}" th:errors="*{externalImageUrl}"></p>
 
                     <small class="en-field-hint">
                         Optional HTTP/HTTPS image. Without uploads, this becomes the thumbnail and keeps other gallery images. Limit: 8 total.
@@ -331,6 +364,7 @@ const label =
 let previewUrls = [];
 
 images.addEventListener('change', () => {
+    document.getElementById('productImagesClientError').hidden = true;
     previewUrls.forEach(url => URL.revokeObjectURL(url));
     previewUrls = [];
 
@@ -340,7 +374,9 @@ images.addEventListener('change', () => {
         Array.from(images.files);
 
     if (files.length > 8) {
-        alert('You can upload up to 8 images.');
+        const error = document.getElementById('productImagesClientError');
+        error.textContent = 'You can upload up to 8 product images.';
+        error.hidden = false;
 
         images.value = '';
 
