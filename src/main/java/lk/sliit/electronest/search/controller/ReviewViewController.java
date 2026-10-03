@@ -39,10 +39,40 @@ public class ReviewViewController {
                     "Your verified-purchase review has been published."
             );
         } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            String photoError = photoError(ex, photo);
+            if (photoError != null) {
+                redirectAttributes.addFlashAttribute("reviewDraftRating", rating);
+                redirectAttributes.addFlashAttribute("reviewDraftText", reviewText);
+                redirectAttributes.addFlashAttribute("reviewPhotoError", photoError);
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", reviewError(ex));
+            }
         }
 
         return "redirect:/products/" + productId;
+    }
+
+    private String photoError(RuntimeException ex, MultipartFile photo) {
+        if (!(ex instanceof IllegalArgumentException) || photo == null || photo.isEmpty()) return null;
+        // Only the existing storage service's known photo failures belong beside the file input.
+        return switch (ex.getMessage() == null ? "" : ex.getMessage()) {
+            case "Review photo is empty", "Review photo must be 8 MB or smaller",
+                 "Review photos must be JPG, JPEG, PNG or WEBP with a matching content type",
+                 "Review photo contents do not match the selected image format" -> ex.getMessage();
+            case "Could not read the review photo. Select the file again.",
+                 "Could not store the review photo. Select the file again." ->
+                    "The review photo could not be uploaded. Please try again.";
+            default -> null;
+        };
+    }
+
+    private String reviewError(RuntimeException ex) {
+        return switch (ex.getMessage() == null ? "" : ex.getMessage()) {
+            case "Only customers can create reviews", "Product not found", "Review details are required",
+                 "You have already reviewed this product", "You can review this product after a delivered purchase",
+                 "Rating must be between 1 and 5", "Review text cannot exceed 2000 characters" -> ex.getMessage();
+            default -> "Could not publish your review. Please try again.";
+        };
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")

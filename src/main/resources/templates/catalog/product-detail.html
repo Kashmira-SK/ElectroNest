@@ -231,22 +231,27 @@
 
             <label for="rating">Rating</label>
             <select id="rating" name="rating" required>
-                <option value="5">5 — Excellent</option>
-                <option value="4">4 — Good</option>
-                <option value="3">3 — Average</option>
-                <option value="2">2 — Poor</option>
-                <option value="1">1 — Very poor</option>
+                <option value="5" th:selected="${reviewDraftRating == null or reviewDraftRating == 5}">5 — Excellent</option>
+                <option value="4" th:selected="${reviewDraftRating == 4}">4 — Good</option>
+                <option value="3" th:selected="${reviewDraftRating == 3}">3 — Average</option>
+                <option value="2" th:selected="${reviewDraftRating == 2}">2 — Poor</option>
+                <option value="1" th:selected="${reviewDraftRating == 1}">1 — Very poor</option>
             </select>
 
             <label for="reviewText">Review</label>
             <textarea id="reviewText"
                       name="reviewText"
                       maxlength="2000"
-                      rows="5"></textarea>
+                      rows="5" th:text="${reviewDraftText}"></textarea>
 
             <label for="reviewPhoto">Photo (optional)</label>
-            <input id="reviewPhoto" name="photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-            <small class="en-muted">JPG, JPEG, PNG or WEBP, up to 8 MB.</small>
+            <input id="reviewPhoto" name="photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                   th:attr="aria-invalid=${reviewPhotoError != null},aria-describedby=${reviewPhotoError != null ? 'reviewPhotoHint reviewPhotoError reviewPhotoReselect' : 'reviewPhotoHint'}">
+            <small id="reviewPhotoHint" class="en-muted">JPG, JPEG, PNG or WEBP, up to 8 MB.</small>
+            <p id="reviewPhotoError" class="en-field-error" th:if="${reviewPhotoError}" th:text="${reviewPhotoError}"></p>
+            <small id="reviewPhotoReselect" class="en-muted" th:if="${reviewPhotoError}">
+                Select the photo again before retrying; browsers cannot restore file selections.
+            </small>
 
             <button type="submit" class="en-btn en-btn-primary">
                 Publish review
