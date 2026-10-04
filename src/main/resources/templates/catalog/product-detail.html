@@ -13,6 +13,7 @@
           th:href="@{/css/electronest.css}">
     <link rel="stylesheet" th:href="@{/css/product-detail.css}">
     <script th:src="@{/js/cart-add.js}" defer></script>
+    <script th:src="@{/js/product-quantity.js}" defer></script>
 </head>
 <body>
 
@@ -145,13 +146,20 @@
                        name="productId"
                        th:value="${product.id}">
 
-                <input type="number"
-                       name="quantity"
-                       value="1"
-                       min="1"
-                       th:max="${product.stockQuantity}"
-                       th:disabled="${product.outOfStock
-                            or product.stockQuantity <= 0}">
+                <div class="en-field en-product-quantity">
+                    <label for="productQuantity">Quantity</label>
+                    <div class="en-quantity-control" data-product-quantity>
+                        <button type="button" data-quantity-step="-1"
+                                aria-label="Decrease quantity" disabled>−</button>
+                        <input id="productQuantity" type="number"
+                               name="quantity" value="1" min="1"
+                               th:max="${product.stockQuantity}"
+                               th:disabled="${product.outOfStock or product.stockQuantity <= 0}">
+                        <button type="button" data-quantity-step="1"
+                                aria-label="Increase quantity"
+                                th:disabled="${product.outOfStock or product.stockQuantity <= 1}">+</button>
+                    </div>
+                </div>
 
                 <button type="submit"
                         class="en-btn en-btn-primary"
@@ -165,7 +173,14 @@
             <div th:if="${loggedIn and (accountSuspended
                     or currentUser.role.name() != 'CUSTOMER')}"
                  class="en-product-detail-cart">
-                <input type="number" value="1" disabled aria-label="Quantity unavailable">
+                <div class="en-field en-product-quantity">
+                    <label for="unavailableQuantity">Quantity</label>
+                    <div class="en-quantity-control">
+                        <button type="button" aria-label="Decrease quantity" disabled>−</button>
+                        <input id="unavailableQuantity" type="number" value="1" disabled>
+                        <button type="button" aria-label="Increase quantity" disabled>+</button>
+                    </div>
+                </div>
                 <button type="button" class="en-btn en-btn-primary" disabled
                         th:text="${accountSuspended ? 'Account suspended' : 'Customer accounts only'}">
                     Unavailable
