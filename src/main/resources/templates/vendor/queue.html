@@ -67,7 +67,7 @@
                     <label th:for="${'reason-' + v.id}">Reason for rejection</label>
                     <textarea th:id="${'reason-' + v.id}" name="reason" rows="4" maxlength="500" required placeholder="Explain why this application cannot be approved."></textarea>
                     <p class="en-muted">The customer will see this reason. No seller access is granted.</p>
-                    <button type="submit" class="en-btn en-btn-reject en-btn-auto"
+                    <button type="submit" class="en-btn en-btn-danger en-btn-auto"
                             onclick="return confirm('Reject this application?')">Reject application</button>
                 </form>
             </details>

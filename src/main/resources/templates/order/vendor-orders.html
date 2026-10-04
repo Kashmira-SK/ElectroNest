@@ -166,7 +166,7 @@
                   th:action="@{/vendor/orders/{id}/status(id=${order.id})}" method="post"
                   onsubmit="return confirm('Cancel this entire order? Any paid amount will be marked refunded and reserved stock released.')">
                 <input type="hidden" name="status" value="CANCELLED">
-                <button type="submit" class="en-btn en-btn-reject"
+                <button type="submit" class="en-btn en-btn-danger"
                         th:text="${order.cancellationRequested ? 'Accept cancellation request' : 'Cancel order'}">Cancel order</button>
             </form>
             <p class="en-muted">Status changes apply only to your items. Mixed-vendor cancellations require administrator review.</p>

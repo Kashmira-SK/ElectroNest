@@ -37,12 +37,6 @@
 .en-product-detail-shell :is(.en-detail-in-stock, .en-detail-out-stock) { font-size: 12px; }
 .en-product-detail-shell .en-product-detail-cart { padding-bottom: 8px; align-items: end; }
 .en-product-detail-shell .en-product-quantity { margin-bottom: 0; flex-shrink: 0; }
-.en-product-detail-shell .en-btn-primary {
-  min-height: 48px;
-  border-radius: 8px;
-  transition: background 180ms ease, box-shadow 180ms ease;
-}
-.en-product-detail-shell .en-btn-primary:not(:disabled):hover { box-shadow: 0 5px 16px rgb(40 100 240 / 18%); }
 .en-product-detail-shell .en-product-detail-info > .en-btn { margin-top: 24px; }
 .en-product-detail-shell :is(button, input):disabled { opacity: .5; cursor: not-allowed; }
 .en-product-detail-shell :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--en-blue); outline-offset: 4px; }

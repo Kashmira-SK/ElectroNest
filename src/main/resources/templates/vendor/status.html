@@ -60,20 +60,22 @@
                 Your vendor account has been approved.
             </div>
 
-            <a th:href="@{/vendor/profile}"
-               class="en-btn en-btn-primary">
-                Edit vendor profile
-            </a>
+            <div class="en-actions">
+                <a th:href="@{/vendor/profile}"
+                   class="en-btn en-btn-primary">
+                    Edit vendor profile
+                </a>
 
-            <a th:href="@{/vendor/products}"
-               class="en-btn">
-                Manage products
-            </a>
+                <a th:href="@{/vendor/products}"
+                   class="en-btn en-btn-secondary">
+                    Manage products
+                </a>
 
-            <a th:href="@{/vendor/orders}"
-               class="en-btn">
-                View vendor orders
-            </a>
+                <a th:href="@{/vendor/orders}"
+                   class="en-btn en-btn-secondary">
+                    View vendor orders
+                </a>
+            </div>
         </div>
 
         <div th:if="${vendor.status.name() == 'INFO_REQUESTED'}">

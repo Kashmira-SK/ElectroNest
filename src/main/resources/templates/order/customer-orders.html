@@ -170,7 +170,7 @@
                             <img class="en-review-photo" alt="Your review photo" loading="lazy" hidden>
                             <div class="en-order-review-actions">
                                 <button type="button" class="en-btn en-btn-secondary en-review-edit">Edit review</button>
-                                <button type="button" class="en-btn en-btn-secondary en-review-delete">Delete review</button>
+                                <button type="button" class="en-btn en-btn-danger en-review-delete">Delete review</button>
                             </div>
                         </div>
 
@@ -247,7 +247,7 @@
                 <form th:action="@{/orders/{id}/cancel(id=${order.id})}"
                       method="post"
                       onsubmit="return confirm('Cancel this order or request cancellation?')">
-                    <button type="submit" class="en-btn en-btn-reject en-btn-sm"
+                    <button type="submit" class="en-btn en-btn-danger en-btn-sm"
                             th:text="${order.status.name() == 'PENDING' ? 'Cancel order' : 'Request cancellation'}">
                         Cancel order
                     </button>

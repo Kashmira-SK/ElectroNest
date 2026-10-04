@@ -25,7 +25,7 @@
     </form>
 
     <p>
-        <a th:href="@{/vendor/queue}" class="en-btn">
+        <a th:href="@{/vendor/queue}" class="en-btn en-btn-secondary">
             Verification queue
         </a>
     </p>
@@ -90,7 +90,7 @@
                   th:action="@{/vendor/manage/{id}/suspend(id=${v.id})}"
                   onsubmit="return confirm('Suspend this seller and disable their seller access?')"
                   method="post">
-                <button class="en-btn en-btn-reject en-btn-sm"
+                <button class="en-btn en-btn-danger en-btn-sm"
                         type="submit">
                     Suspend seller
                 </button>
@@ -107,7 +107,7 @@
 
             <form th:action="@{/vendor/manage/{id}/remove(id=${v.id})}"
                   method="post">
-                <button class="en-btn en-btn-reject en-btn-sm"
+                <button class="en-btn en-btn-danger en-btn-sm"
                         type="submit"
                         onclick="return confirm('Remove this seller profile? The user account stays intact and seller access is revoked. Sellers with product or order records must be suspended instead.')">
                     Remove profile
