@@ -14,7 +14,8 @@
         <p class="en-muted" style="margin-bottom: 20px;">
             Reg. no. <span th:text="${vendor.registrationNumber}"></span>
         </p>
-        <span class="en-status en-status-pending" th:text="${vendor.status}">PENDING</span>
+        <span class="en-status" th:classappend="${@statusDisplay.cssClass(vendor.status)}"
+              th:text="${@statusDisplay.label(vendor.status)}">PENDING</span>
         <p class="en-muted" style="margin-top: 20px;">An admin will review your details shortly.</p>
         <a th:href="@{/vendor/status}" class="en-btn en-btn-primary">View application status</a>
     </div>

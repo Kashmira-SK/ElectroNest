@@ -39,7 +39,8 @@
 
         <p class="en-meta">
             <strong>Status:</strong>
-            <span class="en-status" th:text="${vendor.status}"></span>
+            <span class="en-status" th:classappend="${@statusDisplay.cssClass(vendor.status)}"
+                      th:text="${@statusDisplay.label(vendor.status)}"></span>
         </p>
 
         <div class="en-alert"

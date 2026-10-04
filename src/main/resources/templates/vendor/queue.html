@@ -24,7 +24,7 @@
 
     <div class="en-card en-vendor-row" th:each="v : ${vendors}">
         <h3 th:text="${v.businessName}">Business Name</h3>
-        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Inspect applicant account</a> · <span th:text="${v.user.status}">ACTIVE</span></p>
+        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Inspect applicant account</a> · <span class="en-status" th:classappend="${@statusDisplay.cssClass(v.user.status)}" th:text="${@statusDisplay.label(v.user.status)}">Active</span></p>
         <p class="en-meta"><strong>Applicant</strong> <span th:text="${v.user.fullName}"></span></p>
         <p class="en-meta"><strong>Email</strong> <span th:text="${v.user.email}"></span></p>
         <p class="en-meta"><strong>Reg. no.</strong> <span th:text="${v.registrationNumber}"></span></p>

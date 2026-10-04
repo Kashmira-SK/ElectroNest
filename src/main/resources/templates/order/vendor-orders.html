@@ -58,7 +58,8 @@
                 </div>
 
                 <span class="en-status"
-                      th:text="${view.displayStatus}">
+                      th:classappend="${@statusDisplay.cssClass(view.displayStatus)}"
+                      th:text="${@statusDisplay.label(view.displayStatus)}">
                     PENDING
                 </span>
             </div>
@@ -66,8 +67,9 @@
             <div class="en-order-meta">
                 <div>
                     <strong>Payment</strong>
-                    <span th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : order.paymentStatus}">
-                        PENDING_PAYMENT
+                    <span class="en-status" th:classappend="${@statusDisplay.cssClass(order.paymentStatus)}"
+                          th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : @statusDisplay.label(order.paymentStatus)}">
+                        Pending Payment
                     </span>
                 </div>
 

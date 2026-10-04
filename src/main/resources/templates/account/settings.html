@@ -421,7 +421,8 @@
                         <p>
                             Application status:
                             <span class="en-status"
-                                  th:text="${vendor.status}">
+                                  th:classappend="${@statusDisplay.cssClass(vendor.status)}"
+                                  th:text="${@statusDisplay.label(vendor.status)}">
                             </span>
                         </p>
 

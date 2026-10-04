@@ -128,26 +128,41 @@ h3 { font-size: 22px; margin-bottom: 20px; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  max-width: 100%;
+  width: fit-content;
+  vertical-align: middle;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+  overflow-wrap: anywhere;
   padding: 4px 10px;
   border-radius: 100px;
+  background: #eef0f3;
+  color: var(--ink-soft);
 }
 
 .en-status::before {
   content: '';
   width: 6px;
   height: 6px;
+  flex: 0 0 6px;
   border-radius: 50%;
   background: currentColor;
 }
 
-.en-status-pending { background: var(--copper-soft); color: var(--copper); }
+.en-status-warning,
+.en-status-pending { background: var(--copper-soft); color: #80500c; }
+.en-status-success,
+.en-status-active,
 .en-status-approved { background: var(--green-soft); color: var(--green); }
+.en-status-danger,
+.en-status-suspended,
 .en-status-rejected { background: var(--red-soft); color: var(--red); }
+.en-status-neutral,
+.en-status-deactivated { background: #eef0f3; color: var(--ink-soft); }
 
 .en-vendor-row {
   border-left: 3px solid var(--copper);
@@ -665,17 +680,6 @@ a:hover {
   background: var(--card);
 }
 
-.en-status-active {
-  background: var(--green-soft);
-  color: var(--green);
-}
-
-.en-status-deactivated,
-.en-status-suspended {
-  background: var(--red-soft);
-  color: var(--red);
-}
-
 @media (max-width: 850px) {
   .en-stat-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -847,7 +851,7 @@ a:hover {
   font-size: 14px;
 }
 
-.en-order-meta span {
+.en-order-meta span:not(.en-status) {
   color: var(--ink-soft);
 }
 
@@ -3196,11 +3200,6 @@ body {
   letter-spacing: .06em;
 }
 
-.en-vendor-page .en-status {
-  width: fit-content;
-  border-radius: 2px;
-}
-
 .en-vendor-page .en-actions {
   padding-top: 5px;
 }
@@ -3768,7 +3767,7 @@ body {
   gap: 3px;
 }
 
-.en-order-item span {
+.en-order-item span:not(.en-status) {
   color: var(--en-muted);
 }
 
@@ -4181,15 +4180,6 @@ body > .en-navbar .en-admin-nav a:hover::after {
 
 .en-shell > h1 {
   letter-spacing: -.04em;
-}
-
-/* keep semantic colours semantic */
-.en-status-approved {
-  color: #2f7a4a;
-}
-
-.en-status-approved {
-  background: #e7f0ea;
 }
 
 /* Cart: summary always starts at the top-right */
