@@ -34,7 +34,7 @@
             Your account is suspended. You can browse products, but purchasing and other account-changing actions are disabled.
         </div>
 
-        <div class="en-alert"
+        <div class="en-alert en-alert-info"
              th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR'}">
             Vendor accounts cannot place customer orders. Purchase controls are disabled.
         </div>

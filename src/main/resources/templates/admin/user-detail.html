@@ -34,7 +34,7 @@
          th:if="${errorMessage}"
          th:text="${errorMessage}"></div>
 
-    <div class="en-alert"
+    <div class="en-alert en-alert-info"
          th:if="${targetUser.id == currentUser.id}">
         Your own administrator role and account status cannot be changed from this session.
     </div>
