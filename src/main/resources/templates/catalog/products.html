@@ -34,7 +34,7 @@
             Your account is suspended. You can browse products, but purchasing and other account-changing actions are disabled.
         </div>
 
-        <div class="en-alert"
+        <div class="en-alert en-alert-info"
              th:if="${loggedIn and !accountSuspended and currentUser.role.name() == 'VENDOR'}">
             Vendor accounts cannot place customer orders. Purchase controls are disabled.
         </div>
@@ -116,7 +116,7 @@
             </label>
 
             <div class="en-filter-actions">
-                <button id="applyFilters" type="button" class="en-btn en-btn-electric">Apply</button>
+                <button id="applyFilters" type="button" class="en-btn en-btn-primary en-btn-auto">Apply</button>
                 <button id="resetFilters" type="button" class="en-filter-reset">Reset</button>
             </div>
 

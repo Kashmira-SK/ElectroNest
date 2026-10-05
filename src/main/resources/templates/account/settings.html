@@ -210,7 +210,7 @@
                     <form th:action="@{/settings/address/delete}"
                           method="post">
                         <button type="submit"
-                                class="en-settings-remove"
+                                class="en-btn en-btn-danger en-btn-sm"
                                 onclick="return confirm('Remove this saved address?')">
                             Remove
                         </button>
@@ -341,7 +341,7 @@
                     </div>
                     <form th:action="@{/settings/cards/{id}/remove(id=${card.id})}" method="post"
                           onsubmit="return confirm('Remove this saved card from your account?')">
-                        <button type="submit" class="en-settings-remove">Remove</button>
+                        <button type="submit" class="en-btn en-btn-danger en-btn-sm">Remove</button>
                     </form>
                 </div>
                 <form id="cardSettingsForm" class="en-settings-form" th:action="@{/settings/cards}" method="post" hidden>
@@ -421,7 +421,8 @@
                         <p>
                             Application status:
                             <span class="en-status"
-                                  th:text="${vendor.status}">
+                                  th:classappend="${@statusDisplay.cssClass(vendor.status)}"
+                                  th:text="${@statusDisplay.label(vendor.status)}">
                             </span>
                         </p>
 

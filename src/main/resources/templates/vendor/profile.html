@@ -13,6 +13,8 @@
 
 <body>
 
+<header th:replace="~{fragments/site-header :: siteHeader('vendor-profile')}"></header>
+
 <main class="en-business-shell">
 
     <div class="en-business-heading">
@@ -42,7 +44,7 @@
 
     </div>
 
-    <div class="en-alert en-alert-error"
+    <div class="en-alert en-alert-warning"
          th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
 
         <strong>Administrator requested more information</strong>

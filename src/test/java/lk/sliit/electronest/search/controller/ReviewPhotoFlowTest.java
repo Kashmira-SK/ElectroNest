@@ -16,6 +16,9 @@ import lk.sliit.electronest.vendor.repository.VendorRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -168,8 +171,78 @@ class ReviewPhotoFlowTest {
         mvc.perform(upload(api(), customer, invalid)).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("JPG")));
         mvc.perform(upload("/products/" + product.getId() + "/reviews", customer, invalid))
-                .andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("errorMessage"));
+                .andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("reviewPhotoError"));
         assertTrue(reviews.findByCustomerIdAndProductId(customer.getId(), product.getId()).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"type", "contents", "size", "unreadable"})
+    void productPagePhotoFailureKeepsDraftAndShowsInlineError(String failure) throws Exception {
+        MockMultipartFile invalid = switch (failure) {
+            case "type" -> new MockMultipartFile("photo", "bad.svg", "image/svg+xml", "<svg/>".getBytes());
+            case "contents" -> new MockMultipartFile("photo", "bad.png", "image/png", "not an image".getBytes());
+            case "size" -> new MockMultipartFile("photo", "large.png", "image/png", photo().getBytes()) {
+                @Override public long getSize() { return 8L * 1024 * 1024 + 1; }
+            };
+            default -> new MockMultipartFile("photo", "photo.png", "image/png", photo().getBytes()) {
+                @Override public java.io.InputStream getInputStream() throws java.io.IOException {
+                    throw new java.io.IOException("internal storage detail");
+                }
+            };
+        };
+        String expected = switch (failure) {
+            case "type" -> "Review photos must be JPG, JPEG, PNG or WEBP with a matching content type";
+            case "contents" -> "Review photo contents do not match the selected image format";
+            case "size" -> "Review photo must be 8 MB or smaller";
+            default -> "The review photo could not be uploaded. Please try again.";
+        };
+        var session = session(customer);
+        String draft = "My draft & details\n<keep this text>";
+        var submitted = mvc.perform(multipart("/products/" + product.getId() + "/reviews")
+                        .file(invalid).session(session).param("_csrf", csrf(session))
+                        .param("rating", "2").param("reviewText", draft))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("reviewDraftRating", 2))
+                .andExpect(flash().attribute("reviewDraftText", draft))
+                .andExpect(flash().attribute("reviewPhotoError", expected)).andReturn();
+        assertFalse(submitted.getFlashMap().containsKey("errorMessage"));
+        String html = mvc.perform(get(submitted.getResponse().getRedirectedUrl()).session(session)
+                        .flashAttrs(submitted.getFlashMap()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(Pattern.compile("<option[^>]*value=\"2\"[^>]*selected=\"selected\"").matcher(html).find());
+        assertTrue(html.contains("My draft &amp; details\n&lt;keep this text&gt;"));
+        assertTrue(Pattern.compile("<p[^>]*id=\"reviewPhotoError\"[^>]*>" + Pattern.quote(expected) + "</p>").matcher(html).find());
+        assertTrue(html.contains("aria-describedby=\"reviewPhotoHint reviewPhotoError reviewPhotoReselect\""));
+        assertTrue(html.contains("Select the photo again before retrying; browsers cannot restore file selections."));
+        assertEquals(1, html.split(Pattern.quote(expected), -1).length - 1);
+        assertFalse(html.contains("internal storage detail"));
+        assertFalse(html.contains("IOException"));
+        assertTrue(reviews.findByCustomerIdAndProductId(customer.getId(), product.getId()).isEmpty());
+    }
+
+    @Test void productPageReviewWithoutPhotoStillPublishes() throws Exception {
+        mvc.perform(upload("/products/" + product.getId() + "/reviews", customer, null))
+                .andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("successMessage"));
+        assertEquals(5, review().getRating());
+        assertEquals("Great product", review().getReviewText());
+        assertNull(review().getPhotoPath());
+    }
+
+    @Test void productPageEligibilityFailureRemainsFormLevel() throws Exception {
+        var result = mvc.perform(upload("/products/" + product.getId() + "/reviews", user(Role.CUSTOMER), photo()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("errorMessage", "You can review this product after a delivered purchase")).andReturn();
+        assertFalse(result.getFlashMap().containsKey("reviewPhotoError"));
+        assertFalse(result.getFlashMap().containsKey("reviewDraftRating"));
+        assertEquals(0, reviews.count());
+    }
+
+    @Test void productPageRoleAndCsrfChecksRemainEnforced() throws Exception {
+        String url = "/products/" + product.getId() + "/reviews";
+        mvc.perform(upload(url, seller, photo())).andExpect(redirectedUrl("/access-denied"));
+        mvc.perform(multipart(url).file(photo()).session(session(customer)).param("rating", "5"))
+                .andExpect(redirectedUrl("/access-denied"));
+        assertEquals(0, reviews.count());
     }
 
     @Test void securityRoleOwnershipAndCsrfRemainEnforced() throws Exception {

@@ -1,6 +1,8 @@
 package lk.sliit.electronest.catalog.controller;
 
 import lk.sliit.electronest.catalog.model.Product;
+import lk.sliit.electronest.catalog.dto.ProductForm;
+import org.springframework.validation.BeanPropertyBindingResult;
 import lk.sliit.electronest.catalog.service.ProductService;
 import lk.sliit.electronest.catalog.service.ProductImageStorageService;
 import lk.sliit.electronest.common.model.*;
@@ -58,8 +60,9 @@ class SellerCatalogTest {
         when(products.getProductById(1L)).thenReturn(product);
         when(products.createProduct(product)).thenReturn(product);
         var redirect = new RedirectAttributesModelMap();
+        ProductForm form = form(1L, "Product", BigDecimal.TEN);
         String result = new ProductMediaViewController(products, vendors, storage).saveProduct(
-                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", null, null, null, null, principal, redirect);
+                form, new BeanPropertyBindingResult(form, "product"), null, principal, redirect);
         assertEquals("redirect:/vendor/products", result);
         assertEquals(List.of("/images/first.jpg", "/images/second.jpg"), product.getImageUrls());
         assertEquals("/images/first.jpg", product.getImageUrl());
@@ -71,9 +74,10 @@ class SellerCatalogTest {
         var principal = seller();
         when(vendors.getVendorForUser(20L)).thenReturn(vendor);
         var redirect = new RedirectAttributesModelMap();
+        ProductForm submitted = form(null, "My listing", BigDecimal.ZERO);
         new ProductMediaViewController(products, vendors, storage).saveProduct(
-                null, "My listing", "Brand", "Category", "Text", BigDecimal.ZERO, 4, "", null, null, null, null, principal, redirect);
-        var form = (lk.sliit.electronest.catalog.dto.ProductForm) redirect.getFlashAttributes().get("product");
+                submitted, new BeanPropertyBindingResult(submitted, "product"), null, principal, redirect);
+        var form = (ProductForm) redirect.getFlashAttributes().get("product");
         assertEquals("My listing", form.getName());
         verifyNoInteractions(products, storage);
     }
@@ -91,9 +95,23 @@ class SellerCatalogTest {
     }
 
     private String save(List<String> removals, org.springframework.web.multipart.MultipartFile[] uploads) {
+        ProductForm form = form(1L, "Product", BigDecimal.TEN);
+        form.setRemoveImages(removals);
         return new ProductMediaViewController(products, vendors, storage).saveProduct(
-                1L, "Product", "Brand", "Category", "Text", BigDecimal.TEN, 4, "", uploads,
-                removals, null, null, new CustomUserDetails(user), new RedirectAttributesModelMap());
+                form, new BeanPropertyBindingResult(form, "product"), uploads,
+                new CustomUserDetails(user), new RedirectAttributesModelMap());
+    }
+
+    private ProductForm form(Long id, String name, BigDecimal price) {
+        ProductForm form = new ProductForm();
+        form.setId(id);
+        form.setName(name);
+        form.setBrand("Brand");
+        form.setCategory("Category");
+        form.setDescription("Text");
+        form.setPrice(price);
+        form.setStockQuantity(4);
+        return form;
     }
 
     @Test void removingThumbnailPromotesNextImageAndDeletesOnlyRemovedFileAfterSave() {
@@ -156,6 +174,20 @@ class SellerCatalogTest {
         when(products.createProduct(product)).thenThrow(new IllegalStateException("Save failed"));
         assertEquals("redirect:/vendor/products/1/edit", save(List.of("owned"), null));
         verifyNoInteractions(storage);
+    }
+
+    @Test void unexpectedSaveFailureDoesNotExposeExceptionText() {
+        Product product = editableProduct(List.of("owned"));
+        when(products.createProduct(product)).thenThrow(new IllegalStateException("java.sql.Exception: internal detail"));
+        ProductForm form = form(1L, "Product", BigDecimal.TEN);
+        var redirect = new RedirectAttributesModelMap();
+        new ProductMediaViewController(products, vendors, storage).saveProduct(
+                form, new BeanPropertyBindingResult(form, "product"), null,
+                new CustomUserDetails(user), redirect);
+        var errors = (org.springframework.validation.BindingResult) redirect.getFlashAttributes()
+                .get(org.springframework.validation.BindingResult.MODEL_KEY_PREFIX + "product");
+        assertEquals("Could not save the product. Please try again.", errors.getGlobalError().getDefaultMessage());
+        assertFalse(redirect.getFlashAttributes().containsKey("errorMessage"));
     }
 
     @Test void uploadsStillReplaceGallery() {

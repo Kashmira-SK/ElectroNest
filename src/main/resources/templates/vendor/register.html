@@ -8,19 +8,7 @@
 </head>
 <body>
 
-<header class="en-site-header">
-    <div class="en-navbar">
-        <a th:href="@{/}" class="en-brand en-brand-light">
-            <span class="en-brand-mark"></span>
-            ElectroNest
-        </a>
-
-        <nav class="en-nav-center">
-            <a th:href="@{/products}">Shop</a>
-            <a th:href="@{/settings}">Settings</a>
-        </nav>
-    </div>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('vendor-register')}"></header>
 
 <main class="en-business-shell">
 

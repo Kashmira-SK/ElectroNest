@@ -21,6 +21,7 @@ public class RegisterForm {
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
+    @lk.sliit.electronest.admin.validation.BcryptPasswordLength
     private String password;
 
     @NotBlank(message = "Please confirm your password")

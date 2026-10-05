@@ -59,8 +59,10 @@
 
             <div class="en-field">
                 <label>Password</label>
-                <input type="password" th:field="*{password}" minlength="6" autocomplete="new-password" required>
-                <p class="en-field-error"
+                <input type="password" th:field="*{password}" minlength="6" autocomplete="new-password" required
+                       aria-describedby="passwordHint passwordError">
+                <small id="passwordHint" class="en-field-hint">Use at least 6 characters and no more than 72 UTF-8 bytes. Some characters, such as accented letters and emoji, use more than one byte.</small>
+                <p id="passwordError" class="en-field-error"
                    th:if="${#fields.hasErrors('password')}"
                    th:errors="*{password}"></p>
             </div>

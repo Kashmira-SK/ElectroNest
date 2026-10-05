@@ -210,6 +210,39 @@ class PaymentWorkflowServiceTest {
     }
 
     @Test
+    void intentionalCodCancellationIsNotAFailureAndRestoresStockOnce() {
+        Payment cod = new Payment();
+        cod.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        cod.setPaymentStatus(PaymentStatus.PENDING);
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(cod));
+        paymentService.cancelOrderPayment(order);
+        paymentService.cancelOrderPayment(order);
+        assertEquals(PaymentStatus.CANCELLED, cod.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.CANCELLED, order.getPaymentStatus());
+        verify(productService).restoreStockForOrder(10L, 2);
+    }
+
+    @Test
+    void explicitPaymentFailureRemainsFailed() {
+        Payment pending = new Payment();
+        pending.setOrderId(20L);
+        pending.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        pending.setPaymentStatus(PaymentStatus.PENDING);
+        when(paymentRepository.findOrderId(1L)).thenReturn(Optional.of(20L));
+        when(orderRepository.findForUpdate(20L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(pending));
+        when(paymentRepository.findByOrderId(20L)).thenReturn(List.of(pending));
+        paymentService.updateStatus(1L, PaymentStatus.FAILED);
+        assertEquals(PaymentStatus.FAILED, pending.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.FAILED, order.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.OrderStatus.CANCELLED, order.getStatus());
+        verify(productService).restoreStockForOrder(10L, 2);
+        paymentService.cancelOrderPayment(order);
+        assertEquals(PaymentStatus.FAILED, pending.getPaymentStatus());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.FAILED, order.getPaymentStatus());
+    }
+
+    @Test
     void codDeliveryCollectsCashWithoutDecreasingStockAgain() {
         Payment cod = new Payment();
         cod.setPaymentStatus(PaymentStatus.PENDING);

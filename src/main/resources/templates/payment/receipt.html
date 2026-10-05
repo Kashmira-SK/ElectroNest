@@ -21,7 +21,8 @@
                 <h1>Payment receipt</h1>
             </div>
 
-            <span class="en-status" th:text="${receipt.payment.paymentStatus.name() == 'PENDING' ? 'Cash due on delivery' : receipt.payment.paymentStatus}">
+            <span class="en-status" th:classappend="${@statusDisplay.cssClass(receipt.payment.paymentStatus)}"
+                  th:text="${receipt.payment.paymentStatus.name() == 'PENDING' ? 'Cash due on delivery' : @statusDisplay.label(receipt.payment.paymentStatus)}">
                 Paid
             </span>
 
@@ -52,7 +53,7 @@
 
             <div>
                 <span class="en-muted">Payment method</span>
-                <strong th:text="${receipt.paymentMethod}">
+                <strong th:text="${@statusDisplay.label(receipt.paymentMethod)}">
                     CARD
                 </strong>
             </div>
@@ -138,7 +139,9 @@
                 <strong th:text="'− Rs. ' + ${#numbers.formatDecimal(receipt.discountAmount, 1, 'COMMA', 2, 'POINT')}"></strong>
             </div>
             <div class="en-summary-row en-summary-total">
-                <span>Total paid</span>
+                <span th:text="${receipt.payment.paymentStatus.name() == 'SUCCESSFUL' ? 'Total paid'
+                    : (receipt.payment.paymentStatus.name() == 'PENDING' and receipt.payment.paymentMethod.name() == 'CASH_ON_DELIVERY'
+                        ? 'Amount due' : 'Order total')}">Order total</span>
 
                 <strong th:text="'Rs. '
                     + ${#numbers.formatDecimal(
@@ -163,7 +166,7 @@
 
             <a th:if="${receipt.payment.paymentStatus.name() == 'SUCCESSFUL'}"
                th:href="@{/api/v1/receipts/{id}/download(id=${receipt.id})}"
-               class="en-btn en-btn-primary en-btn-auto">Download receipt</a>
+               class="en-btn en-btn-secondary en-btn-auto">Download receipt</a>
 
             <a th:href="@{/orders}"
                class="en-btn en-btn-primary en-btn-auto">

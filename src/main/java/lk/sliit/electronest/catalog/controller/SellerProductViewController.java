@@ -84,6 +84,7 @@ public class SellerProductViewController {
         }
 
         if (bindingResult.hasErrors()) {
+            model.addAllAttributes(ProductFormFeedback.attributes(form, bindingResult));
             return "catalog/vendor-product-form";
         }
 
@@ -93,7 +94,8 @@ public class SellerProductViewController {
         try {
             productService.createProduct(product);
         } catch (IllegalArgumentException | IllegalStateException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
+            ProductFormFeedback.serviceError(bindingResult, ex);
+            model.addAllAttributes(ProductFormFeedback.attributes(form, bindingResult));
             return "catalog/vendor-product-form";
         }
 
@@ -151,14 +153,16 @@ public class SellerProductViewController {
 
         form.setId(id);
         if (bindingResult.hasErrors()) {
-            return "catalog/vendor-product-form";
+            model.addAllAttributes(ProductFormFeedback.attributes(form, bindingResult));
+            return edit(id, currentUser, model, redirectAttributes);
         }
 
         try {
             productService.updateOwnedProduct(id, toProduct(form), vendor.getId());
         } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
-            return "catalog/vendor-product-form";
+            ProductFormFeedback.serviceError(bindingResult, ex);
+            model.addAllAttributes(ProductFormFeedback.attributes(form, bindingResult));
+            return edit(id, currentUser, model, redirectAttributes);
         }
 
         redirectAttributes.addFlashAttribute(

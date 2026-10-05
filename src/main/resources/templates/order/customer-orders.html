@@ -57,7 +57,8 @@
                 </div>
 
                 <span class="en-status"
-                      th:text="${order.status}">
+                      th:classappend="${@statusDisplay.cssClass(order.status)}"
+                      th:text="${@statusDisplay.label(order.status)}">
                     PENDING
                 </span>
             </div>
@@ -81,7 +82,8 @@
                     <div class="en-order-item" th:each="item : ${view.items}">
                         <div>
                             <strong th:text="${item.productName}">Product</strong>
-                            <span class="en-status" th:text="${item.fulfilmentStatus}"></span>
+                            <span class="en-status" th:classappend="${@statusDisplay.cssClass(item.fulfilmentStatus)}"
+                                  th:text="${@statusDisplay.label(item.fulfilmentStatus)}"></span>
                             <span th:text="${'Qty ' + item.quantity + ' × Rs. ' + #numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')}"></span>
                         </div>
                         <strong th:text="${'Rs. ' + #numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">Rs. 0.00</strong>
@@ -170,7 +172,7 @@
                             <img class="en-review-photo" alt="Your review photo" loading="lazy" hidden>
                             <div class="en-order-review-actions">
                                 <button type="button" class="en-btn en-btn-secondary en-review-edit">Edit review</button>
-                                <button type="button" class="en-btn en-btn-secondary en-review-delete">Delete review</button>
+                                <button type="button" class="en-btn en-btn-danger en-review-delete">Delete review</button>
                             </div>
                         </div>
 
@@ -189,8 +191,9 @@
             <div class="en-order-meta">
                 <div>
                     <strong>Payment</strong>
-                    <span th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : order.paymentStatus}">
-                        PENDING_PAYMENT
+                    <span class="en-status" th:classappend="${@statusDisplay.cssClass(order.paymentStatus)}"
+                          th:text="${view.readyForFulfilment and order.paymentStatus.name() == 'PENDING_PAYMENT' ? 'Cash due on delivery' : @statusDisplay.label(order.paymentStatus)}">
+                        Pending Payment
                     </span>
                 </div>
 
@@ -247,14 +250,14 @@
                 <form th:action="@{/orders/{id}/cancel(id=${order.id})}"
                       method="post"
                       onsubmit="return confirm('Cancel this order or request cancellation?')">
-                    <button type="submit" class="en-btn en-btn-reject en-btn-sm"
+                    <button type="submit" class="en-btn en-btn-danger en-btn-sm"
                             th:text="${order.status.name() == 'PENDING' ? 'Cancel order' : 'Request cancellation'}">
                         Cancel order
                     </button>
                 </form>
             </div>
 
-            <div class="en-alert en-alert-error"
+            <div class="en-alert en-alert-warning"
                  th:if="${order.cancellationRequested}"
                  style="margin-top: 18px;">
                 Cancellation has been requested and is awaiting seller action.

@@ -39,10 +39,11 @@
 
         <p class="en-meta">
             <strong>Status:</strong>
-            <span class="en-status" th:text="${vendor.status}"></span>
+            <span class="en-status" th:classappend="${@statusDisplay.cssClass(vendor.status)}"
+                      th:text="${@statusDisplay.label(vendor.status)}"></span>
         </p>
 
-        <div class="en-alert"
+        <div class="en-alert en-alert-info"
              th:if="${guidance != null}">
             <strong th:text="${guidance.title}">Application guidance</strong>
             <p th:text="${guidance.message}"></p>
@@ -60,24 +61,26 @@
                 Your vendor account has been approved.
             </div>
 
-            <a th:href="@{/vendor/profile}"
-               class="en-btn en-btn-primary">
-                Edit vendor profile
-            </a>
+            <div class="en-actions">
+                <a th:href="@{/vendor/profile}"
+                   class="en-btn en-btn-primary">
+                    Edit vendor profile
+                </a>
 
-            <a th:href="@{/vendor/products}"
-               class="en-btn">
-                Manage products
-            </a>
+                <a th:href="@{/vendor/products}"
+                   class="en-btn en-btn-secondary">
+                    Manage products
+                </a>
 
-            <a th:href="@{/vendor/orders}"
-               class="en-btn">
-                View vendor orders
-            </a>
+                <a th:href="@{/vendor/orders}"
+                   class="en-btn en-btn-secondary">
+                    View vendor orders
+                </a>
+            </div>
         </div>
 
         <div th:if="${vendor.status.name() == 'INFO_REQUESTED'}">
-            <div class="en-alert en-alert-error">
+            <div class="en-alert en-alert-warning">
                 <strong>More information is required.</strong>
                 <p th:text="${vendor.rejectionReason}"></p>
             </div>

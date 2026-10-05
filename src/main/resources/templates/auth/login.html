@@ -37,7 +37,7 @@
         <p class="en-eyebrow">Sign in</p>
         <h2>Welcome back.</h2>
 
-        <div class="en-alert" th:if="${param.accountChanged}">
+        <div class="en-alert en-alert-info" th:if="${param.accountChanged}">
             Your account access has changed. Please sign in again. Deactivated accounts cannot sign in.
         </div>
 
@@ -75,7 +75,7 @@
             </div>
 
             <button type="submit"
-                    class="en-btn en-btn-electric en-login-submit">
+                    class="en-btn en-btn-primary en-login-submit">
                 Log in
                 <span aria-hidden="true">→</span>
             </button>

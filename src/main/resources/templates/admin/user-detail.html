@@ -34,7 +34,7 @@
          th:if="${errorMessage}"
          th:text="${errorMessage}"></div>
 
-    <div class="en-alert"
+    <div class="en-alert en-alert-info"
          th:if="${targetUser.id == currentUser.id}">
         Your own administrator role and account status cannot be changed from this session.
     </div>
@@ -218,7 +218,7 @@
 
                 <td th:text="${log.performedByEmail}">admin@example.com</td>
 
-                <td th:text="${log.reason != null && !log.reason.isBlank() ? log.reason : '—'}">
+                <td class="en-table-reason" th:text="${log.reason != null && !log.reason.isBlank() ? log.reason : '—'}">
                     —
                 </td>
             </tr>

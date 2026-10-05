@@ -18,14 +18,14 @@
         <select id="vendor-status" name="status">
             <option value="ALL" th:selected="${selectedStatus == 'ALL'}">All states</option>
             <option th:each="state : ${T(lk.sliit.electronest.vendor.model.VendorStatus).values()}"
-                    th:value="${state.name()}" th:text="${#strings.replace(state.name(), '_', ' ')}"
+                    th:value="${state.name()}" th:text="${@statusDisplay.label(state)}"
                     th:selected="${selectedStatus == state.name()}"></option>
         </select>
         <button type="submit" class="en-btn en-btn-primary en-btn-auto">Filter</button>
     </form>
 
     <p>
-        <a th:href="@{/vendor/queue}" class="en-btn">
+        <a th:href="@{/vendor/queue}" class="en-btn en-btn-secondary">
             Verification queue
         </a>
     </p>
@@ -47,7 +47,7 @@
          th:each="v : ${vendors}">
 
         <h3 th:text="${v.businessName}">Business Name</h3>
-        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Manage account</a> · Account: <span th:text="${v.user.status}">ACTIVE</span> · Role: <span th:text="${v.user.role}">VENDOR</span></p>
+        <p><a th:href="@{/admin/users/{id}(id=${v.user.id})}">Manage account</a> · Account: <span class="en-status" th:classappend="${@statusDisplay.cssClass(v.user.status)}" th:text="${@statusDisplay.label(v.user.status)}">Active</span> · Role: <span th:text="${v.user.role}">VENDOR</span></p>
 
         <p class="en-meta">
             <strong>Account:</strong>
@@ -67,7 +67,8 @@
         <p class="en-meta">
             <strong>Status:</strong>
             <span class="en-status"
-                  th:text="${v.status}"></span>
+                  th:classappend="${@statusDisplay.cssClass(v.status)}"
+                  th:text="${@statusDisplay.label(v.status)}"></span>
         </p>
 
         <p class="en-meta"
@@ -90,7 +91,7 @@
                   th:action="@{/vendor/manage/{id}/suspend(id=${v.id})}"
                   onsubmit="return confirm('Suspend this seller and disable their seller access?')"
                   method="post">
-                <button class="en-btn en-btn-reject en-btn-sm"
+                <button class="en-btn en-btn-danger en-btn-sm"
                         type="submit">
                     Suspend seller
                 </button>
@@ -107,7 +108,7 @@
 
             <form th:action="@{/vendor/manage/{id}/remove(id=${v.id})}"
                   method="post">
-                <button class="en-btn en-btn-reject en-btn-sm"
+                <button class="en-btn en-btn-danger en-btn-sm"
                         type="submit"
                         onclick="return confirm('Remove this seller profile? The user account stays intact and seller access is revoked. Sellers with product or order records must be suspended instead.')">
                     Remove profile
