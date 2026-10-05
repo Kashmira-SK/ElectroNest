@@ -42,7 +42,7 @@ public class StatusDisplay {
             case lk.sliit.electronest.order.model.PaymentStatus status -> switch (status) {
                 case PAID -> "success";
                 case PENDING_PAYMENT -> "warning";
-                case FAILED -> "danger";
+                case FAILED, CANCELLED -> "danger";
                 case REFUNDED -> "neutral";
             };
             case lk.sliit.electronest.payment.model.PaymentStatus status -> switch (status) {

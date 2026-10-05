@@ -90,14 +90,70 @@ class VendorFulfilmentTest {
         assertThrows(SecurityException.class,()->service.getOrderByIdForViewer(order.getId(),other));
     }
 
-    @Test void customerCancellationCancelsAllUndeliveredItemsAndReleasesStock() {
-        service.requestCancellation(order.getId(),customer);
+    @Test void customerCancellationCancelsAllUndeliveredItemsAndReleasesStock() throws Exception {
+        var customerSession = session(customer);
+        var page = mvc.perform(get("/orders").session(customerSession)).andExpect(status().isOk()).andReturn();
+        assertTrue(page.getResponse().getContentAsString().contains("Cash due on delivery"));
+        var csrf = ((CsrfToken) page.getRequest().getAttribute(CsrfToken.class.getName())).getToken();
+        mvc.perform(post("/orders/" + order.getId() + "/cancel").session(customerSession).param("_csrf", csrf))
+                .andExpect(status().is3xxRedirection());
         assertEquals(OrderStatus.CANCELLED,order.getStatus());
         order.getLineItems().forEach(item -> {
             assertEquals(OrderStatus.CANCELLED,item.effectiveStatus());
             assertEquals(5, products.findById(item.getProductId()).orElseThrow().getStockQuantity());
         });
         assertEquals(PaymentStatus.CANCELLED,payment.getPaymentStatus());
+        Long orderId = order.getId(), paymentId = payment.getId();
+        em.flush(); em.clear();
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.CANCELLED,
+                orders.findById(orderId).orElseThrow().getPaymentStatus());
+        assertEquals(PaymentStatus.CANCELLED, payments.getPaymentForViewer(paymentId, customer).getPaymentStatus());
+        mvc.perform(get("/api/orders/" + orderId).session(customerSession))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.paymentStatus").value("CANCELLED"));
+        String ordersHtml = mvc.perform(get("/orders").session(customerSession))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(ordersHtml.contains("Cancelled"));
+        assertFalse(ordersHtml.contains(">Failed<"));
+        mvc.perform(get("/receipt").param("paymentId", paymentId.toString()).session(customerSession))
+                .andExpect(status().isOk()).andExpect(content().string(containsString(">Cancelled<")));
+    }
+
+    @Test void sellerAcceptsRequestedCodCancellationWithCancelledPaymentState() throws Exception {
+        Long productId = order.getLineItems().stream().filter(item -> item.getVendor().getId().equals(sellerA.getId()))
+                .findFirst().orElseThrow().getProductId();
+        Order single = service.createOrder(new CreateOrderRequest("Buyer", "0771234567", "42 Road", null,
+                "Colombo", null, "Sri Lanka", List.of(new OrderLineItemRequest(productId, 1))), customer);
+        PaymentRequest request = new PaymentRequest();
+        request.setOrderId(single.getId()); request.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        Payment cod = payments.processPayment(request, customer);
+        service.updateFulfilmentStatus(single.getId(), sellerA, OrderStatus.PROCESSING, false);
+        service.requestCancellation(single.getId(), customer);
+        assertTrue(single.isCancellationRequested());
+        var sellerSession = session(sellerA);
+        var page = mvc.perform(get("/vendor/orders").session(sellerSession)).andExpect(status().isOk()).andReturn();
+        var csrf = ((CsrfToken) page.getRequest().getAttribute(CsrfToken.class.getName())).getToken();
+        mvc.perform(post("/vendor/orders/" + single.getId() + "/status").session(sellerSession)
+                        .param("_csrf", csrf).param("status", "CANCELLED"))
+                .andExpect(status().is3xxRedirection());
+        Long orderId = single.getId(), paymentId = cod.getId();
+        em.flush(); em.clear();
+        Order saved = orders.findById(orderId).orElseThrow();
+        assertEquals(OrderStatus.CANCELLED, saved.getStatus());
+        assertFalse(saved.isCancellationRequested());
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.CANCELLED, saved.getPaymentStatus());
+        assertEquals(PaymentStatus.CANCELLED, payments.getPaymentForViewer(paymentId, customer).getPaymentStatus());
+    }
+
+    @Test void failedPaymentStillPersistsAndRendersAsFailed() throws Exception {
+        payments.updateStatus(payment.getId(), PaymentStatus.FAILED);
+        Long orderId = order.getId(), paymentId = payment.getId();
+        em.flush(); em.clear();
+        assertEquals(lk.sliit.electronest.order.model.PaymentStatus.FAILED,
+                orders.findById(orderId).orElseThrow().getPaymentStatus());
+        mvc.perform(get("/orders").session(session(customer))).andExpect(status().isOk())
+                .andExpect(content().string(containsString(">Failed<")));
+        mvc.perform(get("/receipt").param("paymentId", paymentId.toString()).session(session(customer)))
+                .andExpect(status().isOk()).andExpect(content().string(containsString(">Failed<")));
     }
 
     @Test void partialDeliveryCannotTriggerWholeOrderRefundOrStockRestoration() {

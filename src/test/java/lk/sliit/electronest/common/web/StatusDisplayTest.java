@@ -14,6 +14,8 @@ class StatusDisplayTest {
     @Test void formatsLabelsWithoutChangingEnumValues() {
         assertEquals("Info Requested", display.label(VendorStatus.INFO_REQUESTED));
         assertEquals("Pending Payment", display.label(lk.sliit.electronest.order.model.PaymentStatus.PENDING_PAYMENT));
+        assertEquals("Cancelled", display.label(lk.sliit.electronest.order.model.PaymentStatus.CANCELLED));
+        assertEquals("Failed", display.label(lk.sliit.electronest.order.model.PaymentStatus.FAILED));
         assertEquals("Credit Card", display.label("CREDIT_CARD"));
         assertEquals("INFO_REQUESTED", VendorStatus.INFO_REQUESTED.name());
         assertEquals("PENDING_PAYMENT", lk.sliit.electronest.order.model.PaymentStatus.PENDING_PAYMENT.name());
@@ -28,7 +30,7 @@ class StatusDisplayTest {
 
     @Test void mapsFulfilmentAndBothPaymentDomains() {
         variants(OrderStatus.values(), "warning", "neutral", "success", "danger");
-        variants(lk.sliit.electronest.order.model.PaymentStatus.values(), "warning", "success", "danger", "neutral");
+        variants(lk.sliit.electronest.order.model.PaymentStatus.values(), "warning", "success", "danger", "neutral", "danger");
         variants(lk.sliit.electronest.payment.model.PaymentStatus.values(), "warning", "success", "danger", "danger", "neutral");
     }
 

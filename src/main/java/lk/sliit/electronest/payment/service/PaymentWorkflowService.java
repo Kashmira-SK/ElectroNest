@@ -221,6 +221,9 @@ public class PaymentWorkflowService {
                 && payment.getPaymentStatus() == PaymentStatus.PENDING) {
             cancelOrderPayment(order);
             payment.setPaymentStatus(status);
+            if (status == PaymentStatus.FAILED) {
+                order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.FAILED);
+            }
             paymentRepository.save(payment);
             order.setStatus(lk.sliit.electronest.order.model.OrderStatus.CANCELLED);
         } else {
@@ -275,8 +278,14 @@ public class PaymentWorkflowService {
                 paymentRepository.save(payment);
             }
         }
-        order.setPaymentStatus(refunded ? lk.sliit.electronest.order.model.PaymentStatus.REFUNDED
-                : lk.sliit.electronest.order.model.PaymentStatus.FAILED);
+        if (refunded) {
+            order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.REFUNDED);
+        } else if (payments.stream().anyMatch(p -> p.getPaymentStatus() == PaymentStatus.CANCELLED)
+                || payments.isEmpty()) {
+            order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.CANCELLED);
+        } else {
+            order.setPaymentStatus(lk.sliit.electronest.order.model.PaymentStatus.FAILED);
+        }
     }
 
     public boolean readyForFulfilment(Order order) {
