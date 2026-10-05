@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Receipt — ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
+    <link rel="stylesheet" th:href="@{/css/receipt.css}">
 </head>
 <body class="en-customer-page">
 
@@ -28,81 +29,92 @@
 
         </div>
 
-        <div class="en-receipt-grid">
+        <div class="en-receipt-details">
+            <section class="en-receipt-section">
+                <h2>Receipt &amp; order</h2>
+                <div class="en-receipt-fields">
+                    <div>
+                        <span class="en-muted">Receipt number</span>
+                        <strong th:text="${receipt.receiptNumber}">
+                            REC
+                        </strong>
+                    </div>
+                    <div>
+                        <span class="en-muted">Order</span>
+                        <strong th:text="${receipt.orderNumber}">
+                            ORD
+                        </strong>
+                    </div>
+                    <div>
+                        <span class="en-muted">Issued</span>
 
-            <div>
-                <span class="en-muted">Receipt number</span>
-                <strong th:text="${receipt.receiptNumber}">
-                    REC
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Transaction</span>
-                <strong th:text="${receipt.payment.transactionId}">
-                    TXN
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Order</span>
-                <strong th:text="${receipt.orderNumber}">
-                    ORD
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Payment method</span>
-                <strong th:text="${@statusDisplay.label(receipt.paymentMethod)}">
-                    CARD
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Customer</span>
-                <strong th:text="${receipt.customerName}">
-                    Customer
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Customer email</span>
-                <strong th:text="${receipt.customerEmail}">
-                    customer@example.com
-                </strong>
-            </div>
-
-            <div th:if="${receipt.payment.maskedCardNumber != null}">
-                <span class="en-muted">Card</span>
-                <strong th:text="${receipt.payment.maskedCardNumber}">
-                    **** 1234
-                </strong>
-            </div>
-
-            <div>
-                <span class="en-muted">Issued</span>
-
-                <strong th:text="${#temporals.format(
-                    receipt.issuedAt,
-                    'dd MMM yyyy, HH:mm')}">
-                    Date
-                </strong>
-            </div>
-
+                        <strong th:text="${#temporals.format(
+                            receipt.issuedAt,
+                            'dd MMM yyyy, HH:mm')}">
+                            Date
+                        </strong>
+                    </div>
+                </div>
+            </section>
+            <section class="en-receipt-section">
+                <h2>Payment</h2>
+                <div class="en-receipt-fields">
+                    <div>
+                        <span class="en-muted">Transaction</span>
+                        <strong th:text="${receipt.payment.transactionId}">
+                            TXN
+                        </strong>
+                    </div>
+                    <div>
+                        <span class="en-muted">Payment method</span>
+                        <strong th:text="${@statusDisplay.label(receipt.paymentMethod)}">
+                            CARD
+                        </strong>
+                    </div>
+                    <div th:if="${receipt.payment.maskedCardNumber != null}">
+                        <span class="en-muted">Card</span>
+                        <strong th:text="${receipt.payment.maskedCardNumber}">
+                            **** 1234
+                        </strong>
+                    </div>
+                </div>
+            </section>
+            <section class="en-receipt-section">
+                <h2>Customer</h2>
+                <div class="en-receipt-fields">
+                    <div>
+                        <span class="en-muted">Customer</span>
+                        <strong th:text="${receipt.customerName}">
+                            Customer
+                        </strong>
+                    </div>
+                    <div>
+                        <span class="en-muted">Customer email</span>
+                        <strong th:text="${receipt.customerEmail}">
+                            customer@example.com
+                        </strong>
+                    </div>
+                </div>
+            </section>
+            <section class="en-receipt-section">
+                <h2>Delivery address</h2>
+                <p class="en-receipt-address" th:text="${receipt.deliveryAddress}">Delivery address</p>
+            </section>
         </div>
 
-        <div class="en-card" style="margin-top:24px">
+        <section class="en-receipt-section en-receipt-purchases">
 
-            <p class="en-eyebrow">Items</p>
+            <h2>Purchased items</h2>
 
             <pre class="en-receipt-items"
                  th:text="${receipt.itemizedSummary}">
                 Items
             </pre>
 
-        </div>
+        </section>
 
-        <div class="en-card">
+        <section class="en-receipt-section en-receipt-totals">
+            <h2>Order summary</h2>
 
             <div class="en-summary-row">
                 <span>Subtotal</span>
@@ -150,19 +162,9 @@
                 </strong>
             </div>
 
-        </div>
+        </section>
 
-        <div class="en-card">
-
-            <p class="en-eyebrow">Delivery</p>
-
-            <p th:text="${receipt.deliveryAddress}">
-                Delivery address
-            </p>
-
-        </div>
-
-        <div class="en-actions">
+        <div class="en-actions en-receipt-actions">
 
             <a th:if="${receipt.payment.paymentStatus.name() == 'SUCCESSFUL'}"
                th:href="@{/api/v1/receipts/{id}/download(id=${receipt.id})}"

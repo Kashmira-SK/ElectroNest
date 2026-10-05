@@ -1,0 +1,37 @@
+/* Receipt-only layout; payment values and shared controls retain their existing styles. */
+.en-receipt {
+  max-width: 960px;
+  margin-inline: auto;
+  padding: clamp(20px, 4vw, 40px);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(20, 22, 26, .06);
+}
+.en-receipt::before { content: none; }
+.en-receipt-header { padding: 0 0 24px; align-items: center; }
+.en-receipt-header h1 { margin: 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.2; }
+.en-receipt-header .en-eyebrow { margin-bottom: 10px; }
+.en-receipt-header .en-status { flex-shrink: 0; }
+.en-receipt-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; padding: 28px 0; }
+.en-receipt-section { min-width: 0; }
+.en-receipt-section h2 { font-size: 17px; line-height: 1.4; margin: 0 0 16px; }
+.en-receipt-fields { display: grid; gap: 14px; }
+.en-receipt-fields > div { display: grid; gap: 4px; min-width: 0; }
+.en-receipt-fields .en-muted { font-size: 13px; }
+.en-receipt-fields strong, .en-receipt-address { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.en-receipt-address { margin: 0; white-space: pre-line; }
+.en-receipt-purchases { padding: 24px 0; border-block: 1px solid var(--line); }
+.en-receipt .en-receipt-items { padding: 16px; background: var(--paper); border-radius: 8px; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+.en-receipt-totals { padding-top: 24px; }
+.en-receipt-totals .en-summary-row { gap: 24px; align-items: baseline; }
+.en-receipt-totals .en-summary-row > span { min-width: 0; overflow-wrap: anywhere; }
+.en-receipt-totals strong { text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.en-receipt-totals .en-summary-total { background: var(--en-blue-soft); border-top: 0; padding: 18px; border-radius: 8px; color: var(--ink); font-size: 18px; }
+.en-receipt-totals .en-summary-total strong { font-size: 24px; }
+.en-receipt-actions { padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 12px; }
+@media (max-width: 600px) {
+  .en-receipt-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .en-receipt-details { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .en-receipt-totals .en-summary-total { flex-wrap: wrap; gap: 8px 16px; }
+  .en-receipt-totals .en-summary-total strong { margin-left: auto; }
+  .en-receipt-actions .en-btn { width: 100%; }
+}
