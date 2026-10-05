@@ -89,3 +89,4 @@ Percentage discounts apply to items; fixed discounts are in LKR and capped at th
 subtotal plus delivery. Amounts round to two decimals. Delivery currently remains free.
 There is no promo administration UI. Codes are revalidated at order creation;
 orders and receipts retain their code/discount snapshot even if the promotion later changes.
+<!-- order logic test 1 -->
