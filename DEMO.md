@@ -1,53 +1,65 @@
 # ElectroNest Demo
 
-Requires Java 21.
+Use the integrated `main` branch with **Java/JDK 21**. The launchers use the included
+Maven Wrapper; a separate Maven installation is not required. Run commands from
+the repository root.
 
-## Linux / macOS / Git Bash
+## Start the demo
 
-Run:
+**Linux/macOS:**
 
+```sh
 ./run-demo.sh
+```
 
-## Windows
+**Windows Command Prompt:**
 
-Run:
-
+```bat
 run-demo.cmd
+```
 
-## Open the site
+**Windows PowerShell:**
 
-http://localhost:8081
+```powershell
+.\run-demo.cmd
+```
+
+Open **http://localhost:8081**. On subsequent launches, use the same command.
+You do not need Docker, PostgreSQL, or `application-local.properties` for demo mode.
+For PostgreSQL development, follow the separate [root README instructions](README.md#local-development--docker-postgresql).
+
+## Persistent database and automatic upgrade
+
+The `demo` profile uses H2 file storage at `./data/electronest-demo`
+(the database file is `data/electronest-demo.mv.db`). It is persistent across restarts.
+
+- A fresh database is created and seeded automatically with demo accounts, products, and the promo code below.
+- Existing H2 demo databases are automatically upgraded for the `CANCELLED` order-payment status by `DemoPaymentStatusMigration`, after Hibernate initializes the schema.
+- The compatibility migration preserves existing rows and safely skips databases that already support `CANCELLED`.
+- **Do not delete/reset the H2 database or run manual SQL for this upgrade.** Do not run the PostgreSQL migration in demo mode.
+- Migration failures stop startup visibly rather than silently continuing.
+
+The existing seeder refreshes the predefined demo accounts/passwords, customer
+delivery details, and demo vendor profile on startup. It adds sample products only
+when that vendor has none, and adds `WELCOME10` only if missing. It does not clear
+existing orders or purchase history.
 
 ## Demo accounts
 
-Admin
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@electronest.lk | Admin@123 |
+| Customer | customer@electronest.lk | Customer@123 |
+| Vendor | vendor@electronest.lk | Vendor@123 |
 
-Email: admin@electronest.lk
-Password: Admin@123
+## Java troubleshooting
 
-Customer
-
-Email: customer@electronest.lk
-Password: Customer@123
-
-Vendor
-
-Email: vendor@electronest.lk
-Password: Vendor@123
-
-## Notes
-
-The demo profile uses its own local H2 database.
-
-You do not need Docker.
-You do not need PostgreSQL.
-You do not need application-local.properties.
-
-The demo database is stored locally under:
-
-data/
-
-To start the project again later, just run the same demo command.
+For large numbers of missing generated methods (`builder()`, `getRole()`,
+`getName()`, getters/setters), run `java -version` and `mvn -version` and ensure
+Maven uses **JDK 21**. If Maven is not installed separately, check `./mvnw -version`
+(Linux/macOS), `mvnw.cmd -version` (Command Prompt), or `.\mvnw.cmd -version`
+(PowerShell). Correct `JAVA_HOME`/`PATH`; do not add generated methods manually.
+See [Java troubleshooting](README.md#java-troubleshooting) for details.
 
 ## Vendor decision emails
 
