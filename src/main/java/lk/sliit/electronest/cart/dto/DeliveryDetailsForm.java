@@ -29,7 +29,7 @@ public class DeliveryDetailsForm {
     @Size(max = 100, message = "City must be 100 characters or fewer")
     private String deliveryCity;
 
-    @Size(max = 20, message = "Postal code must be 20 characters or fewer")
+    @lk.sliit.electronest.common.validation.PostalCode
     private String deliveryPostalCode;
 
     @NotBlank(message = "Country is required")

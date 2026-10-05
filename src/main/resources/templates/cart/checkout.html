@@ -156,15 +156,17 @@
 
                     <div class="en-field">
                         <label for="deliveryPostalCode">
-                            Postal code
+                            Postal code (optional)
                         </label>
 
                         <input id="deliveryPostalCode"
                                type="text"
                                th:field="*{deliveryPostalCode}"
-                               maxlength="20">
-                        <small class="en-field-error" th:if="${#fields.hasErrors('deliveryPostalCode')}"
-                               th:errors="*{deliveryPostalCode}"></small>
+                               aria-describedby="deliveryPostalCodeError"
+                               th:attr="aria-invalid=${#fields.hasErrors('deliveryPostalCode')}">
+                        <small id="deliveryPostalCodeError" class="en-field-error" aria-live="polite"
+                               th:hidden="${!#fields.hasErrors('deliveryPostalCode')}"
+                               th:text="${#fields.hasErrors('deliveryPostalCode') ? #fields.errors('deliveryPostalCode')[0] : ''}"></small>
                     </div>
 
                     <div class="en-field">
@@ -307,6 +309,7 @@
 </main>
 
 <script th:src="@{/js/checkout-promo.js}" defer></script>
+<script th:src="@{/js/checkout-postal-code.js}" defer></script>
 <script>
 function editDelivery() {
     const saved = document.getElementById('savedDelivery');
