@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Products - ElectroNest</title>
     <link rel="stylesheet" th:href="@{/css/electronest.css}">
+    <script th:src="@{/js/product-quantity.js}" defer></script>
 </head>
 <body>
 
@@ -62,7 +63,12 @@
           th:action="@{/vendor/products/bulk-price}" method="post"
           onsubmit="return confirm('Set every selected product to this price?')">
         <div><label for="bulkPrice">Set selected products to price (LKR)</label>
-            <input id="bulkPrice" name="newPrice" type="number" min="0.01" step="0.01" required></div>
+            <div class="en-quantity-control en-quantity-control--wide" data-number-control>
+                <button type="button" data-quantity-step="-1" aria-label="Decrease selected price by LKR 0.01">−</button>
+                <input id="bulkPrice" name="newPrice" type="number" min="0.01" step="0.01" required>
+                <button type="button" data-quantity-step="1" aria-label="Increase selected price by LKR 0.01">+</button>
+            </div>
+        </div>
         <button type="submit" class="en-btn en-btn-secondary">Update selected prices</button>
         <p class="en-muted">Select products below. This sets one price, not a percentage change.</p>
     </form>
@@ -121,12 +127,18 @@
                       th:action="@{/vendor/products/{id}/stock(id=${product.id})}"
                       method="post">
                     <label th:for="${'stock-' + product.id}">Update stock</label>
-                    <input th:id="${'stock-' + product.id}"
-                           name="stockQuantity"
-                           type="number"
-                           min="0"
-                           th:value="${product.stockQuantity}"
-                           required>
+                    <div class="en-quantity-control en-quantity-control--wide" data-number-control>
+                        <button type="button" data-quantity-step="-1"
+                                th:attr="aria-label=${'Decrease stock for ' + product.name}">−</button>
+                        <input th:id="${'stock-' + product.id}"
+                               name="stockQuantity"
+                               type="number"
+                               min="0"
+                               th:value="${product.stockQuantity}"
+                               required>
+                        <button type="button" data-quantity-step="1"
+                                th:attr="aria-label=${'Increase stock for ' + product.name}">+</button>
+                    </div>
                     <button type="submit" class="en-btn en-btn-secondary">
                         Save stock
                     </button>
