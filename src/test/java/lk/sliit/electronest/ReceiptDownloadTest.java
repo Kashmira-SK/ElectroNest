@@ -79,10 +79,10 @@ class ReceiptDownloadTest {
                     .andExpect(header().string("Cache-Control", "no-store"))
                     .andReturn().getResponse().getContentAsByteArray();
             try (PdfReader reader = new PdfReader(bytes)) {
-                assertTrue(reader.getNumberOfPages() >= 1);
+                assertEquals(1, reader.getNumberOfPages());
                 String text = new PdfTextExtractor(reader).getTextFromPage(1);
                 for (String expected : new String[]{"ElectroNest", "REC-TEST", "TXN-TEST", "REF-TEST",
-                        "ORD-TEST", "Receipt Customer", "Colombo", "Keyboard", "1250.00", "CREDIT_CARD", "Issued"}) {
+                        "ORD-TEST", "Receipt Customer", "Colombo", "Keyboard", "1250.00", "Credit Card", "Issued"}) {
                     assertTrue(text.contains(expected), expected);
                 }
             }
@@ -101,6 +101,7 @@ class ReceiptDownloadTest {
 
     @Test void unpaidReceiptCannotBeDownloadedAsProofOfPayment() throws Exception {
         receipt.getPayment().setPaymentStatus(PaymentStatus.PENDING);
+        receipt.getPayment().setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
         mvc.perform(get(path()).session(session(owner))).andExpect(status().isConflict());
     }
 
