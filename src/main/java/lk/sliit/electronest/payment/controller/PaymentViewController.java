@@ -106,6 +106,25 @@ public class PaymentViewController {
             return "redirect:/receipt?paymentId=" + payment.getId();
 
         } catch (RuntimeException ex) {
+            // Only non-sensitive form context may survive the redirect. Never flash the
+            // PaymentRequest, full card number or CVV (including as rejected values).
+            redirectAttributes.addFlashAttribute("paymentChoice", savedCardId != null
+                    ? "saved:" + savedCardId : paymentMethod == null ? "" : paymentMethod.name());
+            if (savedCardId == null && (paymentMethod == PaymentMethod.CREDIT_CARD
+                    || paymentMethod == PaymentMethod.DEBIT_CARD)) {
+                redirectAttributes.addFlashAttribute("paymentCardHolderName", cardHolderName);
+                redirectAttributes.addFlashAttribute("paymentExpiryDate", expiryDate);
+                redirectAttributes.addFlashAttribute("paymentSaveCard", saveCard);
+            }
+            String field = ex instanceof IllegalArgumentException ? switch (ex.getMessage()) {
+                case "Enter the name on the card (up to 100 characters)." -> "cardHolderName";
+                case "Card number is required", "Enter a valid card number", "Enter a valid card number." -> "cardNumber";
+                case "Enter expiry as MM/YY", "This card has expired", "Enter a valid card expiry date",
+                     "Enter a current or future expiry as MM/YY." -> savedCardId == null ? "expiryDate" : "savedCard";
+                case "CVV must be 3 or 4 digits", "CVV must contain 3 or 4 digits" -> "cvv";
+                case null, default -> "";
+            } : "";
+            redirectAttributes.addFlashAttribute("paymentErrorField", field);
             redirectAttributes.addFlashAttribute(
                     "errorMessage",
                     ex.getMessage()
